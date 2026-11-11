@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect M-Pesa | Kaunta</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/steps.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+<header class="step-top">
+  <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="28" height="28"><span>Kaunta</span></a>
+  <div class="top-r"><span class="chip hide-s"><span class="av">K</span><b id="shopName">Your shop</b></span><span data-theme-slot></span></div>
+</header>
+<main class="step-page">
+  <div class="head">
+    <a class="crumb" href="dashboard.html"><i class="ph ph-arrow-left"></i>Back to dashboard</a>
+    <h1>Connect M-Pesa</h1>
+    <p class="muted">Use your Safaricom Daraja app details to take till or paybill payments and match them to sales. Your keys are encrypted and never shown again.</p>
+  </div>
+  <section class="card" id="existing" hidden>
+    <div class="card-h"><h2>Connected</h2><span class="pill" id="exEnv"></span></div>
+    <ul class="rows" id="exRows"></ul>
+    <div class="actions" style="margin-top:.8rem"><button class="btn" id="exTest" type="button">Test connection</button><button class="btn" id="exC2b" type="button">Register payment URLs</button></div>
+    <p class="note ok" id="exMsg" hidden style="margin-top:.8rem"></p>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2 id="formTitle">Your Daraja details</h2></div>
+    <form class="form" id="mpForm" novalidate>
+      <div class="row2">
+        <label class="fld"><span>Receive money with</span><select id="mType"><option value="till">Till number (Buy Goods)</option><option value="paybill">Paybill</option></select></label>
+        <label class="fld"><span>Till or paybill number</span><input type="text" id="mCode" inputmode="numeric" autocomplete="off" required></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>Environment</span><select id="mEnv"><option value="live">Live (real money)</option><option value="sandbox">Sandbox (testing)</option></select></label>
+        <label class="fld"><span>Label</span><input type="text" id="mLabel" value="Main till" autocomplete="off"></label>
+      </div>
+      <label class="fld"><span>Consumer key</span><input type="password" id="mKey" autocomplete="off"><small id="hKey"></small></label>
+      <label class="fld"><span>Consumer secret</span><input type="password" id="mSecret" autocomplete="off"><small id="hSecret"></small></label>
+      <label class="fld"><span>Lipa na M-Pesa passkey</span><input type="password" id="mPass" autocomplete="off"><small id="hPass">Needed for the "pay on phone" prompt (STK push).</small></label>
+      <p class="note err" id="mErr" hidden></p>
+      <div class="actions"><button class="btn primary" id="mSave" type="submit">Save and test</button></div>
+    </form>
+  </section>
+  <section class="card" id="urls" hidden>
+    <div class="card-h"><h2>Payment URLs</h2></div>
+    <p class="muted" style="margin:0 0 .6rem">Kaunta registers these with Safaricom for you when you press "Register payment URLs". They are listed here in case Safaricom asks for them.</p>
+    <ul class="rows" id="urlRows"></ul>
+  </section>
+</main>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/step-mpesa.js"></script>
+</body>
+</html>

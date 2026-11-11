@@ -29,10 +29,10 @@
       session.access_token = s.access_token; if (s.refresh_token) session.refresh_token = s.refresh_token; save(); return true;
     } catch (e) { return false; }
   }
-  async function get(path) {
+  async function get(path, opts) {
     var res;
-    try { res = await raw(path, {}, session.access_token); } catch (e) { throw new Error('We could not reach the server. Check your connection and try again.'); }
-    if (res.status === 401) { if (await refresh()) res = await raw(path, {}, session.access_token); else { toLogin(); throw new Error(''); } }
+    try { res = await raw(path, opts || {}, session.access_token); } catch (e) { throw new Error('We could not reach the server. Check your connection and try again.'); }
+    if (res.status === 401) { if (await refresh()) res = await raw(path, opts || {}, session.access_token); else { toLogin(); throw new Error(''); } }
     if (res.status === 401) { toLogin(); throw new Error(''); }
     var j = null; try { j = await res.json(); } catch (e) { /* not JSON */ }
     if (!res.ok || !j || j.success === false) {
@@ -45,7 +45,8 @@
 
   /* ---------- header ---------- */
   var hour = new Date().getHours(), user = session.user || {};
-  $('#shopName').textContent = (session.tenant && session.tenant.name) || 'Your shop';
+  var shopTitle = (session.tenant && session.tenant.name) || 'Your shop';
+  $('#shopName').textContent = shopTitle; $('#avatar').textContent = shopTitle.charAt(0).toUpperCase();
   $('#userName').textContent = user.name || user.full_name || '';
   $('#greet').textContent = (hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening') + (user.name ? ', ' + String(user.name).split(' ')[0] : '');
   $('#menuBtn').addEventListener('click', function () { var o = $('#side').classList.toggle('open'); this.setAttribute('aria-expanded', o); });
@@ -115,7 +116,7 @@
     $('#net').textContent = money(t.net_sales);
     $('#netSub').textContent = Number(t.refunds) ? 'After ' + money(Math.abs(t.refunds)) + ' in refunds' : 'No refunds today';
     $('#cnt').textContent = String(t.sales_count || 0); $('#avg').textContent = money(t.average_sale); $('#gp').textContent = money(t.gross_profit);
-    $('#dateLine').textContent = new Date(d.date + 'T00:00').toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' });
+    $('#dateLine').textContent = new Date(d.date + 'T00:00').toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     bars(d.trend || []); attention(d.attention || {}); payments(t.payment_methods); lowStock((d.attention || {}).low_stock);
   }
 
@@ -125,5 +126,41 @@
     catch (e) { if (e.message) { $('#errText').textContent = e.message; box.hidden = false; } }
   }
   $('#retry').addEventListener('click', load);
-  loadBranches(); load();
+
+  /* ---------- "Get started" card ----------
+     GET /tenant/onboarding works every step out from real data, so there is nothing to tick by hand.
+     Hidden when every step is done, when the owner dismissed it, or when the person may not manage settings. */
+  function started(d) {
+    var box = $('#gs');
+    if (!d || d.dismissed || d.complete || !d.steps || !d.steps.length) { box.hidden = true; return; }
+    $('#gsSub').textContent = d.done + ' of ' + d.total + ' done';
+    var pct = Math.round((d.done / d.total) * 100), bar = $('#gsBar');
+    bar.setAttribute('aria-valuenow', String(pct)); bar.firstElementChild.style.width = pct + '%';
+    var list = $('#gsList'); list.textContent = '';
+    var next = d.steps.filter(function (s) { return !s.done; })[0];
+    d.steps.forEach(function (s, i) {
+      var li = el('li', undefined, s.done ? 'done' : ''), mark = el('span', undefined, 'mark');
+      if (s.done) { var ic = el('i'); ic.className = 'ph ph-check'; mark.appendChild(ic); } else mark.textContent = String(i + 1);
+      var body = el('div', undefined, 'gs-t'), title = el('b', s.title);
+      if (s.optional) title.appendChild(el('span', 'Optional', 'pill'));
+      body.appendChild(title); body.appendChild(el('p', s.hint, 'muted'));
+      var a = el('a', s.done ? 'Review' : s.cta, 'btn' + (s === next ? ' primary' : '')); a.href = s.href;
+      li.appendChild(mark); li.appendChild(body); li.appendChild(a); list.appendChild(li);
+    });
+    $('#gsFoot').hidden = !d.etims_hidden;
+    box.hidden = false;
+  }
+  async function loadStarted() {
+    try { started(await get('/tenant/onboarding')); } catch (e) { $('#gs').hidden = true; /* not allowed, or not reachable: the overview still works */ }
+  }
+  $('#gsDismiss').addEventListener('click', async function () {
+    $('#gs').hidden = true;
+    try { await get('/tenant/onboarding/dismiss', { method: 'POST' }); } catch (e) { loadStarted(); }
+  });
+  $('#gsVat').addEventListener('click', async function () {
+    try { await get('/tenant', { method: 'PATCH', body: JSON.stringify({ vat_registered: true }) }); } catch (e) { /* shown again below */ }
+    loadStarted();
+  });
+
+  loadBranches(); load(); loadStarted();
 })();

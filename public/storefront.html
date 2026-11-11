@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Online store | Kaunta</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/steps.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+<header class="step-top">
+  <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="28" height="28"><span>Kaunta</span></a>
+  <div class="top-r"><span class="chip hide-s"><span class="av">K</span><b id="shopName">Your shop</b></span><span data-theme-slot></span></div>
+</header>
+<main class="step-page">
+  <div class="head">
+    <a class="crumb" href="dashboard.html"><i class="ph ph-arrow-left"></i>Back to dashboard</a>
+    <h1>Customize your online store</h1>
+    <p class="muted">Optional. Add your shop name and details, then put your shop online so customers can order.</p>
+  </div>
+  <section class="card">
+    <form class="form" id="sfForm" novalidate>
+      <label class="fld"><span>Store name</span><input type="text" id="sName" autocomplete="off"></label>
+      <label class="fld"><span>Tagline</span><input type="text" id="sTag" autocomplete="off" placeholder="e.g. Fresh groceries, delivered fast"></label>
+      <label class="fld"><span>Logo link</span><input type="url" id="sLogo" autocomplete="off" placeholder="https://..."><small>Optional. A link to your logo image.</small></label>
+      <div class="row2">
+        <label class="fld"><span>Phone</span><input type="tel" id="sPhone" autocomplete="off"></label>
+        <label class="fld"><span>WhatsApp</span><input type="tel" id="sWa" autocomplete="off"></label>
+      </div>
+      <label class="fld"><span>Address</span><input type="text" id="sAddr" autocomplete="off"></label>
+      <label class="fld"><span>Announcement</span><input type="text" id="sAnn" autocomplete="off" placeholder="Shown at the top of your store"></label>
+      <label class="fld"><span>Orders are fulfilled from</span><select id="sBranch"></select></label>
+      <label class="chk"><input type="checkbox" id="sDel" checked><span>Offer delivery</span></label>
+      <label class="chk"><input type="checkbox" id="sPick" checked><span>Offer pickup</span></label>
+      <p class="note err" id="sErr" hidden></p>
+      <p class="note ok" id="sOk" hidden></p>
+      <div class="actions"><button class="btn primary" id="sSave" type="submit">Save</button><button class="btn" id="sPub" type="button">Save and publish</button><button class="btn" id="sUnpub" type="button" hidden>Take offline</button></div>
+      <p class="muted" id="sLive" hidden></p>
+    </form>
+  </section>
+</main>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/step-storefront.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Add products | Kaunta</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/steps.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+<header class="step-top">
+  <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="28" height="28"><span>Kaunta</span></a>
+  <div class="top-r"><span class="chip hide-s"><span class="av">K</span><b id="shopName">Your shop</b></span><span data-theme-slot></span></div>
+</header>
+<main class="step-page">
+  <div class="head">
+    <a class="crumb" href="dashboard.html"><i class="ph ph-arrow-left"></i>Back to dashboard</a>
+    <h1>Add your products and prices</h1>
+    <p class="muted">This is the only step you need before you can sell. Add a few now, or import your whole stock list at once.</p>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="btn" role="tab" id="tabOne" aria-selected="true" aria-controls="paneOne" type="button">Add one product</button>
+    <button class="btn" role="tab" id="tabMany" aria-selected="false" aria-controls="paneMany" type="button">Import many</button>
+  </div>
+
+  <section class="card" id="paneOne" role="tabpanel" aria-labelledby="tabOne">
+    <form class="form" id="oneForm" novalidate>
+      <label class="fld"><span>Product name</span><input type="text" id="pName" required autocomplete="off" placeholder="e.g. Maize flour 2kg"></label>
+      <div class="row2">
+        <label class="fld"><span>Selling price (KES)</span><input type="number" id="pPrice" min="0" step="0.01" inputmode="decimal" required></label>
+        <label class="fld"><span>Buying price (KES)</span><input type="number" id="pCost" min="0" step="0.01" inputmode="decimal"><small>Optional. Lets Kaunta show your profit.</small></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>How many do you have now?</span><input type="number" id="pQty" min="0" step="1" inputmode="decimal"><small>Optional. You can only sell what is in stock.</small></label>
+        <label class="fld"><span>SKU or barcode</span><input type="text" id="pSku" autocomplete="off"><small>Optional.</small></label>
+      </div>
+      <p class="note err" id="oneErr" hidden></p>
+      <div class="actions"><button class="btn primary" id="oneSave" type="submit">Save product</button></div>
+    </form>
+  </section>
+
+  <section class="card" id="paneMany" role="tabpanel" aria-labelledby="tabMany" hidden>
+    <div class="form">
+      <p class="muted" style="margin:0">Upload a CSV file (you can save one from Excel or Google Sheets). The first row must name the columns. Only <b>name</b> is required; <b>selling_price</b>, <b>cost_price</b>, <b>opening_quantity</b>, <b>sku</b>, <b>barcode</b>, <b>category</b>, <b>brand</b>, <b>unit</b>, <b>reorder_level</b> and <b>tax_code</b> are optional.</p>
+      <div class="drop">
+        <input type="file" id="file" accept=".csv,text/csv" aria-label="CSV file">
+        <a class="link" id="tpl" href="#" download="kaunta-products-template.csv">Download a template to fill in</a>
+      </div>
+      <p class="note ok" id="manyInfo" hidden></p>
+      <p class="note err" id="manyErr" hidden></p>
+      <div class="actions"><button class="btn primary" id="manySave" type="button" disabled>Import products</button></div>
+      <ul class="rows" id="manyErrors" hidden></ul>
+    </div>
+  </section>
+
+  <section class="card" id="added" hidden>
+    <div class="card-h"><h2>Added just now</h2><a class="btn primary" href="dashboard.html">Back to dashboard</a></div>
+    <ul class="rows" id="addedList"></ul>
+  </section>
+</main>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/step-products.js"></script>
+</body>
+</html>

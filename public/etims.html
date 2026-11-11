@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Set up eTIMS | Kaunta</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/steps.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+<header class="step-top">
+  <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="28" height="28"><span>Kaunta</span></a>
+  <div class="top-r"><span class="chip hide-s"><span class="av">K</span><b id="shopName">Your shop</b></span><span data-theme-slot></span></div>
+</header>
+<main class="step-page">
+  <div class="head">
+    <a class="crumb" href="dashboard.html"><i class="ph ph-arrow-left"></i>Back to dashboard</a>
+    <h1>Set up eTIMS</h1>
+    <p class="muted">Kaunta sends each sale to KRA as an eTIMS receipt through Digitax. Paste your Digitax API key to connect.</p>
+  </div>
+  <section class="card">
+    <div class="card-h"><h2>Digitax connection</h2><span class="pill" id="state">Not connected</span></div>
+    <form class="form" id="etForm" novalidate>
+      <label class="fld"><span>Environment</span><select id="eEnv"><option value="sandbox">Sandbox (testing)</option><option value="live">Live (real receipts to KRA)</option></select><small>Start in sandbox to check everything works, then switch to live.</small></label>
+      <label class="fld"><span>Digitax API key</span><input type="password" id="eKey" autocomplete="off"><small id="hKey"></small></label>
+      <label class="fld"><span>Digitax business ID</span><input type="text" id="eBiz" autocomplete="off"><small>Optional. Only if Digitax gave you one.</small></label>
+      <label class="chk"><input type="checkbox" id="eAuto" checked><span>Send receipts to KRA automatically after each sale</span></label>
+      <p class="note err" id="eErr" hidden></p>
+      <p class="note ok" id="eOk" hidden></p>
+      <div class="actions"><button class="btn primary" id="eSave" type="submit">Save and verify</button><a class="btn" href="dashboard.html">Back to dashboard</a></div>
+    </form>
+  </section>
+  <p class="muted">Your shop's KRA PIN and VAT status come from your shop profile. Make sure they are filled in there before going live.</p>
+</main>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/step-etims.js"></script>
+</body>
+</html>

@@ -15,6 +15,10 @@ router.get('/', ctl.getProfile);
 router.patch('/', can('settings.manage'), ctl.updateProfile);
 router.patch('/settings', can('settings.manage'), ctl.mergeSettings);
 
+// get-started checklist (the dashboard card)
+router.get('/onboarding', can('settings.manage'), ctl.getOnboarding);
+router.post('/onboarding/dismiss', can('settings.manage'), ctl.dismissOnboarding);
+
 // modules
 router.get('/features', ctl.getFeatures);
 router.put('/features', can('settings.manage'), ctl.setFeatures);

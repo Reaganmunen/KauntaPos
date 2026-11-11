@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New sale | Kaunta</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/steps.css" rel="stylesheet">
+  <link href="css/pos.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body class="pos-body">
+<div class="pos">
+  <header class="pos-top">
+    <a class="btn" href="dashboard.html" aria-label="Back to dashboard"><i class="ph ph-arrow-left"></i><span class="hide-s">Dashboard</span></a>
+    <b class="pos-shop" id="shopName">Your shop</b>
+    <label class="sr" for="branch">Branch</label>
+    <select class="chip" id="branch" hidden></select>
+    <div class="top-r">
+      <button class="chip" id="shiftBtn" type="button"><i class="ph ph-clock"></i><span id="shiftText">Shift</span></button>
+      <button class="chip" id="reload" type="button" aria-label="Refresh products and stock" title="Refresh products and stock"><i class="ph ph-arrows-clockwise"></i></button>
+      <span data-theme-slot></span>
+    </div>
+  </header>
+
+  <section class="pos-items" aria-label="Products">
+    <div class="pos-search">
+      <i class="ph ph-magnifying-glass"></i>
+      <input type="search" id="q" placeholder="Search products, or scan a barcode" autocomplete="off" aria-label="Search products or scan a barcode">
+    </div>
+    <p class="note err" id="loadErr" hidden></p>
+    <div class="pos-grid" id="grid" role="list"></div>
+    <p class="muted pos-empty" id="empty" hidden></p>
+  </section>
+
+  <aside class="pos-cart" aria-label="Current sale">
+    <div class="card-h"><h2>Current sale</h2><button class="link" id="clear" type="button" hidden>Clear</button></div>
+    <ul class="cart-lines" id="lines"></ul>
+    <p class="muted cart-empty" id="cartEmpty">Tap a product to add it.</p>
+    <div class="cart-foot">
+      <div class="tot"><span>Total</span><span id="total">KES 0.00</span></div>
+      <p class="note err" id="saleErr" hidden></p>
+      <button class="btn primary charge" id="charge" type="button" disabled>Charge</button>
+    </div>
+  </aside>
+</div>
+
+<dialog id="payDlg" aria-labelledby="payTitle">
+  <form method="dialog" class="dlg" id="payForm" novalidate>
+    <div class="card-h"><h2 id="payTitle">Take payment</h2><button class="btn" id="payClose" type="button" aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="pay-total"><span class="muted">Amount due</span><b id="dueAmt">KES 0.00</b></div>
+    <div class="tabs" role="tablist" id="methods">
+      <button class="btn" type="button" role="tab" data-m="cash" aria-selected="true">Cash</button>
+      <button class="btn" type="button" role="tab" data-m="mpesa" aria-selected="false">M-Pesa</button>
+      <button class="btn" type="button" role="tab" data-m="card" aria-selected="false">Card</button>
+    </div>
+    <div id="paneCash" class="form">
+      <label class="fld"><span>Cash received (KES)</span><input type="number" id="tendered" min="0" step="0.01" inputmode="decimal"></label>
+      <div class="actions" id="quick"></div>
+      <div class="tot"><span>Change</span><span id="change">KES 0.00</span></div>
+    </div>
+    <div id="paneMpesa" class="form" hidden>
+      <label class="fld"><span>M-Pesa receipt code</span><input type="text" id="mpRef" autocomplete="off" autocapitalize="characters" maxlength="20" placeholder="e.g. SJK7H2LQ9P"><small>From the customer's M-Pesa confirmation message. Check the amount and name before you accept.</small></label>
+    </div>
+    <div id="paneCard" class="form" hidden>
+      <label class="fld"><span>Card slip or approval number</span><input type="text" id="cardRef" autocomplete="off"><small>Optional. Take the card payment on your card machine first.</small></label>
+    </div>
+    <p class="note err" id="payErr" hidden></p>
+    <div class="actions"><button class="btn primary" id="payGo" type="submit">Complete sale</button></div>
+  </form>
+</dialog>
+
+<dialog id="doneDlg" aria-labelledby="doneTitle">
+  <div class="dlg done-card">
+    <span class="ic"><i class="ph ph-check"></i></span>
+    <h2 id="doneTitle">Sale complete</h2>
+    <p class="muted" id="doneText"></p>
+    <p class="note err" id="doneErr" hidden></p>
+    <div class="actions"><button class="btn" id="print" type="button"><i class="ph ph-printer"></i>Print receipt</button><button class="btn primary" id="newSale" type="button">New sale</button></div>
+  </div>
+</dialog>
+
+<dialog id="shiftDlg" aria-labelledby="shiftTitle">
+  <form method="dialog" class="dlg" id="shiftForm" novalidate>
+    <div class="card-h"><h2 id="shiftTitle">Open your shift</h2><button class="btn" id="shiftClose" type="button" aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted" style="margin:0" id="shiftWhy">Count the cash in the drawer and enter it as your opening float.</p>
+    <label class="fld"><span>Opening float (KES)</span><input type="number" id="float" min="0" step="0.01" inputmode="decimal" value="0"></label>
+    <p class="note err" id="shiftErr" hidden></p>
+    <div class="actions"><button class="btn primary" id="shiftGo" type="submit">Open shift</button></div>
+  </form>
+</dialog>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pos.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test sale | Kaunta</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/steps.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+<header class="step-top">
+  <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="28" height="28"><span>Kaunta</span></a>
+  <div class="top-r"><span class="chip hide-s"><span class="av">K</span><b id="shopName">Your shop</b></span><span data-theme-slot></span></div>
+</header>
+<main class="step-page">
+  <div class="head">
+    <a class="crumb" href="dashboard.html"><i class="ph ph-arrow-left"></i>Back to dashboard</a>
+    <h1>Make a test sale in cash</h1>
+    <p class="muted">No setup needed. Pick a product, take the cash and see how a sale and its receipt look. It is recorded as a real sale, with real stock and totals.</p>
+  </div>
+  <section class="card" id="saleCard">
+    <form class="form" id="saleForm" novalidate>
+      <label class="fld"><span>Product</span><select id="product" required><option value="">Loading your products...</option></select></label>
+      <div class="row2">
+        <label class="fld"><span>Quantity</span><input type="number" id="qty" min="1" step="1" value="1" inputmode="decimal"></label>
+        <label class="fld"><span>Cash received (KES)</span><input type="number" id="cash" min="0" step="0.01" inputmode="decimal"></label>
+      </div>
+      <div class="tot"><span>Total</span><span id="total">KES 0.00</span></div>
+      <p class="note err" id="saleErr" hidden></p>
+      <div class="actions"><button class="btn primary" id="saleBtn" type="submit" disabled>Complete sale</button><a class="btn" href="products.html">Add more products</a></div>
+    </form>
+  </section>
+  <section class="card done-card" id="doneCard" hidden>
+    <span class="ic"><i class="ph ph-check"></i></span>
+    <h2 id="doneTitle">Sale complete</h2>
+    <p class="muted" id="doneText"></p>
+    <div class="actions"><a class="btn primary" href="dashboard.html">Back to dashboard</a><button class="btn" id="again" type="button">Make another</button></div>
+  </section>
+</main>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/step-sale.js"></script>
+</body>
+</html>

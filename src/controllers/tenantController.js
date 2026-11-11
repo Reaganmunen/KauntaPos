@@ -10,6 +10,7 @@ const { run, pageParams } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { Tenant, TenantFeature, TenantDomain, SubscriptionPayment, Plan } = require('../models');
 const { invalidateTenant } = require('../utils/contextCache');
+const OnboardingService = require('../services/OnboardingService');
 
 const PROFILE_FIELDS = [
   'name', 'legal_name', 'kra_pin', 'vat_registered', 'email', 'phone',
@@ -57,6 +58,23 @@ exports.mergeSettings = asyncHandler(async (req, res) => {
     return updated;
   });
   return ok(res, tenant.settings);
+});
+
+// ---------- get-started checklist ----------
+
+// GET /tenant/onboarding  -> { steps: [{ key, title, done, optional, href, ... }], done, total, complete, dismissed }
+exports.getOnboarding = asyncHandler(async (req, res) => {
+  const data = await run(req, (db) => OnboardingService.getChecklist(db, req.tenantId));
+  return ok(res, data);
+});
+
+// POST /tenant/onboarding/dismiss  closes the card for the whole shop
+exports.dismissOnboarding = asyncHandler(async (req, res) => {
+  await run(req, async (db) => {
+    await Tenant.mergeSettings(db, req.tenantId, { onboarding_dismissed: true });
+    await audit(db, req, 'tenant.onboarding_dismissed', 'tenant', req.tenantId, null);
+  });
+  return ok(res, { dismissed: true });
 });
 
 // ---------- modules / feature flags ----------
