@@ -9,6 +9,8 @@ const { run } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { PERMISSION_GROUPS, isValidPermission } = require('../utils/permissions');
 const { Role, User } = require('../models');
+const { invalidateTenantUsers } = require('../utils/contextCache');
+const { ungrantable } = require('../utils/privileges');
 
 function checkPermissions(req, permissions) {
   nonEmptyArray(permissions, 'permissions');
@@ -16,6 +18,10 @@ function checkPermissions(req, permissions) {
   if (invalid.length) throw ApiError.unprocessable(`Unknown permission(s): ${invalid.join(', ')}`);
   if (permissions.includes('*') && !req.user.is_owner) {
     throw ApiError.forbidden('Only the shop owner can grant full access');
+  }
+  const missing = ungrantable(req.user, permissions);
+  if (missing.length) {
+    throw ApiError.forbidden('You cannot give a role more access than you have yourself', { missing });
   }
   return [...new Set(permissions)];
 }
@@ -71,6 +77,7 @@ exports.update = asyncHandler(async (req, res) => {
     await audit(db, req, 'role.update', 'role', existing.id, { after: data });
     return record;
   });
+  invalidateTenantUsers(req.tenantId); // everyone with this role gets the new permissions at once
   return ok(res, role);
 });
 

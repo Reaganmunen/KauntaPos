@@ -5,7 +5,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { ok, created, paginated } = require('../utils/respond');
 const { requireFields, oneOf, positive } = require('../utils/validate');
-const { run, branchId, pageParams } = require('../utils/context');
+const { run, branchId, listBranch, pageParams } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { Shift, Role } = require('../models');
 
@@ -126,7 +126,7 @@ exports.list = asyncHandler(async (req, res) => {
   const { page, limit } = pageParams(req);
   const result = await run(req, (db) =>
     Shift.listForBranch(db, {
-      branch_id: req.query.branch_id,
+      branch_id: listBranch(req),
       user_id: isManager(req) ? req.query.user_id : req.user.id,
       status: req.query.status,
       page,

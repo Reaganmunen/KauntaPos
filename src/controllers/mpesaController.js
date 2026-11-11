@@ -34,7 +34,8 @@ function baseUrl(req) {
 }
 
 function callbackUrls(req, config) {
-  const root = `${baseUrl(req)}/api/hooks/pay/${config.callback_token}`;
+  const prefix = (process.env.API_PREFIX || '/api').replace(/\/$/, '');
+  const root = `${baseUrl(req)}${prefix}/hooks/pay/${config.callback_token}`;
   return {
     stk_callback: `${root}/stk`,
     c2b_validation: `${root}/validation`,

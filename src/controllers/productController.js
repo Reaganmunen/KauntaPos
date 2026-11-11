@@ -82,6 +82,13 @@ exports.create = asyncHandler(async (req, res) => {
   const body = req.body;
   const branch = branchId(req, { required: false });
   const specs = variantSpecsFrom(body);
+  // opening stock needs a branch to be booked into: fail loudly instead of quietly dropping it
+  if (
+    !branch && body.track_stock !== false && body.product_type !== 'service' &&
+    specs.some((spec) => Number(spec.opening_quantity) > 0)
+  ) {
+    throw ApiError.badRequest('Select a branch to book the opening stock into', undefined, 'branch_required');
+  }
 
   const product = await run(req, async (db) => {
     await assertWithinLimit(db, req.tenantId, 'products');
@@ -185,6 +192,9 @@ exports.createVariant = asyncHandler(async (req, res) => {
 
     const qty = Number(req.body.opening_quantity || 0);
     const branch = branchId(req, { required: false });
+    if (qty > 0 && !branch && product.track_stock) {
+      throw ApiError.badRequest('Select a branch to book the opening stock into', undefined, 'branch_required');
+    }
     if (qty > 0 && branch && product.track_stock) {
       await InventoryService.openingStock(db, req.user, {
         branch_id: branch,
@@ -327,6 +337,9 @@ exports.bulkImport = asyncHandler(async (req, res) => {
   const rows = nonEmptyArray(req.body.rows, 'rows');
   if (rows.length > 1000) throw ApiError.unprocessable('Import at most 1000 rows at a time');
   const branch = branchId(req, { required: false });
+  if (!branch && rows.some((row) => Number(row.opening_quantity) > 0)) {
+    throw ApiError.badRequest('Select a branch to book the opening stock into', undefined, 'branch_required');
+  }
 
   const summary = await run(req, async (db) => {
     const quota = await remainingQuota(db, req.tenantId, 'products');

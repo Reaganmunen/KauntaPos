@@ -9,6 +9,8 @@ const { run, pageParams, toBool } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { assertWithinLimit } = require('../utils/limits');
 const { User, Role, RefreshToken } = require('../models');
+const { invalidateUser } = require('../utils/contextCache');
+const { ungrantable } = require('../utils/privileges');
 const AuthService = require('../services/AuthService');
 
 const UPDATABLE = ['full_name', 'email', 'phone', 'role_id', 'all_branches', 'is_active'];
@@ -16,6 +18,23 @@ const UPDATABLE = ['full_name', 'email', 'phone', 'role_id', 'all_branches', 'is
 function assertCanTouchOwner(req, target) {
   if (target.is_owner && !req.user.is_owner) {
     throw ApiError.forbidden('Only the shop owner can change the owner account');
+  }
+}
+
+// The owner account, and any account with more access than the caller, is off limits.
+function assertCanManage(req, target) {
+  assertCanTouchOwner(req, target);
+  const missing = ungrantable(req.user, target.permissions || []);
+  if (missing.length) {
+    throw ApiError.forbidden('You cannot change an account that has more access than you do', { missing });
+  }
+}
+
+// A role may only be given to someone if the caller already holds everything in it.
+function assertCanAssign(req, role) {
+  const missing = ungrantable(req.user, role.permissions || []);
+  if (missing.length) {
+    throw ApiError.forbidden('You cannot give someone more access than you have', { missing });
   }
 }
 
@@ -62,6 +81,7 @@ exports.create = asyncHandler(async (req, res) => {
     if (role.name === 'Owner' && !req.user.is_owner) {
       throw ApiError.forbidden('Only the shop owner can create another owner');
     }
+    assertCanAssign(req, role);
 
     const record = await User.create(db, {
       full_name: req.body.full_name,
@@ -84,9 +104,9 @@ exports.create = asyncHandler(async (req, res) => {
 // PATCH /users/:id
 exports.update = asyncHandler(async (req, res) => {
   const user = await run(req, async (db) => {
-    const target = await User.findById(db, req.params.id);
+    const target = await User.findWithRole(db, req.params.id);
     if (!target) throw ApiError.notFound('User not found');
-    assertCanTouchOwner(req, target);
+    assertCanManage(req, target);
 
     const data = pick(req.body, UPDATABLE);
     if (target.is_owner) {
@@ -99,6 +119,7 @@ exports.update = asyncHandler(async (req, res) => {
       if (role.name === 'Owner' && !req.user.is_owner) {
         throw ApiError.forbidden('Only the shop owner can make someone an owner');
       }
+      assertCanAssign(req, role);
     }
     if (data.is_active === true && !target.is_active) {
       await assertWithinLimit(db, req.tenantId, 'users');
@@ -110,6 +131,7 @@ exports.update = asyncHandler(async (req, res) => {
     await audit(db, req, 'user.update', 'user', target.id, { after: data });
     return User.sanitize(record);
   });
+  invalidateUser(req.tenantId, req.params.id); // role / branch / active changes apply at once
   return ok(res, user);
 });
 
@@ -118,9 +140,9 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   requireFields(req.body, ['password']);
   const password_hash = await AuthService.hashPassword(req.body.password);
   await run(req, async (db) => {
-    const target = await User.findById(db, req.params.id);
+    const target = await User.findWithRole(db, req.params.id);
     if (!target) throw ApiError.notFound('User not found');
-    assertCanTouchOwner(req, target);
+    assertCanManage(req, target);
     await User.update(db, target.id, { password_hash });
     await RefreshToken.revokeAllForUser(db, target.id);
     await audit(db, req, 'user.reset_password', 'user', target.id, null);
@@ -134,9 +156,9 @@ exports.setPin = asyncHandler(async (req, res) => {
   if (!/^\d{4,8}$/.test(String(req.body.pin))) throw ApiError.unprocessable('PIN must be 4 to 8 digits');
   const pin_hash = await AuthService.hashPassword(String(req.body.pin));
   await run(req, async (db) => {
-    const target = await User.findById(db, req.params.id);
+    const target = await User.findWithRole(db, req.params.id);
     if (!target) throw ApiError.notFound('User not found');
-    assertCanTouchOwner(req, target);
+    assertCanManage(req, target);
     await User.update(db, target.id, { pin_hash });
     await audit(db, req, 'user.set_pin', 'user', target.id, null);
   });
@@ -146,13 +168,15 @@ exports.setPin = asyncHandler(async (req, res) => {
 // POST /users/:id/deactivate
 exports.deactivate = asyncHandler(async (req, res) => {
   await run(req, async (db) => {
-    const target = await User.findById(db, req.params.id);
+    const target = await User.findWithRole(db, req.params.id);
     if (!target) throw ApiError.notFound('User not found');
     if (target.is_owner) throw ApiError.unprocessable('The owner account cannot be deactivated');
     if (target.id === req.user.id) throw ApiError.unprocessable('You cannot deactivate your own account');
+    assertCanManage(req, target);
     await User.update(db, target.id, { is_active: false });
     await RefreshToken.revokeAllForUser(db, target.id);
     await audit(db, req, 'user.deactivate', 'user', target.id, null);
   });
+  invalidateUser(req.tenantId, req.params.id);
   return ok(res, { deactivated: true });
 });

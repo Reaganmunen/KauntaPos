@@ -1,7 +1,7 @@
 'use strict';
 
 const { notFound, errorHandler } = require('./errorHandler');
-const { authenticate, requireOwner, authenticatePlatform } = require('./auth');
+const { authenticate, tenantFromToken, requireOwner, authenticatePlatform } = require('./auth');
 const { can, canAny, requireFeature } = require('./permissions');
 const { resolveTenant } = require('./tenant');
 
@@ -17,6 +17,7 @@ module.exports = {
 
   // who is calling?
   authenticate,
+  tenantFromToken,
   authenticatePlatform,
   requireOwner,
 

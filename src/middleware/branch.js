@@ -18,9 +18,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  *
  *   resolveBranch()                        optional
  *   resolveBranch({ required: true })      400 when no branch can be determined
- *   resolveBranch({ also: ['from_branch_id'] })
+ *   resolveBranch({ also: ['from_branch_id'] })      body fields that must ALSO be branches the user may use
+ *   resolveBranch({ exists: ['to_branch_id'] })      body fields that only need to be active branches
+ *                                                    (e.g. the receiving branch of a transfer)
  */
-function resolveBranch({ required = false, also = [] } = {}) {
+function resolveBranch({ required = false, also = [], exists = [] } = {}) {
   return asyncHandler(async (req, res, next) => {
     const user = req.user;
     if (!user) throw ApiError.unauthorized();
@@ -29,14 +31,16 @@ function resolveBranch({ required = false, also = [] } = {}) {
       (req.body && req.body.branch_id) || (req.query && req.query.branch_id) || req.get('x-branch-id') || null;
     const extra = also.map((field) => req.body && req.body[field]).filter(Boolean);
     const ids = [...new Set([primary, ...extra].filter(Boolean).map(String))];
+    const existOnly = exists.map((field) => req.body && req.body[field]).filter(Boolean).map(String);
+    const mustExist = [...new Set([...ids, ...existOnly])];
 
-    for (const id of ids) {
+    for (const id of mustExist) {
       if (!UUID_RE.test(id)) throw ApiError.badRequest('Invalid branch id');
     }
 
     const restricted = !(user.is_owner || user.all_branches);
 
-    if (ids.length) {
+    if (mustExist.length) {
       if (restricted) {
         const mine = new Set(user.branch_ids.map(String));
         if (ids.some((id) => !mine.has(id))) {
@@ -44,9 +48,9 @@ function resolveBranch({ required = false, also = [] } = {}) {
         }
       }
       const { rows } = await withTenant(req.tenantId, (db) =>
-        db.query('SELECT id FROM branches WHERE id = ANY($1::uuid[]) AND is_active', [ids])
+        db.query('SELECT id FROM branches WHERE id = ANY($1::uuid[]) AND is_active', [mustExist])
       );
-      if (rows.length !== ids.length) throw ApiError.unprocessable('Branch not found or no longer active');
+      if (rows.length !== mustExist.length) throw ApiError.unprocessable('Branch not found or no longer active');
     }
 
     if (primary) {

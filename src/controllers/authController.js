@@ -73,6 +73,8 @@ exports.refresh = asyncHandler(async (req, res) => {
 
 // POST /auth/logout  { refresh_token }
 exports.logout = asyncHandler(async (req, res) => {
+  // no shop could be worked out (bad or missing token): nothing to revoke, still a successful logout
+  if (!req.tenantId) return ok(res, { logged_out: true });
   await AuthService.logout({ tenantId: req.tenantId, refreshToken: req.body && req.body.refresh_token });
   return ok(res, { logged_out: true });
 });

@@ -9,7 +9,8 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { ok } = require('../utils/respond');
 const { nonEmptyArray } = require('../utils/validate');
-const { run, branchId } = require('../utils/context');
+const { run, branchId, isRestricted } = require('../utils/context');
+const { assertSaleRights } = require('../utils/saleGuards');
 const SaleService = require('../services/SaleService');
 
 const MAX_BATCH = 100;
@@ -29,11 +30,18 @@ exports.pushSales = asyncHandler(async (req, res) => {
         out.push({ client_uuid: null, ok: false, code: 422, error: 'client_uuid is required' });
         continue;
       }
+      // a till may only push sales for a branch its user is allowed to work in
+      const saleBranch = sale.branch_id || branch;
+      if (isRestricted(req.user) && !(req.user.branch_ids || []).map(String).includes(String(saleBranch))) {
+        out.push({ client_uuid: sale.client_uuid, ok: false, code: 403, error: 'You do not have access to that branch' });
+        continue;
+      }
       await db.query('SAVEPOINT sync_sale');
       try {
+        assertSaleRights(req.user, sale);
         const saved = await SaleService.create(db, req.user, {
           ...sale,
-          branch_id: sale.branch_id || branch,
+          branch_id: saleBranch,
           channel: 'pos',
           offline: true,
         });

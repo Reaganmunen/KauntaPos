@@ -9,6 +9,7 @@ const { requireFields, pick, positive } = require('../utils/validate');
 const { run, pageParams } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { Tenant, TenantFeature, TenantDomain, SubscriptionPayment, Plan } = require('../models');
+const { invalidateTenant } = require('../utils/contextCache');
 
 const PROFILE_FIELDS = [
   'name', 'legal_name', 'kra_pin', 'vat_registered', 'email', 'phone',
@@ -80,6 +81,7 @@ exports.setFeatures = asyncHandler(async (req, res) => {
     await audit(db, req, 'tenant.features', 'tenant', req.tenantId, { after: changes });
     return TenantFeature.asMap(db);
   });
+  invalidateTenant(req.tenantId); // so requireFeature() sees the change straight away
   return ok(res, map);
 });
 

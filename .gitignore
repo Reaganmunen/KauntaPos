@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+
+# secrets: never commit real credentials (.env.example stays tracked)
+.env
+.env.*
+!.env.example
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# runtime and tooling
+pids/
+*.pid
+coverage/
+.nyc_output/
+.cache/
+tmp/
+*.tmp
+
+# build output
+dist/
+build/
+
+# editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

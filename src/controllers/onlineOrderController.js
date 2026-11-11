@@ -5,7 +5,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { ok, paginated } = require('../utils/respond');
 const { requireFields, oneOf } = require('../utils/validate');
-const { run, branchId, pageParams } = require('../utils/context');
+const { run, branchId, listBranch, pageParams } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { OnlineOrder, Sale } = require('../models');
 const StorefrontService = require('../services/StorefrontService');
@@ -16,7 +16,7 @@ const STATUSES = ['awaiting_payment', 'paid', 'processing', 'ready', 'out_for_de
 exports.list = asyncHandler(async (req, res) => {
   const { page, limit } = pageParams(req);
   const result = await run(req, (db) =>
-    OnlineOrder.list(db, { status: req.query.status, branch_id: req.query.branch_id, q: req.query.q, page, limit })
+    OnlineOrder.list(db, { status: req.query.status, branch_id: listBranch(req), q: req.query.q, page, limit })
   );
   return paginated(res, result);
 });

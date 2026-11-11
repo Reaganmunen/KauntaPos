@@ -13,6 +13,7 @@ const { pageParams, clientMeta } = require('../utils/context');
 const { withAdmin } = require('../config/database');
 const { Tenant, Plan, SubscriptionPayment, PlatformAdmin } = require('../models');
 const AuthService = require('../services/AuthService');
+const { invalidateTenant } = require('../utils/contextCache');
 
 const TENANT_STATUSES = ['trial', 'active', 'past_due', 'suspended', 'cancelled'];
 const PLAN_FIELDS = [
@@ -131,6 +132,7 @@ exports.setTenantStatus = asyncHandler(async (req, res) => {
   oneOf(req.body.status, TENANT_STATUSES, 'status');
   const tenant = await withAdmin((db) => Tenant.setStatus(db, req.params.id, req.body.status));
   if (!tenant) throw ApiError.notFound('Tenant not found');
+  invalidateTenant(tenant.id); // suspension / reactivation takes effect immediately
   return ok(res, tenant);
 });
 
@@ -149,6 +151,7 @@ exports.extendTrial = asyncHandler(async (req, res) => {
     return rows[0] || null;
   });
   if (!tenant) throw ApiError.notFound('Tenant not found');
+  invalidateTenant(tenant.id);
   return ok(res, tenant);
 });
 
@@ -161,6 +164,7 @@ exports.changePlan = asyncHandler(async (req, res) => {
     return Tenant.update(db, req.params.id, { plan_id: plan.id });
   });
   if (!tenant) throw ApiError.notFound('Tenant not found');
+  invalidateTenant(tenant.id);
   return ok(res, tenant);
 });
 
@@ -248,6 +252,7 @@ exports.confirmPayment = asyncHandler(async (req, res) => {
       plan_id: req.body.plan_id,
     })
   );
+  invalidateTenant(payment.tenant_id); // the shop is active again right away
   return ok(res, payment);
 });
 
@@ -285,5 +290,6 @@ exports.recordPayment = asyncHandler(async (req, res) => {
     },
     { tenantId: req.body.tenant_id }
   );
+  invalidateTenant(req.body.tenant_id);
   return created(res, payment);
 });

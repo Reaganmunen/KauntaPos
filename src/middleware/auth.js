@@ -65,6 +65,24 @@ const authenticate = asyncHandler(async (req, res, next) => {
   next();
 });
 
+/**
+ * For logout: an expired access token must still be able to sign the user out, so the signature
+ * is checked but expiry is ignored, and only the shop id is taken from it. Never rejects.
+ */
+function tenantFromToken(req, res, next) {
+  if (!req.tenantId) {
+    const token = bearerToken(req);
+    if (token) {
+      try {
+        req.tenantId = verifyAccessToken(token, { ignoreExpiration: true }).tid;
+      } catch (err) {
+        // bad token: leave the shop unset, logout just reports success
+      }
+    }
+  }
+  next();
+}
+
 /** Only the shop owner (e.g. billing, transferring ownership). */
 function requireOwner(req, res, next) {
   if (!req.user) return next(ApiError.unauthorized());
@@ -105,4 +123,4 @@ const authenticatePlatform = asyncHandler(async (req, res, next) => {
   next();
 });
 
-module.exports = { authenticate, requireOwner, authenticatePlatform };
+module.exports = { authenticate, tenantFromToken, requireOwner, authenticatePlatform };

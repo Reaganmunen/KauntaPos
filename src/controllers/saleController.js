@@ -8,7 +8,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { ok, created, paginated } = require('../utils/respond');
 const { requireFields, nonEmptyArray, positive } = require('../utils/validate');
-const { run, branchId, pageParams } = require('../utils/context');
+const { run, branchId, listBranch, pageParams } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { Sale, Tenant, Role } = require('../models');
 const SaleService = require('../services/SaleService');
@@ -54,7 +54,7 @@ exports.list = asyncHandler(async (req, res) => {
   const result = await run(req, (db) =>
     Sale.search(db, {
       q: req.query.q,
-      branch_id: req.query.branch_id,
+      branch_id: listBranch(req),
       status: req.query.status,
       channel: req.query.channel,
       sale_type: req.query.sale_type,

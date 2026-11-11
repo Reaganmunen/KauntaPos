@@ -4,7 +4,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { ok, created, paginated } = require('../utils/respond');
 const { requireFields, positive } = require('../utils/validate');
-const { run, branchId, pageParams } = require('../utils/context');
+const { run, branchId, listBranch, pageParams } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { makeCrud } = require('../utils/crud');
 const { Expense, ExpenseCategory } = require('../models');
@@ -15,7 +15,7 @@ exports.list = asyncHandler(async (req, res) => {
   const { page, limit } = pageParams(req);
   const result = await run(req, (db) =>
     Expense.search(db, {
-      branch_id: req.query.branch_id,
+      branch_id: listBranch(req),
       category_id: req.query.category_id,
       from: req.query.from,
       to: req.query.to,

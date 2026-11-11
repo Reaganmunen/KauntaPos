@@ -5,7 +5,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { ok, created, paginated } = require('../utils/respond');
 const { requireFields, nonEmptyArray, positive } = require('../utils/validate');
-const { run, pageParams, toBool } = require('../utils/context');
+const { run, listBranch, pageParams, toBool } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { StockTransfer } = require('../models');
 const InventoryService = require('../services/InventoryService');
@@ -14,7 +14,7 @@ const InventoryService = require('../services/InventoryService');
 exports.list = asyncHandler(async (req, res) => {
   const { page, limit } = pageParams(req);
   const result = await run(req, (db) =>
-    StockTransfer.list(db, { status: req.query.status, branch_id: req.query.branch_id, page, limit })
+    StockTransfer.list(db, { status: req.query.status, branch_id: listBranch(req), page, limit })
   );
   return paginated(res, result);
 });

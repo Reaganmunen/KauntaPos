@@ -8,15 +8,17 @@ const { requireFields, pick } = require('../utils/validate');
 const { run, toBool } = require('../utils/context');
 const { audit } = require('../utils/audit');
 const { assertWithinLimit } = require('../utils/limits');
-const { Branch, PosTerminal } = require('../models');
+const { Branch, PosTerminal, Role } = require('../models');
 
 const BRANCH_FIELDS = ['code', 'name', 'phone', 'address', 'county', 'etims_branch_id', 'is_active'];
 
 // GET /branches  -> branches the current user may work in (?all=true for management screens)
 exports.list = asyncHandler(async (req, res) => {
-  const rows = await run(req, (db) =>
-    toBool(req.query.all) ? Branch.findAll(db) : Branch.listForUser(db, req.user)
-  );
+  // every branch (including ones the user cannot work in) is for people who manage branches
+  const seeAll =
+    toBool(req.query.all) === true &&
+    (req.user.is_owner || Role.hasPermission(req.user.permissions, 'branches.manage'));
+  const rows = await run(req, (db) => (seeAll ? Branch.findAll(db) : Branch.listForUser(db, req.user)));
   return ok(res, rows);
 });
 
