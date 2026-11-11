@@ -1,0 +1,8 @@
+/* Theme switch button, shared by every page. */
+.theme-toggle { font: 600 .85rem/1 var(--font-body, system-ui, sans-serif); color: var(--ink, #1d1b19); background: var(--card, #fff); border: 1px solid var(--field-line, var(--line, #928d86)); border-radius: 999px; padding: .55rem 1rem; min-height: 40px; cursor: pointer; transition: background-color .2s, border-color .2s, transform .12s; }
+.theme-toggle:hover { border-color: var(--ink, #1d1b19); }
+.theme-toggle:active { transform: translateY(1px); }
+.theme-toggle:focus-visible { outline: 2px solid var(--ink, #1d1b19); outline-offset: 3px; }
+.auth-main .theme-toggle { position: absolute; top: 1.6rem; right: clamp(1.25rem, 5vw, 4.5rem); }
+.theme-toggle-float { position: fixed; top: 1rem; right: 1rem; }
+@media (max-width: 991.98px) { .site-nav .theme-toggle { align-self: flex-start; } }

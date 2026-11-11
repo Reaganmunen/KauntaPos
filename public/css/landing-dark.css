@@ -1,0 +1,53 @@
+/* Dark theme for the landing page. Loaded after landing.css. Orange sections stay orange; light surfaces go dark. */
+html[data-theme="dark"] {
+  --ink: #f2efec; --ink-soft: #b3ada6;
+  --paper: #151311; --paper-line: rgba(255,255,255,.06); --card: #1e1b19;
+  --ember-tint: #2c211b; --line: rgba(255,255,255,.13);
+  --bs-body-bg: #151311; --bs-body-color: #f2efec;
+  --bs-link-color: #ff8a5c; --bs-link-hover-color: #ffa07a;
+}
+html[data-theme="dark"] body { background-color: #151311; }
+html[data-theme="dark"] .site-nav { background: rgba(21,19,17,.92); }
+
+/* surfaces that were hard-coded white */
+html[data-theme="dark"] .pill,
+html[data-theme="dark"] .till-screen,
+html[data-theme="dark"] .tile:not(.hit),
+html[data-theme="dark"] .cart,
+html[data-theme="dark"] .stk,
+html[data-theme="dark"] .receipt,
+html[data-theme="dark"] .stage,
+html[data-theme="dark"] .field,
+html[data-theme="dark"] .mini-table td,
+html[data-theme="dark"] .feed-item,
+html[data-theme="dark"] .kpi,
+html[data-theme="dark"] .bars,
+html[data-theme="dark"] .biz-card,
+html[data-theme="dark"] .biz-art .row-card,
+html[data-theme="dark"] .m-card:not(.ember):not(.dark),
+html[data-theme="dark"] .browser,
+html[data-theme="dark"] .browser-bar .url,
+html[data-theme="dark"] .shop-item,
+html[data-theme="dark"] .mini-phone,
+html[data-theme="dark"] .plan:not(.pop),
+html[data-theme="dark"] .billing,
+html[data-theme="dark"] .form-card,
+html[data-theme="dark"] .form-card .form-control,
+html[data-theme="dark"] .form-card .form-select,
+html[data-theme="dark"] .status,
+html[data-theme="dark"] .step.on,
+html[data-theme="dark"] .step:not(.on) .ic { background-color: var(--card); }
+html[data-theme="dark"] .browser-bar,
+html[data-theme="dark"] .shop-foot { background: #211e1c; }
+html[data-theme="dark"] .phone-screen { background: #1a1c1b; }
+html[data-theme="dark"] .demo { background: #231a15; }
+
+/* things that used --ink as a dark background must stay dark */
+html[data-theme="dark"] .signup,
+html[data-theme="dark"] .stock-toast,
+html[data-theme="dark"] .pin i.on { background: #1d1b19; }
+html[data-theme="dark"] .band .device-card .btn-ember,
+html[data-theme="dark"] .plan.pop .btn-ember { --bs-btn-hover-bg: #1d1b19; --bs-btn-hover-border-color: #1d1b19; }
+html[data-theme="dark"] .btn-ghost { --bs-btn-hover-bg: var(--card); --bs-btn-hover-color: var(--ink); }
+html[data-theme="dark"] .form-card .form-control,
+html[data-theme="dark"] .form-card .form-select { color: var(--ink); border-color: var(--line); }
