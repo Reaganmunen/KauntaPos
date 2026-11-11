@@ -53,6 +53,18 @@ function fromPostgres(err) {
   }
 }
 
+const SERVICE_DOWN_MESSAGE = 'The service is temporarily unavailable. Please try again in a few minutes.';
+const NETWORK_CODES = new Set(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNRESET', 'EAI_AGAIN', 'EPIPE']);
+// 28xxx = invalid authorization (wrong DB password), 3D000 = database missing, 08xxx = connection failures,
+// 53300 = too many connections, 57P0x = server shutting down or starting up
+const DB_DOWN_CODES = new Set(['28P01', '28000', '3D000', '53300', '57P01', '57P02', '57P03', '08000', '08001', '08003', '08004', '08006']);
+
+/** The database or network is unreachable or misconfigured. Never a person's mistake, never shown in detail. */
+function isInfrastructureError(err) {
+  if (DB_DOWN_CODES.has(err.code) || NETWORK_CODES.has(err.code)) return true;
+  return /password authentication failed|no pg_hba\.conf entry|connection terminated|timeout exceeded when trying to connect|ECONNREFUSED|self.signed certificate|SSL/i.test(err.message || '');
+}
+
 function toApiError(err) {
   if (err instanceof ApiError) return err;
 
@@ -65,6 +77,8 @@ function toApiError(err) {
   if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
     return new ApiError(401, 'Your session is not valid. Please log in again.', undefined, 'invalid_token');
   }
+
+  if (isInfrastructureError(err)) return new ApiError(503, SERVICE_DOWN_MESSAGE, undefined, 'service_unavailable');
 
   // PostgreSQL SQLSTATE codes are 5 characters
   if (typeof err.code === 'string' && /^[0-9A-Z]{5}$/.test(err.code)) return fromPostgres(err);
@@ -85,7 +99,7 @@ function errorHandler(err, req, res, next) {
   if (unexpected) {
     apiError = new ApiError(
       500,
-      isProd() ? 'Something went wrong on our side. Please try again.' : err.message,
+      'Something went wrong on our side. Please try again.',
       undefined,
       'server_error'
     );
@@ -119,6 +133,8 @@ function errorHandler(err, req, res, next) {
     },
   };
   if (apiError.details !== undefined) body.error.details = apiError.details;
+  // Developer-only: set ERROR_DEBUG=true in .env to see the real message in the API response. Ignored in production.
+  if (!isProd() && process.env.ERROR_DEBUG === 'true' && (unexpected || apiError.status >= 500)) body.error.debug = err.message;
   return res.status(apiError.status).json(body);
 }
 

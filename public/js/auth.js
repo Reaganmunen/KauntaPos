@@ -35,7 +35,9 @@
     try { data = await res.json(); } catch (e) { /* not JSON */ }
     if (!res.ok || (data && data.success === false)) {
       var err = data && data.error;
-      throw fail((err && err.message) || 'Something went wrong. Please try again.', err && err.code, res.status);
+      /* Server-side faults (status 500 and up) never show technical wording to the person; the server logs the real cause. */
+      var friendly = res.status >= 500 ? 'We could not complete that right now. Please try again in a few minutes.' : (err && err.message);
+      throw fail(friendly || 'Something went wrong. Please try again.', err && err.code, res.status);
     }
     return data && data.data;
   }
