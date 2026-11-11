@@ -30,9 +30,11 @@
     btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'theme-toggle';
     btn.addEventListener('click', function () { var next = current() === 'dark' ? 'light' : 'dark'; save(next); apply(next); });
+    var slot = document.querySelector('[data-theme-slot]');
     var navActions = document.querySelector('.site-nav .d-flex');   /* landing page: sits beside Sign in */
     var authMain = document.querySelector('.auth-main');            /* login and signup: top right of the form side */
-    if (navActions) navActions.insertBefore(btn, navActions.firstChild);
+    if (slot) slot.appendChild(btn);
+    else if (navActions) navActions.insertBefore(btn, navActions.firstChild);
     else if (authMain) authMain.appendChild(btn);
     else { btn.className += ' theme-toggle-float'; document.body.appendChild(btn); }
     apply(current());

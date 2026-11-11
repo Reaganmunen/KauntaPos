@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Kaunta</title>
+  <meta name="theme-color" content="#f6f6f5">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="30" height="30">Kaunta</a>
+    <nav aria-label="Main">
+      <a class="nav-i on" href="dashboard.html" aria-current="page">Overview</a>
+      <p class="nav-h">Sell</p>
+      <span class="nav-i off" title="Coming next">Sales</span><span class="nav-i off" title="Coming next">Shifts</span><span class="nav-i off" title="Coming next">Online orders</span>
+      <p class="nav-h">Stock</p>
+      <span class="nav-i off" title="Coming next">Products</span><span class="nav-i off" title="Coming next">Inventory</span><span class="nav-i off" title="Coming next">Purchases</span>
+      <p class="nav-h">People</p>
+      <span class="nav-i off" title="Coming next">Customers</span><span class="nav-i off" title="Coming next">Suppliers</span>
+      <p class="nav-h">Money</p>
+      <span class="nav-i off" title="Coming next">Expenses</span><span class="nav-i off" title="Coming next">M-Pesa</span><span class="nav-i off" title="Coming next">eTIMS</span><span class="nav-i off" title="Coming next">Reports</span>
+      <p class="nav-h">Shop</p>
+      <span class="nav-i off" title="Coming next">Team</span><span class="nav-i off" title="Coming next">Branches</span>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <button class="menu" id="menuBtn" type="button" aria-label="Open menu" aria-controls="side" aria-expanded="false">Menu</button>
+      <div class="who"><b id="shopName">Your shop</b><span id="userName"></span></div>
+      <div class="top-r">
+        <label class="sr" for="branch">Branch</label>
+        <select id="branch" hidden></select>
+        <span data-theme-slot></span>
+        <button class="btn ghost" id="signOut" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <main class="page" id="page" aria-live="polite">
+      <div class="head">
+        <h1 id="greet">Today</h1>
+        <p id="dateLine" class="muted"></p>
+      </div>
+      <div class="err" id="err" role="alert" hidden><span id="errText"></span><button class="btn ghost" id="retry" type="button">Try again</button></div>
+
+      <section class="grid">
+        <article class="card hero-card">
+          <p class="lbl">Net sales today</p>
+          <p class="big" id="net"><i class="sk w60"></i></p>
+          <p class="muted" id="netSub"></p>
+          <div class="bars" id="bars" role="img" aria-label="Net sales for the last 7 days"></div>
+        </article>
+        <div class="stats">
+          <article class="card"><p class="lbl">Sales made</p><p class="num" id="cnt"><i class="sk"></i></p></article>
+          <article class="card"><p class="lbl">Average sale</p><p class="num" id="avg"><i class="sk"></i></p></article>
+          <article class="card"><p class="lbl">Gross profit</p><p class="num" id="gp"><i class="sk"></i></p></article>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <article class="card">
+          <h2>Needs your attention</h2>
+          <ul class="rows" id="attn"><li class="sk-row"></li><li class="sk-row"></li><li class="sk-row"></li></ul>
+        </article>
+        <article class="card">
+          <h2>How customers paid today</h2>
+          <ul class="rows" id="pay"><li class="sk-row"></li><li class="sk-row"></li></ul>
+        </article>
+      </section>
+
+      <article class="card">
+        <h2>Running low</h2>
+        <div class="scroll"><table><thead><tr><th>Product</th><th>SKU</th><th class="r">In stock</th><th class="r">Reorder at</th></tr></thead><tbody id="low"><tr><td colspan="4"><i class="sk"></i></td></tr></tbody></table></div>
+      </article>
+    </main>
+  </div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
