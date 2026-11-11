@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kaunta | Every sale counted. Every shilling accounted for.</title>
+  <meta name="description" content="Kaunta is a point of sale for Kenyan shops: M-Pesa payments, live stock across branches, KRA eTIMS receipts and an online storefront from one login.">
+  <meta name="theme-color" content="#f0602a">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/landing.css" rel="stylesheet">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 16 16"><path fill="currentColor" d="M13.85 3.65a.5.5 0 0 1 0 .7l-7 7a.5.5 0 0 1-.7 0l-3.5-3.5a.5.5 0 1 1 .7-.7L6.5 10.29l6.65-6.64a.5.5 0 0 1 .7 0z" stroke="currentColor" stroke-width="1"/></symbol>
+</svg>
+
+<!-- ================= NAV ================= -->
+<nav class="navbar navbar-expand-lg sticky-top site-nav">
+  <div class="container">
+    <a class="brand" href="#top">
+      <span class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4v16M19 4l-9 8 9 8"/></svg></span>
+      Kaunta
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#menu" aria-controls="menu" aria-label="Open menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="menu">
+      <div class="offcanvas-header">
+        <span class="brand">Kaunta</span>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body align-items-lg-center">
+        <ul class="navbar-nav mx-lg-auto gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="#demo" data-bs-dismiss="offcanvas">How it works</a></li>
+          <li class="nav-item"><a class="nav-link" href="#industries" data-bs-dismiss="offcanvas">Shops we serve</a></li>
+          <li class="nav-item"><a class="nav-link" href="#features" data-bs-dismiss="offcanvas">Features</a></li>
+          <li class="nav-item"><a class="nav-link" href="#storefront" data-bs-dismiss="offcanvas">Online store</a></li>
+          <li class="nav-item"><a class="nav-link" href="#pricing" data-bs-dismiss="offcanvas">Pricing</a></li>
+          <li class="nav-item"><a class="nav-link" href="#faq" data-bs-dismiss="offcanvas">FAQ</a></li>
+        </ul>
+        <div class="d-flex gap-2 mt-3 mt-lg-0">
+          <a class="btn btn-ghost btn-sm px-3" href="login.html">Sign in</a>
+          <a class="btn btn-ember btn-sm px-3" href="#start" data-bs-dismiss="offcanvas">Start free trial</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <span class="pill"><i>✓</i> M-Pesa and KRA eTIMS ready</span>
+        <h1>Every sale counted. Every shilling accounted for.</h1>
+        <p class="lead">Kaunta is a point of sale for Kenyan shops. Take cash and M-Pesa at the counter, watch stock across every branch, and open an online store from the same login.</p>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <a href="#start" class="btn btn-ember btn-lg">Start free trial</a>
+          <a href="#demo" class="btn btn-ghost btn-lg">See a day at the till</a>
+        </div>
+        <div class="hero-notes">
+          <span><svg width="16" height="16"><use href="#i-check"/></svg> No card to start</span>
+          <span><svg width="16" height="16"><use href="#i-check"/></svg> Sells offline, syncs later</span>
+          <span><svg width="16" height="16"><use href="#i-check"/></svg> Cashier PIN switching</span>
+        </div>
+      </div>
+
+      <!-- Live till: a looping sale, M-Pesa prompt, eTIMS receipt -->
+      <div class="col-lg-7">
+        <div class="scene" id="scene" aria-label="Animated demo of a sale at the Kaunta till, paid by M-Pesa">
+          <div class="scene-inner">
+            <div class="halo" aria-hidden="true"></div>
+
+            <div class="till" aria-hidden="true">
+              <div class="till-screen">
+                <div class="till-top">
+                  <b>Mama Njeri Stores</b>
+                  <span class="shift">Wanjiku, Westlands till</span>
+                </div>
+                <div class="till-main"><div class="chips"><span class="on">All</span><span>Groceries</span><span>Household</span><span>Drinks</span></div><div class="tiles" id="tiles"></div></div>
+                <div class="cart">
+                  <h4>Current sale</h4>
+                  <div class="cart-lines" id="cartLines"><div class="cart-empty">Tap an item to start a sale.</div></div>
+                  <div class="cart-total"><span>Total</span><b>KES <span id="cartTotal">0</span></b></div>
+                  <div class="pay-btn" id="payBtn">Pay with M-Pesa</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stock-toast" id="stockToast" aria-hidden="true">Stock updated at Westlands</div>
+
+            <div class="phone" id="phone" aria-hidden="true">
+              <div class="phone-screen">
+                <div class="stk" id="stk">
+                  <div class="tick"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+                  <div class="who"><i>M</i> M-PESA request</div>
+                  <p>Pay <b>KES 725</b> to <b>Mama Njeri Stores</b>? Enter your PIN to confirm.</p>
+                  <div class="pin"><i></i><i></i><i></i><i></i></div>
+                  <div class="ok" id="stkOk">&nbsp;</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="receipt" id="receipt" aria-hidden="true">
+              <h5>Receipt KC-000482</h5>
+              <small>Mama Njeri Stores, Westlands</small>
+              <div class="rl"><span>4 items</span><span>M-Pesa</span></div>
+              <div class="rt"><span>Paid</span><span>KES 725</span></div>
+              <div class="etims"><canvas id="qr" width="21" height="21"></canvas><span>Signed and sent to KRA through eTIMS</span></div>
+            </div>
+
+            <button class="scene-ctl" id="sceneCtl" type="button" aria-pressed="false"><i class="bi bi-pause-circle"></i> <span>Pause demo</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= BAND ================= -->
+<section class="container" aria-label="Kaunta at a glance">
+  <div class="band">
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-6">
+        <h2>One login runs the counter, the stockroom and the shop window.</h2>
+        <p class="mt-3">Use it on the tablet at the till, the phone in your pocket or the laptop in the back office. Every sale lands in the same books.</p>
+        <div class="band-stats">
+          <div><b>3</b><span>kinds of shop: retail, restaurant, pharmacy</span></div>
+          <div><b>Many</b><span>branches and tills, one dashboard</span></div>
+          <div><b>0</b><span>lost sales when the line drops</span></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <div class="device-card">
+              <h3>At the till</h3>
+              <p>Barcode, variants, price lists, split payments.</p>
+              <a href="#start" class="btn btn-ember">Try the till</a>
+              <span class="glyph"><i class="bi bi-upc-scan fs-1"></i></span>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="device-card">
+              <h3>On your phone</h3>
+              <p>Sales, low stock and shift reports wherever you are.</p>
+              <a href="#start" class="btn btn-ember">Open the dashboard</a>
+              <span class="glyph"><i class="bi bi-phone fs-1"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DEMO ================= -->
+<section class="section" id="demo">
+  <div class="demo" id="demoBox">
+    <div class="container py-5">
+      <div class="section-head position-relative">
+        <h2>From signing up to your first sale in an afternoon.</h2>
+        <p>Pick a step to see it, or let it play through.</p>
+      </div>
+      <div class="row g-4 align-items-start position-relative">
+        <div class="col-lg-5">
+          <ol class="steps" id="steps">
+            <li><button class="step on" data-i="0" type="button"><span class="ic"><i class="bi bi-shop"></i></span><span><h3>Open your shop</h3><p>Name it, choose the kind of business and you get your own address.</p></span><span class="bar"><i></i></span></button></li>
+            <li><button class="step" data-i="1" type="button"><span class="ic"><i class="bi bi-box-seam"></i></span><span><h3>Add what you sell</h3><p>Products, categories, units, prices and opening stock.</p></span><span class="bar"><i></i></span></button></li>
+            <li><button class="step" data-i="2" type="button"><span class="ic"><i class="bi bi-phone-vibrate"></i></span><span><h3>Get paid on M-Pesa</h3><p>Send the prompt to the customer's phone. The sale closes when they confirm.</p></span><span class="bar"><i></i></span></button></li>
+            <li><button class="step" data-i="3" type="button"><span class="ic"><i class="bi bi-graph-up-arrow"></i></span><span><h3>Close the day</h3><p>Shift totals, best sellers and low stock, ready before you lock up.</p></span><span class="bar"><i></i></span></button></li>
+          </ol>
+        </div>
+        <div class="col-lg-7">
+          <div class="stage" id="stage">
+            <div class="stage-bar"><i></i><i></i><i></i></div>
+
+            <div class="screen on" data-i="0">
+              <h4>Create your shop</h4>
+              <div class="field"><small>Shop name</small><span class="typed" id="typedName">Mama Njeri Stores</span></div>
+              <div class="field"><small>Business type</small><span>Retail</span></div>
+              <div class="field"><small>Your address</small><span><b>mama-njeri</b>.kaunta.co.ke</span></div>
+              <div class="field"><small>Owner phone</small><span>0712 345 678</span></div>
+              <div class="mt-3"><span class="chip ok">Free trial starts today</span></div>
+            </div>
+
+            <div class="screen" data-i="1">
+              <h4>Products</h4>
+              <table class="mini-table">
+                <tr><td>Maize flour 2kg</td><td>KES 185</td><td><span class="chip ok">48 in stock</span></td></tr>
+                <tr><td>Cooking oil 1L</td><td>KES 340</td><td><span class="chip ok">22 in stock</span></td></tr>
+                <tr><td>Bread 400g</td><td>KES 70</td><td><span class="chip">6 left</span></td></tr>
+                <tr><td>Bar soap</td><td>KES 120</td><td><span class="chip ok">60 in stock</span></td></tr>
+                <tr><td>Milk 500ml</td><td>KES 60</td><td><span class="chip">4 left</span></td></tr>
+              </table>
+            </div>
+
+            <div class="screen" data-i="2">
+              <h4>Payments</h4>
+              <div class="feed">
+                <div class="feed-item"><span class="dot"><i class="bi bi-check2"></i></span><span>M-Pesa, 0722 ••• 410</span><span>KES 725</span></div>
+                <div class="feed-item"><span class="dot"><i class="bi bi-check2"></i></span><span>Cash, Wanjiku</span><span>KES 1,240</span></div>
+                <div class="feed-item"><span class="dot"><i class="bi bi-check2"></i></span><span>M-Pesa, 0733 ••• 982</span><span>KES 360</span></div>
+                <div class="feed-item"><span class="dot" style="background:var(--ember-tint);color:var(--ember-deep)"><i class="bi bi-hourglass-split"></i></span><span>Waiting for customer PIN</span><span>KES 95</span></div>
+              </div>
+            </div>
+
+            <div class="screen" data-i="3">
+              <h4>Today at Westlands</h4>
+              <div class="kpis">
+                <div class="kpi"><small>Sales</small><b>KES 48,920</b></div>
+                <div class="kpi"><small>Receipts</small><b>137</b></div>
+                <div class="kpi"><small>Low stock</small><b>5 items</b></div>
+              </div>
+              <div class="bars" id="bars" aria-hidden="true">
+                <div data-h="38"><span>Mon</span></div><div data-h="52"><span>Tue</span></div><div data-h="44"><span>Wed</span></div>
+                <div data-h="61"><span>Thu</span></div><div data-h="78"><span>Fri</span></div><div data-h="100"><span>Sat</span></div><div data-h="66"><span>Sun</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INDUSTRIES ================= -->
+<section class="section" id="industries">
+  <div class="container">
+    <div class="section-head">
+      <h2>Made for the shop you actually run.</h2>
+      <p>A duka, a kitchen and a chemist need different things from a till. Kaunta has all three built in.</p>
+    </div>
+    <ul class="nav nav-pills mb-4" id="bizTabs" role="tablist">
+      <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#biz-retail" type="button" role="tab">Retail and wholesale</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#biz-rest" type="button" role="tab">Restaurants</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#biz-pharma" type="button" role="tab">Pharmacies</button></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="biz-retail" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-lg-7"><div class="biz-card">
+            <h3>Know what is on the shelf, in every branch.</h3>
+            <ul>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Variants and price lists</b><span>Sizes, retail and wholesale prices for the same product.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Stock counts and transfers</b><span>Count a shelf, then move stock between branches with a paper trail.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Suppliers and purchase orders</b><span>Reorder what is running low and receive it into stock.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Customer credit</b><span>Keep a ledger for regulars who pay at month end.</span></div></li>
+            </ul>
+          </div></div>
+          <div class="col-lg-5"><div class="biz-art">
+            <div class="row-card"><span>Unga Jogoo 2kg</span><span class="chip">Westlands 48</span></div>
+            <div class="row-card"><span>Transfer to Kilimani</span><span class="chip ok">12 sent</span></div>
+            <div class="row-card"><span>Purchase order PO-0031</span><span class="chip">Draft</span></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="biz-rest" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-lg-7"><div class="biz-card">
+            <h3>Orders that reach the kitchen, bills that close fast.</h3>
+            <ul>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Tables</b><span>Open a bill per table and move guests without losing the order.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Modifiers</b><span>No onions, extra cheese, well done. Added as options on each dish.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Split the bill</b><span>Part cash, part M-Pesa, one receipt per payer if needed.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Shift reports</b><span>See what each waiter took in before they hand over.</span></div></li>
+            </ul>
+          </div></div>
+          <div class="col-lg-5"><div class="biz-art">
+            <div class="row-card"><span>Table 4</span><span class="chip">3 items</span></div>
+            <div class="row-card"><span>Chicken stew, no onions</span><span>KES 650</span></div>
+            <div class="row-card"><span>Table 7</span><span class="chip ok">Paid</span></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="biz-pharma" role="tabpanel">
+        <div class="row g-3">
+          <div class="col-lg-7"><div class="biz-card">
+            <h3>Batches, expiry dates and prescriptions, tracked for you.</h3>
+            <ul>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Batch and expiry tracking</b><span>Sell the oldest batch first and see what expires soon.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Prescription records</b><span>Note the prescriber and patient against controlled medicines.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Drug details on each product</b><span>Strength, form and generic name beside the price.</span></div></li>
+              <li><svg width="18" height="18"><use href="#i-check"/></svg><div><b>Audit log</b><span>Every stock change records who made it and when.</span></div></li>
+            </ul>
+          </div></div>
+          <div class="col-lg-5"><div class="biz-art">
+            <div class="row-card"><span>Amoxicillin 500mg</span><span class="chip">Batch B2291</span></div>
+            <div class="row-card"><span>Expires in 45 days</span><span class="chip">Sell first</span></div>
+            <div class="row-card"><span>Prescription logged</span><span class="chip ok">Dr. Otieno</span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section class="section pt-0" id="features">
+  <div class="container">
+    <div class="section-head">
+      <h2>Everything a growing shop ends up needing.</h2>
+      <p>Start with the till. Switch on the rest when you are ready.</p>
+    </div>
+    <div class="mosaic">
+      <div class="m-card wide ember"><span class="m-ic"><i class="bi bi-wifi-off fs-5"></i></span><h3>Offline selling</h3><p>The line drops and the queue does not. Sales are saved on the device and sent as soon as you are back online, in the order they were rung up.</p></div>
+      <div class="m-card wide dark"><span class="m-ic"><i class="bi bi-receipt fs-5"></i></span><h3>KRA eTIMS receipts</h3><p>Each sale is signed and reported to KRA, so the receipt your customer holds is the one the taxman sees.</p></div>
+      <div class="m-card"><span class="m-ic"><i class="bi bi-phone fs-5"></i></span><h3>M-Pesa STK push</h3><p>Prompt the customer's phone from the till and watch it confirm.</p></div>
+      <div class="m-card"><span class="m-ic"><i class="bi bi-people fs-5"></i></span><h3>Roles and PIN login</h3><p>Cashiers switch with a PIN. Managers see the numbers cashiers can't.</p></div>
+      <div class="m-card"><span class="m-ic"><i class="bi bi-clock-history fs-5"></i></span><h3>Shifts</h3><p>Open with a float, close with a count, and see any difference.</p></div>
+      <div class="m-card"><span class="m-ic"><i class="bi bi-diagram-3 fs-5"></i></span><h3>Branches</h3><p>Stock, staff and reports for each location, rolled up for you.</p></div>
+      <div class="m-card"><span class="m-ic"><i class="bi bi-wallet2 fs-5"></i></span><h3>Expenses</h3><p>Record rent, transport and wages so profit means profit.</p></div>
+      <div class="m-card"><span class="m-ic"><i class="bi bi-shield-check fs-5"></i></span><h3>Audit trail</h3><p>Who changed a price, voided a sale or adjusted stock.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STOREFRONT ================= -->
+<section class="section pt-0" id="storefront">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5">
+        <div class="section-head mb-4">
+          <h2>Your shop, open online at the same time.</h2>
+          <p>Every product you sell at the counter can appear on your own web address. Customers order and pay by M-Pesa, and the order drops into your till with stock already held.</p>
+        </div>
+        <ul class="list-unstyled d-grid gap-2 mb-4">
+          <li class="d-flex gap-2"><svg width="18" height="18" style="color:var(--green);margin-top:.2rem"><use href="#i-check"/></svg> Your own address, like <b>mama-njeri.kaunta.co.ke</b></li>
+          <li class="d-flex gap-2"><svg width="18" height="18" style="color:var(--green);margin-top:.2rem"><use href="#i-check"/></svg> Banners and pages you edit yourself</li>
+          <li class="d-flex gap-2"><svg width="18" height="18" style="color:var(--green);margin-top:.2rem"><use href="#i-check"/></svg> Customers track their order with a link</li>
+        </ul>
+        <a href="#start" class="btn btn-ember">Open my online store</a>
+      </div>
+      <div class="col-lg-7">
+        <div class="browser">
+          <div class="browser-bar"><i></i><i></i><i></i><span class="url">mama-njeri.kaunta.co.ke</span></div>
+          <div class="shop-grid" id="shopGrid"></div>
+          <div class="shop-foot">
+            <span id="shopCartText">Your basket is empty. Tap a product.</span>
+            <button class="btn btn-ember btn-sm" id="shopPay" type="button" disabled>Pay with M-Pesa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= APP SCREENS STRIP ================= -->
+<section class="section pt-0" aria-label="Screens from Kaunta">
+  <div class="container">
+    <div class="section-head"><h2>A look at the screens.</h2></div>
+  </div>
+  <div class="strip">
+    <div class="strip-track" id="stripTrack"></div>
+  </div>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section class="section pt-0" id="pricing">
+  <div class="container">
+    <div class="section-head text-center mx-auto">
+      <h2>Pay for what your shop uses.</h2>
+      <p>Every plan starts with a free trial. Change plans or stop at any time.</p>
+      <div class="billing" role="group" aria-label="Billing period">
+        <button type="button" class="on" data-bill="monthly">Monthly</button>
+        <button type="button" data-bill="yearly">Yearly</button>
+      </div>
+    </div>
+    <div class="row g-4 align-items-stretch">
+      <div class="col-md-4">
+        <div class="plan">
+          <h3 class="fs-4">Duka</h3>
+          <p class="muted mb-0">One counter, one owner.</p>
+          <div class="price"><span data-m="1,500" data-y="15,000">1,500</span> <small>KES / <span class="per">month</span></small></div>
+          <ul>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>1 branch, 2 users</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>M-Pesa and cash</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>eTIMS receipts</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>Offline selling</li>
+          </ul>
+          <a href="#start" class="btn btn-ghost w-100">Start free trial</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="plan pop">
+          <h3 class="fs-4">Biashara</h3>
+          <p class="muted mb-0">A shop with staff and a second branch.</p>
+          <div class="price"><span data-m="3,500" data-y="35,000">3,500</span> <small>KES / <span class="per">month</span></small></div>
+          <ul>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>3 branches, 10 users</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>Online storefront</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>Transfers and purchase orders</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>Reports and audit trail</li>
+          </ul>
+          <a href="#start" class="btn btn-ember w-100">Start free trial</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="plan">
+          <h3 class="fs-4">Chain</h3>
+          <p class="muted mb-0">Many branches, one head office.</p>
+          <div class="price"><span data-m="8,000" data-y="80,000">8,000</span> <small>KES / <span class="per">month</span></small></div>
+          <ul>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>Unlimited branches and users</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>Price lists per branch</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>Restaurant and pharmacy tools</li>
+            <li><svg width="16" height="16"><use href="#i-check"/></svg>Priority support</li>
+          </ul>
+          <a href="#start" class="btn btn-ghost w-100">Talk to us</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section class="section pt-0" id="faq">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-4"><div class="section-head"><h2>Questions shop owners ask.</h2></div></div>
+      <div class="col-lg-8">
+        <div class="accordion" id="faqList">
+          <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#q1">What happens if my internet goes down?</button></h3>
+            <div id="q1" class="accordion-collapse collapse show" data-bs-parent="#faqList"><div class="accordion-body">You keep selling. The till saves each sale on the device and sends it to Kaunta when the connection returns. M-Pesa prompts need a connection, so take cash or a manual till number for those moments.</div></div></div>
+          <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q2">Do I need to register for eTIMS first?</button></h3>
+            <div id="q2" class="accordion-collapse collapse" data-bs-parent="#faqList"><div class="accordion-body">Yes. Your business needs to be registered with KRA. You enter your PIN and eTIMS details once in settings, and Kaunta signs each receipt from then on.</div></div></div>
+          <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q3">Can several branches share one account?</button></h3>
+            <div id="q3" class="accordion-collapse collapse" data-bs-parent="#faqList"><div class="accordion-body">Yes. Each branch has its own stock and staff, and you see all of them together or one at a time. Roles decide who can see what.</div></div></div>
+          <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q4">Is my shop's data separate from other shops?</button></h3>
+            <div id="q4" class="accordion-collapse collapse" data-bs-parent="#faqList"><div class="accordion-body">Yes. Every shop's records are kept apart at the database level, so one shop can never read another's sales, customers or stock.</div></div></div>
+          <div class="accordion-item"><h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q5">Can I bring my products from a spreadsheet?</button></h3>
+            <div id="q5" class="accordion-collapse collapse" data-bs-parent="#faqList"><div class="accordion-body">Yes. Import a product list in one go instead of typing each item, then fix any rows Kaunta flags.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SIGNUP ================= -->
+<section class="signup" id="start">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-6">
+        <h2>Open your shop on Kaunta today.</h2>
+        <p class="lead mt-3">Create your account, add a few products and ring up your first sale. No card needed for the trial.</p>
+      </div>
+      <div class="col-lg-6">
+        <form class="form-card" id="signupForm" novalidate>
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="shopName">Shop name</label>
+              <input class="form-control" id="shopName" name="name" required placeholder="Mama Njeri Stores" autocomplete="organization">
+              <div class="slug-hint">Your address: <b id="slugOut">your-shop</b>.kaunta.co.ke</div>
+            </div>
+            <div class="col-sm-6">
+              <label for="slug">Shop address</label>
+              <input class="form-control" id="slug" name="slug" required pattern="[a-z0-9\-]{3,40}" placeholder="mama-njeri">
+            </div>
+            <div class="col-sm-6">
+              <label for="bizType">Kind of business</label>
+              <select class="form-select" id="bizType" name="business_type">
+                <option value="retail">Retail or wholesale</option>
+                <option value="restaurant">Restaurant</option>
+                <option value="pharmacy">Pharmacy</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label for="ownerName">Your name</label>
+              <input class="form-control" id="ownerName" name="owner_name" required placeholder="Njeri Kamau" autocomplete="name">
+            </div>
+            <div class="col-sm-6">
+              <label for="ownerPhone">Phone</label>
+              <input class="form-control" id="ownerPhone" name="owner_phone" type="tel" placeholder="0712 345 678" autocomplete="tel">
+            </div>
+            <div class="col-sm-6">
+              <label for="ownerEmail">Email</label>
+              <input class="form-control" id="ownerEmail" name="owner_email" type="email" placeholder="you@shop.co.ke" autocomplete="email">
+            </div>
+            <div class="col-12">
+              <label for="password">Password</label>
+              <input class="form-control" id="password" name="password" type="password" minlength="8" required autocomplete="new-password" placeholder="At least 8 characters">
+            </div>
+            <div class="col-12">
+              <button class="btn btn-ember w-100 py-3" type="submit" id="signupBtn">Create my shop</button>
+              <div class="form-msg" id="formMsg" role="alert"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="foot">
+  <div class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <a class="brand" href="#top" style="font-size:1.1rem">Kaunta</a>
+        <span>Point of sale for Kenyan shops.</span>
+      </div>
+      <div class="d-flex flex-wrap gap-4">
+        <a href="#demo">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="login.html">Sign in</a>
+      </div>
+      <span class="status" id="apiStatus"><i></i><span>Checking service</span></span>
+    </div>
+    <div class="mt-4">&copy; <span id="year">2026</span> Kaunta. Made in Nairobi.</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/landing.js"></script>
+</body>
+</html>
