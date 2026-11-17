@@ -31,7 +31,7 @@
       { href: 'team.html', label: 'Team', icon: 'identification-badge', desc: 'Staff, roles and PINs', ready:true }
     ] },
     { id: 'money', label: 'Money', icon: 'wallet', title: 'Money', blurb: 'Payments, tax and reports.', items: [
-      { href: 'expenses.html', label: 'Expenses', icon: 'wallet', desc: 'Rent, wages and running costs' },
+      { href: 'expenses.html', label: 'Expenses', icon: 'wallet', desc: 'Rent, wages and running costs', ready:true },
       { href: 'mpesa.html', label: 'M-Pesa', icon: 'device-mobile', desc: 'Till or paybill connection', ready: true },
       { href: 'etims.html', label: 'eTIMS', icon: 'seal-check', desc: 'KRA receipts through Digitax', ready: true },
       { href: 'reports.html', label: 'Reports', icon: 'chart-bar', desc: 'Sales, profit and tax' }
