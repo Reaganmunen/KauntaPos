@@ -1,0 +1,35 @@
+/* Team page: small additions on top of ui.css / theme.css */
+.tm-tabs { margin: 0 0 14px; }
+.tm-tabs button { min-width: 96px; }
+
+.tm-checks { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.tm-checks label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line, #dfe3da); border-radius: 10px; cursor: pointer; font-size: 14px; }
+.tm-checks input { margin: 0; }
+.tm-checks.off { opacity: .45; pointer-events: none; }
+
+.tm-perms { display: grid; gap: 14px; }
+.tm-group > b { display: block; font-size: 13px; margin-bottom: 6px; text-transform: capitalize; }
+.tm-group .tm-checks { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.tm-group label.locked { opacity: .5; cursor: not-allowed; }
+
+.tm-person { display: flex; align-items: center; gap: 10px; }
+.tm-av { width: 32px; height: 32px; border-radius: 50%; flex: none; display: inline-grid; place-items: center; overflow: hidden;
+  background: var(--line, #dfe3da); font-size: 12px; font-weight: 600; }
+.tm-av img { width: 100%; height: 100%; object-fit: cover; }
+.tm-person small { display: block; color: var(--muted, #6b7280); }
+
+.tm-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+
+.tm-term { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line, #dfe3da); }
+.tm-term .grow { min-width: 0; }
+.tm-term small { display: block; color: var(--muted, #6b7280); }
+.tm-term:last-of-type { border-bottom: 0; margin-bottom: 8px; }
+
+#detail .facts { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+#detail .fact small { display: block; color: var(--muted, #6b7280); }
+
+@media (max-width: 640px) {
+  .tm-tabs { display: flex; }
+  .tm-tabs button { flex: 1; min-width: 0; }
+  .tm-checks, .tm-group .tm-checks { grid-template-columns: 1fr; }
+}
