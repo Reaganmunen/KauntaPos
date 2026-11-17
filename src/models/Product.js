@@ -115,7 +115,9 @@ class Product extends BaseModel {
    * and in-stock flag for the branch that fulfils online orders.
    */
   static async listOnline(db, { branchId, category_id, q, page = 1, limit = 24 } = {}) {
-    const where = ['p.is_online', 'p.is_active', 'p.deleted_at IS NULL'];
+    // `$1::uuid IS NOT NULL` is always true. It is here so $1 (the branch) is used by the row-count query
+    // as well as the main one; PostgreSQL rejects a query whose parameters are not all referenced.
+    const where = ['p.is_online', 'p.is_active', 'p.deleted_at IS NULL', '$1::uuid IS NOT NULL'];
     const values = [branchId];
 
     if (category_id) {

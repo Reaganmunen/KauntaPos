@@ -15,7 +15,12 @@
     branches.forEach(function (b) { var o = K.el('option', b.name); o.value = b.id; sel.appendChild(o); });
     sel.value = s.fulfilment_branch_id || (branches[0] && branches[0].id) || '';
     live = Boolean(s.is_published); $('#sUnpub').hidden = !live; $('#sPub').hidden = live;
-    $('#sLive').hidden = !live; $('#sLive').textContent = live ? 'Your store is live.' : '';
+    var lv = $('#sLive'); lv.hidden = !live; lv.textContent = '';
+    if (live) {
+      var slug = K.session.tenant && K.session.tenant.slug, a = K.el('a', 'Open your store');
+      a.href = 'store.html?shop=' + encodeURIComponent(slug || ''); a.target = '_blank'; a.rel = 'noopener'; a.className = 'link';
+      lv.appendChild(document.createTextNode('Your store is live. ')); lv.appendChild(a);
+    }
   }
   function body() {
     function v(id) { var x = $(id).value.trim(); return x === '' ? null : x; }

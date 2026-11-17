@@ -35,6 +35,15 @@
 
   <section class="card" id="paneOne" role="tabpanel" aria-labelledby="tabOne">
     <form class="form" id="oneForm" novalidate>
+      <div class="fld"><span>Photo</span>
+        <div class="photo">
+          <img id="pPrev" alt="" hidden>
+          <label class="btn" for="pPhoto"><i class="ph ph-camera"></i><span id="pPhotoTxt">Add photo</span></label>
+          <input type="file" id="pPhoto" accept="image/*" class="sr">
+          <button class="link" id="pPhotoX" type="button" hidden>Remove</button>
+        </div>
+        <small>Optional. Shows on the till and in your online store. On a phone you can take the photo directly.</small>
+      </div>
       <label class="fld"><span>Product name</span><input type="text" id="pName" required autocomplete="off" placeholder="e.g. Maize flour 2kg"></label>
       <div class="row2">
         <label class="fld"><span>Selling price (KES)</span><input type="number" id="pPrice" min="0" step="0.01" inputmode="decimal" required></label>
@@ -44,6 +53,7 @@
         <label class="fld"><span>How many do you have now?</span><input type="number" id="pQty" min="0" step="1" inputmode="decimal"><small>Optional. You can only sell what is in stock.</small></label>
         <label class="fld"><span>SKU or barcode</span><input type="text" id="pSku" autocomplete="off"><small>Optional.</small></label>
       </div>
+      <label class="chk"><input type="checkbox" id="pOnline" checked><span>Also sell this online (shows in your online store)</span></label>
       <p class="note err" id="oneErr" hidden></p>
       <div class="actions"><button class="btn primary" id="oneSave" type="submit">Save product</button></div>
     </form>

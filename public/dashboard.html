@@ -24,24 +24,27 @@
     <nav aria-label="Main">
       <a class="nav-i on" href="dashboard.html" aria-current="page"><i class="ph ph-squares-four"></i>Overview</a>
       <p class="nav-h">Sell</p>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-receipt"></i>Sales</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-clock"></i>Shifts</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-shopping-bag"></i>Online orders</span>
+      <a class="nav-i" href="pos.html"><i class="ph ph-cash-register"></i>New sale</a>
+      <a class="nav-i" href="sales.html"><i class="ph ph-receipt"></i>Sales</a>
+      <a class="nav-i" href="shifts.html"><i class="ph ph-clock"></i>Shifts</a>
+      <a class="nav-i" href="online-orders.html"><i class="ph ph-shopping-bag"></i>Online orders</a>
       <p class="nav-h">Stock</p>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-package"></i>Products</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-stack"></i>Inventory</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-truck"></i>Purchases</span>
+      <a class="nav-i" href="products.html"><i class="ph ph-package"></i>Products</a>
+      <a class="nav-i" href="inventory.html"><i class="ph ph-stack"></i>Inventory</a>
+      <a class="nav-i" href="purchases.html"><i class="ph ph-truck"></i>Purchases</a>
       <p class="nav-h">People</p>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-users"></i>Customers</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-handshake"></i>Suppliers</span>
+      <a class="nav-i" href="customers.html"><i class="ph ph-users"></i>Customers</a>
+      <a class="nav-i" href="suppliers.html"><i class="ph ph-handshake"></i>Suppliers</a>
       <p class="nav-h">Money</p>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-wallet"></i>Expenses</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-device-mobile"></i>M-Pesa</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-file-text"></i>eTIMS</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-chart-bar"></i>Reports</span>
+      <a class="nav-i" href="expenses.html"><i class="ph ph-wallet"></i>Expenses</a>
+      <a class="nav-i" href="mpesa.html"><i class="ph ph-device-mobile"></i>M-Pesa</a>
+      <a class="nav-i" href="etims.html"><i class="ph ph-file-text"></i>eTIMS</a>
+      <a class="nav-i" href="reports.html"><i class="ph ph-chart-bar"></i>Reports</a>
       <p class="nav-h">Shop</p>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-users-three"></i>Team</span>
-      <span class="nav-i off" title="Coming next"><i class="ph ph-storefront"></i>Branches</span>
+      <a class="nav-i" href="team.html"><i class="ph ph-users-three"></i>Team</a>
+      <a class="nav-i" href="branches.html"><i class="ph ph-git-branch"></i>Branches</a>
+      <a class="nav-i" href="storefront.html"><i class="ph ph-storefront"></i>Online store</a>
+      <a class="nav-i" href="profile.html"><i class="ph ph-user-circle"></i>Profile &amp; shop</a>
     </nav>
     <button class="nav-i out" id="signOut" type="button"><i class="ph ph-sign-out"></i>Sign out</button>
   </aside>
@@ -49,13 +52,14 @@
   <div class="main">
     <header class="top">
       <button class="chip menu" id="menuBtn" type="button" aria-label="Open menu" aria-controls="side" aria-expanded="false"><i class="ph ph-list"></i></button>
-      <span class="chip"><span class="av" id="avatar">K</span><b id="shopName">Your shop</b></span>
+      <a class="chip" href="profile.html" title="Your shop profile"><span class="av sq" id="avatar">K</span><b id="shopName">Your shop</b></a>
       <label class="sr" for="branch">Branch</label>
       <select class="chip" id="branch" hidden></select>
       <div class="top-r">
         <span class="chip hide-s"><i class="ph ph-calendar-blank"></i><span id="dateLine"></span></span>
+        <a class="chip" id="viewStore" href="storefront.html" hidden><i class="ph ph-storefront"></i><span id="viewStoreText">View store</span></a>
         <span data-theme-slot></span>
-        <span class="chip hide-s"><i class="ph ph-user-circle"></i><span id="userName"></span></span>
+        <a class="chip hide-s" id="meChip" href="profile.html" title="Your profile"><span class="av" id="meAv">K</span><span id="userName"></span></a>
       </div>
     </header>
 

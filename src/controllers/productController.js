@@ -382,6 +382,7 @@ exports.bulkImport = asyncHandler(async (req, res) => {
             unit_id: unit ? unit.id : null,
             tax_class_id: tax ? tax.id : null,
             track_stock: row.track_stock === undefined ? true : toBool(row.track_stock) !== false,
+            is_online: toBool(row.is_online) === true, // shown in the online store only when the file says so
             created_by: req.user.id,
           },
           [{

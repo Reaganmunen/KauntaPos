@@ -180,3 +180,26 @@ exports.deactivate = asyncHandler(async (req, res) => {
   invalidateUser(req.tenantId, req.params.id);
   return ok(res, { deactivated: true });
 });
+
+// PATCH /profile  { full_name, phone, avatar_url }
+// The signed-in person's own details. Email, role and access stay with whoever manages the team.
+// avatar_url is the link POST /media returned (or any https link). Send null to remove the picture.
+exports.updateMe = asyncHandler(async (req, res) => {
+  const data = pick(req.body, ['full_name', 'phone', 'avatar_url']);
+  if (data.full_name !== undefined && !String(data.full_name).trim()) throw ApiError.unprocessable('Your name cannot be empty');
+  if (data.full_name !== undefined) data.full_name = String(data.full_name).trim();
+  if (data.phone !== undefined) data.phone = String(data.phone).trim() || null;
+  if (data.avatar_url !== undefined && data.avatar_url !== null) {
+    data.avatar_url = String(data.avatar_url).trim() || null;
+    if (data.avatar_url && !/^(\/|https?:\/\/)/i.test(data.avatar_url)) throw ApiError.unprocessable('The picture link is not valid');
+  }
+  if (!Object.keys(data).length) throw ApiError.unprocessable('Nothing to save');
+
+  const user = await run(req, async (db) => {
+    const updated = await User.update(db, req.user.id, data);
+    await audit(db, req, 'user.update_self', 'user', req.user.id, { fields: Object.keys(data) });
+    return updated;
+  });
+  invalidateUser(req.tenantId, req.user.id);
+  return ok(res, User.sanitize(user));
+});

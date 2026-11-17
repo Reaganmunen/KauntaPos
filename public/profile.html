@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profile and shop | Kaunta</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/steps.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+<header class="step-top">
+  <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="28" height="28"><span>Kaunta</span></a>
+  <div class="top-r"><span class="chip hide-s"><span class="av">K</span><b id="shopName">Your shop</b></span><span data-theme-slot></span></div>
+</header>
+<main class="step-page">
+  <div class="head">
+    <a class="crumb" href="dashboard.html"><i class="ph ph-arrow-left"></i>Back to dashboard</a>
+    <h1>Profile and shop</h1>
+    <p class="muted">Add your picture and your shop logo. They show on your dashboard, at the till and on receipts.</p>
+  </div>
+
+  <section class="card">
+    <div class="card-h"><h2>Your profile</h2></div>
+    <form class="form" id="meForm" novalidate>
+      <div class="who">
+        <span class="av lg" id="meAv">K</span>
+        <div class="acts">
+          <label class="btn" for="meFile"><i class="ph ph-camera"></i><span id="meFileTxt">Add picture</span></label>
+          <input type="file" id="meFile" accept="image/*" class="sr">
+          <button class="link" id="meRemove" type="button" hidden>Remove</button>
+        </div>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>Your name</span><input type="text" id="meName" autocomplete="name" required></label>
+        <label class="fld"><span>Phone</span><input type="tel" id="mePhone" autocomplete="tel"></label>
+      </div>
+      <p class="ro" id="meEmail"></p>
+      <p class="note err" id="meErr" hidden></p>
+      <p class="note ok" id="meOk" hidden></p>
+      <div class="actions"><button class="btn primary" id="meSave" type="submit">Save my profile</button></div>
+    </form>
+  </section>
+
+  <section class="card" id="shopCard" hidden>
+    <div class="card-h"><h2>Shop profile</h2></div>
+    <form class="form" id="shopForm" novalidate>
+      <div class="who">
+        <span class="av lg sq" id="logoAv">K</span>
+        <div class="acts">
+          <label class="btn" for="logoFile"><i class="ph ph-image"></i><span id="logoFileTxt">Add logo</span></label>
+          <input type="file" id="logoFile" accept="image/*" class="sr">
+          <button class="link" id="logoRemove" type="button" hidden>Remove</button>
+        </div>
+      </div>
+      <label class="chk" id="sfRow"><input type="checkbox" id="sfLogo" checked><span>Also use this logo on my online store</span></label>
+      <label class="fld"><span>Shop name</span><input type="text" id="sName" autocomplete="organization" required></label>
+      <div class="row2">
+        <label class="fld"><span>Shop phone</span><input type="tel" id="sPhone"></label>
+        <label class="fld"><span>Shop email</span><input type="email" id="sEmail"></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>Address</span><input type="text" id="sAddr"></label>
+        <label class="fld"><span>County</span><input type="text" id="sCounty"></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>KRA PIN</span><input type="text" id="sPin" autocapitalize="characters" autocomplete="off"><small>Printed on receipts.</small></label>
+        <label class="chk" style="align-self:end;padding-bottom:.7rem"><input type="checkbox" id="sVat"><span>Registered for VAT</span></label>
+      </div>
+      <p class="note err" id="shErr" hidden></p>
+      <p class="note ok" id="shOk" hidden></p>
+      <div class="actions"><button class="btn primary" id="shSave" type="submit">Save shop profile</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2>Change password</h2></div>
+    <form class="form" id="pwForm" novalidate>
+      <label class="fld"><span>Current password</span><input type="password" id="pwOld" autocomplete="current-password"></label>
+      <div class="row2">
+        <label class="fld"><span>New password</span><input type="password" id="pwNew" autocomplete="new-password"></label>
+        <label class="fld"><span>Repeat new password</span><input type="password" id="pwNew2" autocomplete="new-password"></label>
+      </div>
+      <p class="note err" id="pwErr" hidden></p>
+      <p class="note ok" id="pwOk" hidden></p>
+      <div class="actions"><button class="btn primary" id="pwSave" type="submit">Change password</button></div>
+    </form>
+  </section>
+</main>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/step-profile.js"></script>
+</body>
+</html>

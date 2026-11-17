@@ -162,5 +162,36 @@
     loadStarted();
   });
 
-  loadBranches(); load(); loadStarted();
+  /* ---------- link to the online store ----------
+     Live store: opens the customer-facing page in a new tab (store.html?shop=<slug>; on a real shop address the slug is not needed).
+     Not published yet: the customer page would only say "not open", so the link goes to the Online store settings, where Publish is.
+     Hidden when the shop has the store module switched off, or the person may not manage it. */
+  async function loadStoreLink() {
+    var a = $('#viewStore');
+    try {
+      var s = await get('/storefront/settings'), live = Boolean(s && s.is_published);
+      a.hidden = false;
+      if (live) { a.href = 'store.html?shop=' + encodeURIComponent(slug() || ''); a.target = '_blank'; a.rel = 'noopener'; a.title = 'See your store as customers see it'; $('#viewStoreText').textContent = 'View store'; }
+      else { a.href = 'storefront.html'; a.removeAttribute('target'); a.title = 'Your store is not published yet. Set it up and publish it to see it.'; $('#viewStoreText').textContent = 'Set up your store'; }
+    } catch (e) { a.hidden = true; }
+  }
+
+  /* ---------- who is signed in: shop logo and the person's picture ---------- */
+  function pic(node, url, name) {
+    node.textContent = ''; var letter = String(name || '?').trim().charAt(0).toUpperCase();
+    if (!url) { node.textContent = letter; return; }
+    var im = document.createElement('img'); im.alt = ''; im.src = url; im.addEventListener('error', function () { node.textContent = letter; }); node.appendChild(im);
+  }
+  pic($('#meAv'), null, user.name || user.full_name);
+  async function loadIdentity() {
+    try {
+      var d = await get('/auth/me'), t = d.tenant || {}, u = d.user || {};
+      if (t.name) { $('#shopName').textContent = t.name; }
+      pic($('#avatar'), t.logo_url, t.name || shopTitle);
+      if (u.full_name) { $('#userName').textContent = u.full_name; $('#greet').textContent = (hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening') + ', ' + String(u.full_name).split(' ')[0]; }
+      pic($('#meAv'), u.avatar_url, u.full_name || user.name);
+    } catch (e) { /* the initials stay */ }
+  }
+
+  loadBranches(); load(); loadStarted(); loadStoreLink(); loadIdentity();
 })();

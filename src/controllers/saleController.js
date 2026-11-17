@@ -104,6 +104,7 @@ exports.receipt = asyncHandler(async (req, res) => {
       sale,
       business: {
         name: tenant.name,
+        logo_url: tenant.logo_url,
         legal_name: tenant.legal_name,
         kra_pin: tenant.kra_pin,
         vat_registered: tenant.vat_registered,

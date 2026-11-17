@@ -21,3 +21,10 @@ textarea { min-height:90px; resize:vertical; }
 .tot { display:flex; justify-content:space-between; font-family:var(--font-display); font-weight:800; font-size:1.3rem; padding-top:.6rem; border-top:1px solid var(--line); }
 .done-card { text-align:center; padding:1.6rem 1.2rem; display:grid; gap:.6rem; justify-items:center; } .done-card .ic { margin:0; width:44px; height:44px; font-size:1.5rem; }
 @media (max-width:640px) { .row2 { grid-template-columns:1fr; } }
+
+.photo { display:flex; align-items:center; gap:.8rem; flex-wrap:wrap; } .photo img { width:72px; height:72px; object-fit:cover; border-radius:12px; border:1px solid var(--line); background:var(--chip); }
+.photo label.btn { cursor:pointer; } input.sr:focus-visible + .link, .photo:focus-within label.btn { outline:2px solid var(--ink); outline-offset:2px; }
+
+.av.lg { width:76px; height:76px; font-size:1.7rem; font-weight:800; } .av.sq { border-radius:16px; } .av.lg img { border-radius:inherit; }
+.who { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; } .who .acts { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+.ro { color:var(--ink-soft); margin:0; font-size:.9rem; }

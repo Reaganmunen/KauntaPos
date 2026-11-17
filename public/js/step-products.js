@@ -26,6 +26,42 @@
     $('#addedList').insertBefore(li, $('#addedList').firstChild);
   }
 
+  /* ---------- photo ----------
+     Shrunk in the browser to a JPEG of at most 800px, then uploaded to POST /media when the product is saved.
+     A phone photo of several MB becomes roughly 60 to 150 KB. */
+  var photo = null; // data URL of the shrunk photo, or null
+  var MAX_CHARS = 520000; // about 380 KB of image, under the server's 400 KB cap
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var out = null;
+        [[800, 0.82], [800, 0.68], [600, 0.7], [480, 0.65]].some(function (try_) {
+          var scale = Math.min(1, try_[0] / Math.max(img.width, img.height)), c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * scale)); c.height = Math.max(1, Math.round(img.height * scale));
+          var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+          out = c.toDataURL('image/jpeg', try_[1]);
+          return out.length <= MAX_CHARS;
+        });
+        out && out.length <= MAX_CHARS ? resolve(out) : reject(new Error('That photo is too detailed to shrink enough. Try another one.'));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('We could not read that photo. Use a JPEG, PNG or WebP image.')); };
+      img.src = url;
+    });
+  }
+  function paintPhoto() {
+    var prev = $('#pPrev'); prev.hidden = !photo; if (photo) prev.src = photo;
+    $('#pPhotoX').hidden = !photo; $('#pPhotoTxt').textContent = photo ? 'Change photo' : 'Add photo';
+  }
+  $('#pPhoto').addEventListener('change', async function () {
+    var f = this.files && this.files[0]; K.notice($('#oneErr'), '');
+    if (!f) return;
+    try { photo = await shrink(f); } catch (ex) { photo = null; K.notice($('#oneErr'), ex.message, 'err'); }
+    this.value = ''; paintPhoto();
+  });
+  $('#pPhotoX').addEventListener('click', function () { photo = null; paintPhoto(); });
+
   /* ---------- add one ---------- */
   $('#oneForm').addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -37,12 +73,14 @@
     if ($('#pCost').value !== '') body.cost_price = K.num($('#pCost').value);
     if (qty > 0) body.opening_quantity = qty;
     if ($('#pSku').value.trim()) body.sku = $('#pSku').value.trim();
+    body.is_online = $('#pOnline').checked;
     K.busy(btn, true, 'Saving...');
     try {
       var headers = await stockBranchHeader(qty > 0);
+      if (photo) { var up = await K.api('POST', '/media', { data: photo }); body.images = [{ url: up.url, alt_text: name }]; }
       await K.api('POST', '/products', body, headers);
-      listAdded(name + ' at ' + K.money(price) + (qty > 0 ? ', ' + qty + ' in stock' : ''));
-      $('#oneForm').reset(); $('#pName').focus();
+      listAdded(name + ' at ' + K.money(price) + (qty > 0 ? ', ' + qty + ' in stock' : '') + (photo ? ', with photo' : ''));
+      $('#oneForm').reset(); photo = null; paintPhoto(); $('#pName').focus();
     } catch (ex) { K.notice(err, ex.message, 'err'); }
     K.busy(btn, false);
   });

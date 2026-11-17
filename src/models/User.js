@@ -6,7 +6,7 @@ class User extends BaseModel {
   static table = 'users';
   static columns = [
     'email', 'phone', 'full_name', 'password_hash', 'pin_hash', 'role_id',
-    'is_owner', 'all_branches', 'is_active', 'last_login_at',
+    'is_owner', 'all_branches', 'is_active', 'last_login_at', 'avatar_url',
   ];
   static defaultOrder = 'full_name ASC';
 

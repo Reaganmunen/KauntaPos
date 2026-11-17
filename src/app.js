@@ -16,6 +16,7 @@ const express = require('express');
 const cors = require('cors');
 const { requestContext, corsOptions, notFound, errorHandler } = require('./middleware');
 const routes = require('./routes');
+const { isPlatformHost } = require('./middleware/tenant');
 
 const prefix = (process.env.API_PREFIX || '/api').replace(/\/$/, '');
 const publicDir = path.join(__dirname, '..', 'public');
@@ -34,6 +35,14 @@ app.use(requestContext);
 app.use(cors(corsOptions));
 
 // ---------- frontend ----------
+// A shop's own address (acme.kaunta.co.ke or a custom domain) opens its online store at "/".
+// Kaunta's own hosts (and localhost) keep the landing page; preview a shop with store.html?shop=<slug>.
+app.get('/', (req, res, next) => {
+  const host = (req.hostname || '').toLowerCase();
+  if (host && !isPlatformHost(host)) return res.sendFile(path.join(publicDir, 'store.html'));
+  return next();
+});
+
 // Before the API and before notFound, so files are found first and anything else falls through.
 // Pages are never cached hard (you will edit them often); css/js/images are cached for an hour in
 // production. Dotfiles are ignored, and a request for a folder returns its index.html.

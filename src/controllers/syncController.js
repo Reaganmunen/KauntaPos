@@ -84,6 +84,9 @@ exports.catalog = asyncHandler(async (req, res) => {
               p.name AS product_name, p.product_type, p.track_stock, p.category_id, p.kitchen_station,
               t.code AS tax_code, COALESCE(t.rate, 0) AS tax_rate,
               COALESCE(sl.quantity_on_hand, 0) AS quantity_on_hand,
+              (SELECT i.url FROM product_images i
+                WHERE i.product_id = p.id AND (i.variant_id IS NULL OR i.variant_id = v.id)
+                ORDER BY (i.variant_id = v.id) DESC NULLS LAST, i.is_primary DESC, i.sort_order ASC LIMIT 1) AS image_url,
               (v.deleted_at IS NOT NULL OR p.deleted_at IS NOT NULL OR NOT v.is_active OR NOT p.is_active) AS removed,
               GREATEST(v.updated_at, p.updated_at, COALESCE(sl.updated_at, v.updated_at)) AS changed_at
          FROM product_variants v

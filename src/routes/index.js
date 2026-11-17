@@ -18,6 +18,7 @@
 const express = require('express');
 const { query } = require('../config/database');
 const { rateLimit, resolveTenant, authenticate, requireActiveSubscription } = require('../middleware');
+const media = require('../controllers/mediaController');
 
 const router = express.Router();
 
@@ -36,6 +37,7 @@ router.use('/hooks/pay', require('./webhooks'));
 router.use('/store', require('./publicStore'));
 router.use('/auth', require('./auth'));
 router.use('/platform', require('./platform'));
+router.get('/media/:id', media.serve); // product photos: <img> tags carry no login
 
 // ---------- shop staff ----------
 
@@ -52,6 +54,8 @@ const online = require('./storefront');
 const insight = require('./reports');
 
 router.use('/tenant', require('./tenant'));
+router.post('/media', media.upload); // any signed-in staff: profile pictures as well as product photos
+router.patch('/profile', require('../controllers/userController').updateMe);
 
 router.use('/users', team.usersRouter);
 router.use('/roles', team.rolesRouter);
