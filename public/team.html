@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Team | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/team.css" rel="stylesheet">
+</head>
+<body data-nav="team.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Team</h1><p>Your staff, what each role can do, and the branches and tills they work at.</p></div>
+    <div class="actions">
+      <button class="btn primary" id="openAdd" type="button"><i class="ph ph-plus"></i><span id="openAddLabel">Add staff member</span></button>
+    </div>
+  </div>
+
+  <div class="seg tm-tabs" id="tabs" role="group" aria-label="Section">
+    <button type="button" data-t="staff" aria-pressed="true">Staff</button>
+    <button type="button" data-t="roles" aria-pressed="false">Roles</button>
+    <button type="button" data-t="branches" aria-pressed="false">Branches</button>
+  </div>
+
+  <div class="toolbar" id="staffBar">
+    <div class="search"><i class="ph ph-magnifying-glass"></i><input type="search" id="uq" placeholder="Search by name, email or phone" autocomplete="off" aria-label="Search staff"></div>
+    <span class="grow"></span>
+    <select id="uRoleFilter" aria-label="Filter by role"><option value="">All roles</option></select>
+    <div class="seg" id="uview" role="group" aria-label="Filter"><button type="button" data-v="active" aria-pressed="true">Active</button><button type="button" data-v="inactive" aria-pressed="false">Inactive</button><button type="button" data-v="all" aria-pressed="false">All</button></div>
+    <button class="btn" id="refresh" type="button"><i class="ph ph-arrows-clockwise"></i>Refresh</button>
+  </div>
+
+  <p class="note err" id="listErr" hidden></p>
+  <div id="list"></div>
+  <div class="pager" id="pager" hidden><button class="btn sm" id="prev" type="button">Previous</button><span id="pageInfo"></span><button class="btn sm" id="next" type="button">Next</button></div>
+</main>
+
+<!-- Staff member details -->
+<dialog class="sheet wide" id="detail" aria-labelledby="dTitle">
+  <div class="sheet-h"><h2 id="dTitle">Staff member</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b" id="dBody"></div>
+  <div class="sheet-f">
+    <button class="btn" id="dEdit" type="button"><i class="ph ph-pencil-simple"></i>Edit</button>
+    <button class="btn" id="dPw" type="button"><i class="ph ph-key"></i>Reset password</button>
+    <button class="btn" id="dPin" type="button"><i class="ph ph-password"></i>Set PIN</button>
+    <button class="btn danger" id="dOff" type="button"><i class="ph ph-user-minus"></i>Deactivate</button>
+    <button class="btn" type="button" data-close>Close</button>
+  </div>
+</dialog>
+
+<!-- Add / edit staff -->
+<dialog class="sheet" id="formSheet" aria-labelledby="fTitle">
+  <form class="form" id="userForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="fTitle">Add a staff member</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <label class="fld"><span>Full name</span><input type="text" id="fName" required autocomplete="off"></label>
+      <div class="row2">
+        <label class="fld"><span>Phone</span><input type="tel" id="fPhone" autocomplete="off" inputmode="tel" placeholder="07..."></label>
+        <label class="fld"><span>Email</span><input type="email" id="fEmail" autocomplete="off"></label>
+      </div>
+      <small class="muted">Email or phone is required. Either one can be used to sign in.</small>
+      <label class="fld"><span>Role</span><select id="fRole" required></select><small id="fRoleHint"></small></label>
+      <div class="row2" id="fSecrets">
+        <label class="fld"><span>Password</span><input type="password" id="fPassword" autocomplete="new-password"><small>At least 8 characters.</small></label>
+        <label class="fld"><span>PIN</span><input type="password" id="fPinNew" inputmode="numeric" maxlength="8" autocomplete="off"><small>Optional. 4 to 8 digits, for the till.</small></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="fAll"><span><b>Works at every branch</b><small>Includes branches you add later.</small></span></label>
+      <div class="fld" id="fBranchesBox"><span>Branches</span><div class="tm-checks" id="fBranches"></div></div>
+      <label class="chk" id="fActiveBox"><input type="checkbox" id="fActive" checked><span><b>Active</b><small>Switch off to stop this person signing in.</small></span></label>
+      <p class="note err" id="fErr" hidden></p>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="fSave" type="submit">Save staff member</button></div>
+  </form>
+</dialog>
+
+<!-- Reset password -->
+<dialog class="modal" id="pwDlg" aria-labelledby="pwTitle">
+  <form class="dlg form" id="pwForm" novalidate>
+    <div class="row"><h2 class="grow" id="pwTitle">Reset password</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted" id="pwInfo"></p>
+    <label class="fld"><span>New password</span><input type="password" id="pwNew" autocomplete="new-password" required><small>At least 8 characters. They will be signed out everywhere.</small></label>
+    <p class="note err" id="pwErr" hidden></p>
+    <button class="btn primary lg block" id="pwGo" type="submit">Reset password</button>
+  </form>
+</dialog>
+
+<!-- Set PIN -->
+<dialog class="modal" id="pinDlg" aria-labelledby="pnTitle">
+  <form class="dlg form" id="pinForm" novalidate>
+    <div class="row"><h2 class="grow" id="pnTitle">Set PIN</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted" id="pnInfo"></p>
+    <label class="fld"><span>New PIN</span><input type="password" id="pnNew" inputmode="numeric" maxlength="8" autocomplete="off" required><small>4 to 8 digits.</small></label>
+    <p class="note err" id="pnErr" hidden></p>
+    <button class="btn primary lg block" id="pnGo" type="submit">Save PIN</button>
+  </form>
+</dialog>
+
+<!-- Add / edit role -->
+<dialog class="sheet wide" id="roleSheet" aria-labelledby="rTitle">
+  <form class="form" id="roleForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="rTitle">Add a role</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <label class="fld"><span>Role name</span><input type="text" id="rName" required autocomplete="off" placeholder="e.g. Cashier"></label>
+      <label class="fld"><span>Description</span><input type="text" id="rDesc" autocomplete="off"><small>Optional.</small></label>
+      <div class="fld"><span>What this role can do</span><div id="rPerms" class="tm-perms"></div></div>
+      <p class="note err" id="rErr" hidden></p>
+      <button class="btn danger sm" id="rDelete" type="button" style="justify-self:start" hidden><i class="ph ph-trash"></i>Delete role</button>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="rSave" type="submit">Save role</button></div>
+  </form>
+</dialog>
+
+<!-- Add / edit branch -->
+<dialog class="sheet" id="branchSheet" aria-labelledby="bTitle">
+  <form class="form" id="branchForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="bTitle">Add a branch</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <label class="fld"><span>Branch name</span><input type="text" id="bName" required autocomplete="off"></label>
+      <div class="row2">
+        <label class="fld"><span>Phone</span><input type="tel" id="bPhone" autocomplete="off" inputmode="tel"></label>
+        <label class="fld"><span>Code</span><input type="text" id="bCode" autocomplete="off"><small>Optional short code.</small></label>
+      </div>
+      <label class="fld"><span>Address</span><input type="text" id="bAddress" autocomplete="off"></label>
+      <label class="chk" id="bActiveBox"><input type="checkbox" id="bActive" checked><span><b>Active</b><small>Switch off to hide this branch.</small></span></label>
+      <p class="note err" id="bErr" hidden></p>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="bSave" type="submit">Save branch</button></div>
+  </form>
+</dialog>
+
+<!-- Terminals of a branch -->
+<dialog class="sheet" id="termSheet" aria-labelledby="tTitle">
+  <div class="sheet-h"><h2 id="tTitle">Tills</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b">
+    <div id="tList"></div>
+    <form class="form" id="termForm" novalidate>
+      <div class="row2">
+        <label class="fld"><span>New till name</span><input type="text" id="tName" autocomplete="off" placeholder="e.g. Till 1"></label>
+        <div class="fld"><span>&nbsp;</span><button class="btn primary" id="tAdd" type="submit"><i class="ph ph-plus"></i>Add till</button></div>
+      </div>
+    </form>
+    <p class="note err" id="tErr" hidden></p>
+  </div>
+  <div class="sheet-f"><button class="btn" type="button" data-close>Close</button></div>
+</dialog>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/team.js"></script>
+</body>
+</html>
