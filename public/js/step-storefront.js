@@ -15,6 +15,7 @@
     branches.forEach(function (b) { var o = K.el('option', b.name); o.value = b.id; sel.appendChild(o); });
     sel.value = s.fulfilment_branch_id || (branches[0] && branches[0].id) || '';
     live = Boolean(s.is_published); $('#sUnpub').hidden = !live; $('#sPub').hidden = live;
+    var lt = $('#liveTag'); lt.textContent = live ? 'Live' : 'Offline'; lt.className = 'tag dot ' + (live ? 'ok' : 'warn'); preview();
     var lv = $('#sLive'); lv.hidden = !live; lv.textContent = '';
     if (live) {
       var slug = K.session.tenant && K.session.tenant.slug, a = K.el('a', 'Open your store');
@@ -22,6 +23,17 @@
       lv.appendChild(document.createTextNode('Your store is live. ')); lv.appendChild(a);
     }
   }
+  /* The little preview on the right follows what you type. */
+  function preview() {
+    var name = $('#sName').value.trim() || 'Your store';
+    $('#pvName').textContent = name; $('#pvTag').textContent = $('#sTag').value.trim() || 'Your tagline shows here';
+    var ann = $('#sAnn').value.trim(); $('#pvAnn').hidden = !ann; $('#pvAnn').textContent = ann;
+    K.avatar($('#pvLogo'), $('#sLogo').value.trim() || null, name);
+    var foot = $('#pvFoot'); foot.textContent = '';
+    [$('#sAddr').value.trim(), $('#sPhone').value.trim() && 'Call ' + $('#sPhone').value.trim(), $('#sWa').value.trim() && 'WhatsApp ' + $('#sWa').value.trim(), $('#sDel').checked && 'Delivery', $('#sPick').checked && 'Pickup'].filter(Boolean).forEach(function (t) { foot.appendChild(K.el('span', t)); });
+  }
+  ['#sName', '#sTag', '#sLogo', '#sPhone', '#sWa', '#sAddr', '#sAnn'].forEach(function (id) { $(id).addEventListener('input', preview); });
+  ['#sDel', '#sPick'].forEach(function (id) { $(id).addEventListener('change', preview); });
   function body() {
     function v(id) { var x = $(id).value.trim(); return x === '' ? null : x; }
     return { store_name: v('#sName'), tagline: v('#sTag'), logo_url: v('#sLogo'), contact_phone: v('#sPhone'), whatsapp_number: v('#sWa'), address: v('#sAddr'),

@@ -1,7 +1,8 @@
 /* The customer-facing storefront. Talks only to the public API (/api/store/...), no login.
    Which shop: the address you open it on (acme.kaunta.co.ke or a custom domain). While developing on
    localhost, open  store.html?shop=<your-shop-slug>  and the slug is sent as the X-Tenant header.
-   The cart lives on the server; this page keeps only its token in localStorage. */
+   The cart lives on the server; this page keeps only its token in localStorage.
+   Products, the cart, checkout and order tracking all open in one side drawer (a bottom sheet on phones). */
 (function () {
   'use strict';
   var $ = function (s) { return document.querySelector(s); };
@@ -10,6 +11,7 @@
   var money = function (n) { return kes.format(Number(n) || 0); };
 
   function el(tag, text, cls) { var e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
+  function icon(n) { var i = document.createElement('i'); i.className = 'ph ph-' + n; i.setAttribute('aria-hidden', 'true'); return i; }
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* private mode */ } return null; }
 
   var params = new URLSearchParams(location.search);
@@ -18,7 +20,7 @@
   var onShopHost = false; // set when the bundle loads without a slug (real subdomain)
   var CART_KEY = function () { return 'kaunta.cart.' + (slug || location.host); };
 
-  var S = { settings: {}, zones: [], cats: [], cat: '', q: '', page: 1, pages: 1, cart: { items: [], total: 0 }, token: store(CART_KEY()) || '' };
+  var S = { settings: {}, zones: [], cats: [], cat: '', q: '', page: 1, pages: 1, total: 0, cart: { items: [], total: 0 }, token: store(CART_KEY()) || '' };
   var polling = 0; // incremented to cancel a payment poll
 
   /* ---------- api ---------- */
@@ -56,18 +58,20 @@
     try { S.cart = await cartApi('GET', '/cart'); } catch (e) { S.cart = { items: [], total: 0 }; }
     paintCount();
   }
-  function paintCount() {
+  function paintCount(bump) {
     var n = S.cart.items.reduce(function (s, i) { return s + Number(i.quantity); }, 0), c = $('#count');
     c.hidden = n <= 0; c.textContent = String(n > 99 ? '99+' : n);
+    if (bump) { var b = $('#cartBtn'); b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
   }
 
   var toastTimer;
   function toast(text) { var t = $('#toast'); t.textContent = text; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 2600); }
 
-  /* ---------- modal ---------- */
+  /* ---------- the drawer ---------- */
   var modal = $('#modal');
   function open(title, build) {
-    polling++; $('#mTitle').textContent = title; var b = $('#mBody'); b.textContent = ''; build(b);
+    polling++; $('#mTitle').textContent = title; var b = $('#mBody'), f = $('#mFoot'); b.textContent = ''; f.textContent = ''; f.hidden = true;
+    build(b, f); f.hidden = !f.children.length;
     if (!modal.open) modal.showModal(); b.scrollTop = 0;
   }
   $('#mClose').addEventListener('click', function () { modal.close(); });
@@ -82,6 +86,13 @@
     if (url) { var im = el('img'); im.alt = ''; im.loading = 'lazy'; im.src = url; im.addEventListener('error', none); box.appendChild(im); } else none();
     return box;
   }
+  function stepper(value, min, onChange) {
+    var q = el('span', undefined, 'qty'), minus = el('button'), plus = el('button'), n = input('number', { min: String(min), step: '1', value: String(value), inputmode: 'numeric', 'aria-label': 'Quantity' });
+    minus.type = 'button'; plus.type = 'button'; minus.appendChild(icon('minus')); plus.appendChild(icon('plus')); minus.setAttribute('aria-label', 'One less'); plus.setAttribute('aria-label', 'One more');
+    minus.addEventListener('click', function () { n.value = String(Math.max(min, (Number(n.value) || min) - 1)); onChange(); });
+    plus.addEventListener('click', function () { var max = Number(n.max) || Infinity; n.value = String(Math.min(max, (Number(n.value) || 0) + 1)); onChange(); });
+    n.addEventListener('input', onChange); q.appendChild(minus); q.appendChild(n); q.appendChild(plus); q.input = n; return q;
+  }
 
   /* ---------- page shell ---------- */
   function applySettings(s) {
@@ -90,9 +101,12 @@
     $('#shopName').textContent = name; $('#fName').textContent = name; document.title = s.seo_title || name;
     if (s.seo_description) $('meta[name=description]').setAttribute('content', s.seo_description);
     if (s.favicon_url) $('#favicon').setAttribute('href', s.favicon_url);
-    var logo = $('#logo'); if (s.logo_url) { logo.src = s.logo_url; logo.hidden = false; logo.addEventListener('error', function () { logo.hidden = true; }); }
+    var logo = $('#logo'), mark = $('#mark'); mark.textContent = name.trim().charAt(0).toUpperCase(); mark.hidden = Boolean(s.logo_url);
+    if (s.logo_url) { logo.src = s.logo_url; logo.hidden = false; logo.addEventListener('error', function () { logo.hidden = true; mark.hidden = false; }); }
     if (s.announcement) { $('#announce').textContent = s.announcement; $('#announce').hidden = false; }
-    if (s.tagline) { $('#tagline').textContent = s.tagline; $('#hello').hidden = false; }
+    $('#tagline').textContent = s.tagline || 'Order from ' + name; $('#hello').hidden = false;
+    var perks = $('#perks'); perks.textContent = '';
+    [[s.enable_delivery !== false, 'moped', 'Delivery'], [s.enable_pickup !== false, 'bag', 'Pickup in store'], [true, 'device-mobile', 'Pay with M-Pesa']].forEach(function (p) { if (!p[0]) return; var li = el('li'); li.appendChild(icon(p[1])); li.appendChild(document.createTextNode(p[2])); perks.appendChild(li); });
     var t = s.theme || {}, brand = t.primary_color || t.primary || t.brand_color || t.accent_color;
     if (typeof brand === 'string' && /^#[0-9a-f]{3,8}$/i.test(brand)) document.documentElement.style.setProperty('--brand', brand);
     $('#fAddr').textContent = s.address || '';
@@ -112,6 +126,9 @@
       var d = el('div'); if (b.title) d.appendChild(el('h2', b.title)); if (b.subtitle) d.appendChild(el('p', b.subtitle)); a.appendChild(d); hero.appendChild(a);
     });
     hero.hidden = !(list && list.length);
+    if (list && list.length > 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      var i = 0; setInterval(function () { if (document.hidden) return; i = (i + 1) % list.length; hero.scrollTo({ left: hero.clientWidth * i, behavior: 'smooth' }); }, 5200);
+    }
   }
   function pagesFooter(list) {
     var ul = $('#fPages'); ul.textContent = '';
@@ -124,7 +141,7 @@
     if (!flat.length) { nav.hidden = true; return; }
     [{ id: '', name: 'All' }].concat(flat).forEach(function (c) {
       var b = el('button', c.name, 'chip'); b.type = 'button'; b.setAttribute('aria-pressed', String(S.cat === c.id));
-      b.addEventListener('click', function () { S.cat = c.id; categories(tree); loadProducts(true); });
+      b.addEventListener('click', function () { S.cat = c.id; $('#secTitle').textContent = c.id ? c.name : 'All products'; categories(tree); loadProducts(true); });
       nav.appendChild(b);
     });
     nav.hidden = false;
@@ -142,12 +159,13 @@
       if (reset) grid.textContent = '';
       rows.forEach(function (p) {
         var c = el('button', undefined, 'card'); c.type = 'button';
-        var box = pic(p.image_url, p.name); if (p.in_stock === false) box.appendChild(el('span', 'Sold out', 'badge')); c.appendChild(box);
+        var box = pic(p.image_url, p.name); if (p.in_stock === false) box.appendChild(el('span', 'Sold out', 'badge')); else box.appendChild(el('span', 'Quick view', 'view')); c.appendChild(box);
         var info = el('div', undefined, 'info'); info.appendChild(el('b', p.name)); info.appendChild(el('span', range(p), 'price')); c.appendChild(info);
         c.addEventListener('click', function () { openProduct(p.slug); });
         grid.appendChild(c);
       });
-      S.pages = meta.pages || 1; more.hidden = S.page >= S.pages;
+      S.pages = meta.pages || 1; S.total = meta.total || grid.children.length; more.hidden = S.page >= S.pages;
+      $('#secCount').textContent = S.total ? S.total + (S.total === 1 ? ' product' : ' products') : '';
       if (!grid.children.length) { msg.textContent = S.q || S.cat ? 'Nothing found. Try a different search or category.' : 'No products are listed yet. Check back soon.'; msg.className = 'msg'; msg.hidden = false; }
     } catch (e) { if (reset) grid.textContent = ''; msg.textContent = e.message; msg.className = 'msg err'; msg.hidden = false; }
   }
@@ -156,33 +174,44 @@
   $('#q').addEventListener('input', function () { if (!this.value && S.q) { S.q = ''; loadProducts(true); } });
 
   async function openProduct(pslug) {
-    open('Loading...', function (b) { b.appendChild(el('div', undefined, 'spin')); });
+    open('Loading', function (b) { b.appendChild(el('div', undefined, 'spin')); });
     try {
       var p = await api('GET', '/products/' + encodeURIComponent(pslug));
-      open(p.name, function (b) {
-        var gal = el('div', undefined, 'gal'), main = el('img', undefined, 'main'); main.alt = p.name;
+      open(p.name, function (b, f) {
         var imgs = (p.images || []).filter(function (i) { return i.url; });
+        var gal = el('div', undefined, 'gal');
         if (imgs.length) {
-          main.src = imgs[0].url; gal.appendChild(main);
+          var main = el('img', undefined, 'main'); main.alt = p.name; main.src = imgs[0].url; gal.appendChild(main);
           if (imgs.length > 1) { var th = el('div', undefined, 'thumbs'); imgs.forEach(function (i, n) { var t = el('img'); t.src = i.url; t.alt = ''; t.setAttribute('aria-current', String(n === 0)); t.addEventListener('click', function () { main.src = i.url; th.querySelectorAll('img').forEach(function (x) { x.setAttribute('aria-current', 'false'); }); t.setAttribute('aria-current', 'true'); }); th.appendChild(t); }); gal.appendChild(th); }
-          b.appendChild(gal);
+        } else gal.appendChild(pic(null, p.name));
+        b.appendChild(gal);
+        var vs = p.variants || [], cur = vs.filter(function (v) { return v.in_stock; })[0] || vs[0];
+        var price = el('div', undefined, 'd-price'), stock = el('span', undefined, 'stock'), qty = stepper(1, 1, paint), add = el('button', undefined, 'btn primary'); add.type = 'button';
+        b.appendChild(price); b.appendChild(stock);
+        if (p.description) b.appendChild(el('p', p.description, 'desc'));
+        if (vs.length > 1 || (vs[0] && vs[0].name !== 'Default')) {
+          var pick = el('div', undefined, 'vpick'); vs.forEach(function (v) {
+            var vb = el('button'); vb.type = 'button'; vb.disabled = !v.in_stock; vb.appendChild(document.createTextNode(v.name && v.name !== 'Default' ? v.name : 'Standard')); vb.appendChild(el('small', money(v.price) + (v.in_stock ? '' : ', sold out')));
+            vb.addEventListener('click', function () { cur = v; paint(); }); vb.dataset.id = v.id; pick.appendChild(vb);
+          });
+          var w = el('div', undefined, 'fld'); w.appendChild(el('span', 'Choose an option')); w.appendChild(pick); b.appendChild(w); b._pick = pick;
         }
-        var vs = p.variants || [], sel = el('select');
-        vs.forEach(function (v) { var o = el('option', (v.name && v.name !== 'Default' ? v.name + ' - ' : '') + money(v.price) + (v.in_stock ? '' : ' (sold out)')); o.value = v.id; o.disabled = !v.in_stock; sel.appendChild(o); });
-        var firstOk = vs.filter(function (v) { return v.in_stock; })[0]; if (firstOk) sel.value = firstOk.id;
-        var price = el('div', undefined, 'price'), stock = el('small', undefined, 'muted'), qty = input('number', { min: '1', step: '1', value: '1', inputmode: 'numeric' }), add = el('button', 'Add to cart', 'btn primary full'); add.type = 'button';
-        function cur() { return vs.filter(function (v) { return v.id === sel.value; })[0]; }
-        function paint() { var v = cur(); price.textContent = v ? money(v.price) : ''; add.disabled = !v || !v.in_stock; stock.textContent = v && v.available != null && v.in_stock ? v.available + ' available' : v && !v.in_stock ? 'Sold out' : ''; if (v && v.available != null) qty.max = String(v.available); }
-        sel.addEventListener('change', paint); paint();
-        price.style.fontSize = '1.4rem';
-        b.appendChild(price); if (p.description) b.appendChild(el('p', p.description, 'desc'));
-        if (vs.length > 1 || (vs[0] && vs[0].name !== 'Default')) b.appendChild(field('Choose an option', sel));
-        b.appendChild(stock); b.appendChild(field('Quantity', qty));
-        var err = note('', 'err'); err.hidden = true; b.appendChild(err); b.appendChild(add);
+        function paint() {
+          if (!cur) return;
+          var n = Math.max(1, Math.floor(Number(qty.input.value) || 1));
+          price.textContent = money(cur.price);
+          var av = cur.available != null ? Number(cur.available) : null;
+          stock.className = 'stock' + (!cur.in_stock ? ' out' : av != null && av <= 5 ? ' low' : ''); stock.textContent = !cur.in_stock ? 'Sold out' : av != null && av <= 5 ? 'Only ' + av + ' left' : 'In stock';
+          if (av != null && cur.in_stock) qty.input.max = String(av);
+          add.disabled = !cur.in_stock; add.textContent = cur.in_stock ? 'Add to cart, ' + money(cur.price * n) : 'Sold out';
+          if (b._pick) b._pick.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.id === cur.id)); });
+        }
+        var err = note('', 'err'); err.hidden = true; b.appendChild(err);
+        var row = el('div', undefined, 'buy'); row.appendChild(qty); row.appendChild(add); f.appendChild(row); paint();
         add.addEventListener('click', async function () {
-          var v = cur(), n = Math.max(1, Math.floor(Number(qty.value) || 1)); err.hidden = true; if (!v) return;
+          var n = Math.max(1, Math.floor(Number(qty.input.value) || 1)); err.hidden = true; if (!cur) return;
           add.disabled = true;
-          try { S.cart = await cartApi('POST', '/cart/items', { variant_id: v.id, quantity: n }); paintCount(); modal.close(); toast('Added to your cart'); }
+          try { S.cart = await cartApi('POST', '/cart/items', { variant_id: cur.id, quantity: n }); paintCount(true); modal.close(); toast(p.name + ' added to your cart'); }
           catch (e) { err.textContent = e.message; err.hidden = false; add.disabled = false; }
         });
       });
@@ -192,25 +221,27 @@
   /* ---------- cart ---------- */
   async function openCart() {
     await refreshCart();
-    open('Your cart', function (b) {
+    open('Your cart', function (b, f) {
       var items = S.cart.items || [];
-      if (!items.length) { b.appendChild(el('p', 'Your cart is empty.', 'msg')); var c = el('button', 'Keep shopping', 'btn full'); c.type = 'button'; c.addEventListener('click', function () { modal.close(); }); b.appendChild(c); return; }
+      if (!items.length) {
+        var e = el('div', undefined, 'center'); e.style.padding = '40px 0'; var ic = el('span', undefined, 'gone-ic'); ic.appendChild(icon('shopping-bag')); e.appendChild(ic); e.appendChild(el('b', 'Your cart is empty')); e.appendChild(el('p', 'Add something you like and it will wait for you here.', 'muted'));
+        var c = el('button', 'Keep shopping', 'btn'); c.type = 'button'; c.addEventListener('click', function () { modal.close(); }); e.appendChild(c); b.appendChild(e); return;
+      }
       var ul = el('ul', undefined, 'lines');
       items.forEach(function (i) {
-        var li = el('li'); li.appendChild(i.image_url ? pic(i.image_url, i.product_name, 'th') : el('div', (i.product_name || '?').charAt(0).toUpperCase(), 'th'));
+        var li = el('li'); var th = pic(i.image_url, i.product_name, 'th'); li.appendChild(th);
         var nm = el('div', i.product_name, 'nm'); if (i.variant_name && i.variant_name !== 'Default') nm.appendChild(el('small', i.variant_name)); nm.appendChild(el('small', money(i.selling_price) + ' each'));
-        var q = el('span', undefined, 'qty'), minus = el('button', '-'), plus = el('button', '+'), n = el('span', String(Number(i.quantity)));
-        minus.type = 'button'; plus.type = 'button'; minus.setAttribute('aria-label', 'One less'); plus.setAttribute('aria-label', 'One more');
+        var q = el('span', undefined, 'qty'), minus = el('button'), plus = el('button'), n = el('span', String(Number(i.quantity)));
+        minus.type = 'button'; plus.type = 'button'; minus.appendChild(icon('minus')); plus.appendChild(icon('plus')); minus.setAttribute('aria-label', 'One less'); plus.setAttribute('aria-label', 'One more');
         minus.addEventListener('click', function () { setQty(i.variant_id, Number(i.quantity) - 1); }); plus.addEventListener('click', function () { setQty(i.variant_id, Number(i.quantity) + 1); });
         q.appendChild(minus); q.appendChild(n); q.appendChild(plus); nm.appendChild(q); li.appendChild(nm);
         var right = el('div'); right.appendChild(el('div', money(i.line_total), 'lt')); var rm = el('button', 'Remove', 'rm'); rm.type = 'button'; rm.addEventListener('click', function () { setQty(i.variant_id, 0); }); right.appendChild(rm); li.appendChild(right);
         ul.appendChild(li);
       });
       b.appendChild(ul);
-      var sum = el('div', undefined, 'sum'), tot = el('div', undefined, 'tot'); tot.appendChild(el('span', 'Subtotal')); tot.appendChild(el('span', money(S.cart.total))); sum.appendChild(tot);
-      var min = Number(S.settings.min_order_amount) || 0; if (min && S.cart.total < min) sum.appendChild(note('The minimum order is ' + money(min) + '.'));
-      b.appendChild(sum);
-      var go = el('button', 'Checkout', 'btn primary full'); go.type = 'button'; go.disabled = Boolean(min && S.cart.total + 0.005 < min); go.addEventListener('click', openCheckout); b.appendChild(go);
+      var min = Number(S.settings.min_order_amount) || 0; if (min && S.cart.total < min) b.appendChild(note('The minimum order is ' + money(min) + '. Add ' + money(min - S.cart.total) + ' more to check out.'));
+      var sum = el('div', undefined, 'sum'), tot = el('div', undefined, 'tot'); tot.appendChild(el('span', 'Subtotal')); tot.appendChild(el('span', money(S.cart.total))); sum.appendChild(tot); sum.appendChild(el('div', 'Delivery is worked out at checkout.')); f.appendChild(sum);
+      var go = el('button', 'Checkout', 'btn primary full'); go.type = 'button'; go.disabled = Boolean(min && S.cart.total + 0.005 < min); go.addEventListener('click', openCheckout); f.appendChild(go);
     });
   }
   async function setQty(variantId, q) {
@@ -222,25 +253,25 @@
   /* ---------- checkout ---------- */
   function openCheckout() {
     var s = S.settings, zones = S.zones || [];
-    open('Checkout', function (b) {
-      var canDel = s.enable_delivery !== false && (zones.length > 0 || true), canPick = s.enable_pickup !== false;
-      if (s.enable_delivery === false && s.enable_pickup === false) { b.appendChild(note('This shop is not taking orders right now.', 'err')); return; }
-      var f = el('form', undefined, 'fld'); f.noValidate = true; f.style.gap = '.9rem'; f.style.display = 'grid';
+    open('Checkout', function (b, foot) {
+      var canDel = s.enable_delivery !== false, canPick = s.enable_pickup !== false;
+      if (!canDel && !canPick) { b.appendChild(note('This shop is not taking orders right now.', 'err')); return; }
+      var f = el('form', undefined, 'form'); f.id = 'coForm'; f.noValidate = true; f.style.display = 'grid'; f.style.gap = '16px';
       var name = input('text', { autocomplete: 'name', required: '' }), phone = input('tel', { autocomplete: 'tel', inputmode: 'tel', placeholder: '0712 345 678', required: '' }), email = input('email', { autocomplete: 'email' });
       var row = el('div', undefined, 'row2'); row.appendChild(field('Your name', name)); row.appendChild(field('Phone (M-Pesa)', phone, 'You will pay on this phone.')); f.appendChild(row);
       f.appendChild(field('Email (optional)', email));
       var pick = el('div', undefined, 'pick'), rD = input('radio', { name: 'ft', value: 'delivery' }), rP = input('radio', { name: 'ft', value: 'pickup' });
-      var lD = el('label'), lP = el('label'); lD.appendChild(rD); lD.appendChild(el('span', 'Delivery')); lP.appendChild(rP); lP.appendChild(el('span', 'Pickup'));
-      if (s.enable_delivery !== false) pick.appendChild(lD); if (canPick) pick.appendChild(lP);
-      (s.enable_delivery !== false ? rD : rP).checked = true;
+      var lD = el('label'), lP = el('label'); lD.appendChild(rD); lD.appendChild(icon('moped')); lD.appendChild(el('span', 'Delivery')); lP.appendChild(rP); lP.appendChild(icon('bag')); lP.appendChild(el('span', 'Pickup'));
+      if (canDel) pick.appendChild(lD); if (canPick) pick.appendChild(lP);
+      (canDel ? rD : rP).checked = true;
       var fw = el('div', undefined, 'fld'); fw.appendChild(el('span', 'How do you want your order?')); fw.appendChild(pick); f.appendChild(fw);
-      var zone = el('select'); zones.forEach(function (z) { var o = el('option', z.name + ' - ' + money(z.fee)); o.value = z.id; zone.appendChild(o); });
-      var addr = el('textarea'), dnote = input('text'), dBox = el('div'); dBox.style.display = 'grid'; dBox.style.gap = '.9rem';
+      var zone = el('select'); zones.forEach(function (z) { var o = el('option', z.name + ', ' + money(z.fee)); o.value = z.id; zone.appendChild(o); });
+      var addr = el('textarea'), dnote = input('text'), dBox = el('div'); dBox.style.display = 'grid'; dBox.style.gap = '16px';
       if (zones.length) dBox.appendChild(field('Delivery area', zone)); dBox.appendChild(field('Delivery address', addr, 'Building, street, landmark.')); dBox.appendChild(field('Directions (optional)', dnote)); f.appendChild(dBox);
       var cnote = el('textarea'); f.appendChild(field('Note to the shop (optional)', cnote));
-      var sum = el('div', undefined, 'sum'); f.appendChild(sum);
-      var err = note('', 'err'); err.hidden = true; f.appendChild(err);
-      var go = el('button', 'Place order and pay with M-Pesa', 'btn primary full'); go.type = 'submit'; f.appendChild(go);
+      var err = note('', 'err'); err.hidden = true; f.appendChild(err); b.appendChild(f);
+      var sum = el('div', undefined, 'sum'); foot.appendChild(sum);
+      var go = el('button', 'Place order and pay with M-Pesa', 'btn primary full'); go.type = 'submit'; go.setAttribute('form', 'coForm'); foot.appendChild(go);
       function ft() { return rP.checked ? 'pickup' : 'delivery'; }
       function fee() { if (ft() !== 'delivery') return 0; var z = zones.filter(function (x) { return x.id === zone.value; })[0]; return z ? Number(z.fee) || 0 : 0; }
       function paint() {
@@ -262,7 +293,6 @@
           payOrder(order, phone.value.trim());
         } catch (ex) { err.textContent = ex.message; err.hidden = false; go.disabled = false; go.textContent = 'Place order and pay with M-Pesa'; }
       });
-      b.appendChild(f);
     });
   }
 
@@ -270,7 +300,7 @@
   function trackLink(token) { return location.origin + location.pathname + '?' + (slug ? 'shop=' + encodeURIComponent(slug) + '&' : '') + 'order=' + encodeURIComponent(token); }
   async function payOrder(order, phone) {
     open('Pay with M-Pesa', function (b) {
-      var c = el('div', undefined, 'center'); c.appendChild(el('div', undefined, 'spin')); c.appendChild(el('b', 'Order ' + order.order_number + ' placed'));
+      var c = el('div', undefined, 'center'); c.style.padding = '20px 0'; var pp = el('div', undefined, 'phone-pulse'); pp.appendChild(icon('device-mobile')); c.appendChild(pp); c.appendChild(el('b', 'Order ' + order.order_number + ' placed'));
       var status = el('p', 'Sending the payment request to your phone...', 'note'); c.appendChild(status);
       var retry = el('button', 'Send the request again', 'btn'); retry.type = 'button'; retry.hidden = true; c.appendChild(retry);
       var keep = el('p', 'Your items are held for ' + (order.hold_minutes || 15) + ' minutes. Order link: ', 'note'), a = el('a', 'track this order'); a.href = trackLink(order.tracking_token); keep.appendChild(a); c.appendChild(keep);
@@ -295,17 +325,34 @@
     });
   }
   function paid(o) { return o.payment_status === 'paid' || (o.fulfilment_status && ['awaiting_payment', 'cancelled'].indexOf(o.fulfilment_status) < 0); }
+
+  /* Statuses the shop moves an order through: awaiting_payment, paid, processing, ready, out_for_delivery, completed (or cancelled). */
+  function timeline(o) {
+    var delivery = o.fulfilment_type === 'delivery';
+    var steps = [['awaiting_payment', 'Order placed', 'We have your order.'], ['paid', 'Payment received', 'Thank you.'], ['processing', 'Being prepared', 'The shop is packing your items.'],
+      delivery ? ['out_for_delivery', 'On the way', 'Your order is out for delivery.'] : ['ready', 'Ready for pickup', 'Come and collect it from the shop.'], ['completed', delivery ? 'Delivered' : 'Collected', 'All done.']];
+    var order = ['awaiting_payment', 'paid', 'processing', 'ready', 'out_for_delivery', 'completed'], at = order.indexOf(o.fulfilment_status);
+    if (!delivery && o.fulfilment_status === 'out_for_delivery') at = order.indexOf('ready');
+    var ol = el('ol', undefined, 'track');
+    steps.forEach(function (s) {
+      var idx = order.indexOf(s[0]), done = idx <= at && at >= 0, now = (idx === at) || (delivery === false && s[0] === 'ready' && at === 3);
+      var li = el('li', undefined, (done ? 'done' : '') + (now ? ' now' : '')), dot = el('span', undefined, 'dot'); if (done && !now) dot.appendChild(icon('check'));
+      li.appendChild(dot); var t = el('div'); t.appendChild(el('b', s[1])); if (now || done) t.appendChild(el('small', s[2])); li.appendChild(t); ol.appendChild(li);
+    });
+    return ol;
+  }
   function showOrder(o, justPaid) {
-    open('Order ' + (o.sale_number || ''), function (b) {
+    open('Order ' + (o.sale_number || ''), function (b, f) {
       var c = el('div', undefined, 'center');
-      if (justPaid) { c.appendChild(el('div', '✓', 'tick')); c.appendChild(el('b', 'Thank you, ' + (o.customer_name || '') + '! Your payment is received.')); }
-      c.appendChild(el('p', 'Status: ' + String(o.fulfilment_status || '').replace(/_/g, ' ') + (paid(o) ? '' : ' (not paid yet)'), 'note' + (paid(o) ? ' ok' : '')));
+      if (justPaid) { var t = el('div', undefined, 'tick'); t.appendChild(icon('check')); c.appendChild(t); c.appendChild(el('b', 'Thank you, ' + (o.customer_name || '') + '! Your payment is received.')); }
       b.appendChild(c);
-      var ul = el('ul', undefined, 'lines'); (o.items || []).forEach(function (i) { var li = el('li'); li.style.gridTemplateColumns = 'minmax(0,1fr) auto'; li.appendChild(el('div', Number(i.quantity) + ' x ' + i.product_name + (i.variant_name && i.variant_name !== 'Default' ? ' - ' + i.variant_name : ''), 'nm')); li.appendChild(el('div', money(i.line_total), 'lt')); ul.appendChild(li); });
+      if (o.fulfilment_status === 'cancelled') b.appendChild(note('This order was cancelled.', 'err'));
+      else { b.appendChild(timeline(o)); if (!paid(o)) b.appendChild(note('This order is not paid yet.')); }
+      var ul = el('ul', undefined, 'lines'); (o.items || []).forEach(function (i) { var li = el('li'); li.style.gridTemplateColumns = 'minmax(0,1fr) auto'; li.appendChild(el('div', Number(i.quantity) + ' x ' + i.product_name + (i.variant_name && i.variant_name !== 'Default' ? ', ' + i.variant_name : ''), 'nm')); li.appendChild(el('div', money(i.line_total), 'lt')); ul.appendChild(li); });
       b.appendChild(ul);
       var sum = el('div', undefined, 'sum'), tot = el('div', undefined, 'tot'); tot.appendChild(el('span', 'Total')); tot.appendChild(el('span', money(o.total))); sum.appendChild(tot); b.appendChild(sum);
       if (o.fulfilment_type === 'delivery' && o.delivery_address) b.appendChild(el('p', 'Delivering to: ' + o.delivery_address, 'desc'));
-      var done = el('button', 'Continue shopping', 'btn full'); done.type = 'button'; done.addEventListener('click', function () { modal.close(); }); b.appendChild(done);
+      var done = el('button', 'Continue shopping', 'btn full'); done.type = 'button'; done.addEventListener('click', function () { modal.close(); }); f.appendChild(done);
     });
   }
   async function openTracked(token) {
@@ -323,7 +370,7 @@
 
   /* ---------- start ---------- */
   function unavailable(text) {
-    $('#main').hidden = true; $('.bar').hidden = true; $('#foot').hidden = true; $('#gone').hidden = false;
+    $('#main').hidden = true; $('#bar').hidden = true; $('#foot').hidden = true; $('#gone').hidden = false;
     if (text) $('#goneText').textContent = text;
   }
   (async function () {

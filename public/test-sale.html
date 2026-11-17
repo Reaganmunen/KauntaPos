@@ -3,31 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Test sale | Kaunta</title>
-  <meta name="theme-color" content="#ffffff">
+  <title>Practice sale | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
   <link rel="icon" href="favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
   <script src="js/theme.js"></script>
-  <link href="css/dashboard.css" rel="stylesheet">
-  <link href="css/steps.css" rel="stylesheet">
+  <link href="css/ui.css" rel="stylesheet">
   <link href="css/theme.css" rel="stylesheet">
 </head>
-<body>
-<header class="step-top">
-  <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="28" height="28"><span>Kaunta</span></a>
-  <div class="top-r"><span class="chip hide-s"><span class="av">K</span><b id="shopName">Your shop</b></span><span data-theme-slot></span></div>
-</header>
-<main class="step-page">
-  <div class="head">
-    <a class="crumb" href="dashboard.html"><i class="ph ph-arrow-left"></i>Back to dashboard</a>
-    <h1>Make a test sale in cash</h1>
-    <p class="muted">No setup needed. Pick a product, take the cash and see how a sale and its receipt look. It is recorded as a real sale, with real stock and totals.</p>
-  </div>
+<body data-nav="test-sale.html">
+<main class="page narrow" id="page">
+  <div class="head"><div><h1>Make a practice sale in cash</h1><p>No setup needed. Pick a product, take the cash and see how a sale and its receipt look. It is recorded as a real sale, with real stock and totals.</p></div></div>
   <section class="card" id="saleCard">
     <form class="form" id="saleForm" novalidate>
       <label class="fld"><span>Product</span><select id="product" required><option value="">Loading your products...</option></select></label>
@@ -40,15 +31,17 @@
       <div class="actions"><button class="btn primary" id="saleBtn" type="submit" disabled>Complete sale</button><a class="btn" href="products.html">Add more products</a></div>
     </form>
   </section>
-  <section class="card done-card" id="doneCard" hidden>
-    <span class="ic"><i class="ph ph-check"></i></span>
+  <section class="card done-card2" id="doneCard" hidden>
+    <span class="ic lg"><i class="ph ph-check"></i></span>
     <h2 id="doneTitle">Sale complete</h2>
     <p class="muted" id="doneText"></p>
-    <div class="actions"><a class="btn primary" href="dashboard.html">Back to dashboard</a><button class="btn" id="again" type="button">Make another</button></div>
+    <div class="actions" style="justify-content:center"><a class="btn primary" href="dashboard.html">Back to overview</a><button class="btn" id="again" type="button">Make another</button></div>
   </section>
 </main>
+
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
+<script src="js/shell.js"></script>
 <script src="js/step-sale.js"></script>
 </body>
 </html>

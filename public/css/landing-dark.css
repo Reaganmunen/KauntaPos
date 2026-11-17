@@ -1,12 +1,12 @@
 /* Dark theme for the landing page. Loaded after landing.css. Orange sections stay orange; light surfaces go dark. */
 html[data-theme="dark"] {
-  --ink: #f2efec; --ink-soft: #b3ada6;
-  --paper: #151311; --paper-line: rgba(255,255,255,.06); --card: #1e1b19;
-  --ember-tint: #2c211b; --line: rgba(255,255,255,.13);
-  --bs-body-bg: #151311; --bs-body-color: #f2efec;
-  --bs-link-color: #ff8a5c; --bs-link-hover-color: #ffa07a;
+  --ink: #e8efea; --ink-soft: #a3b2aa;
+  --paper: #0a100d; --paper-line: rgba(255,255,255,.06); --card: #111915;
+  --ember-tint: #12291f; --line: rgba(255,255,255,.13);
+  --bs-body-bg: #0a100d; --bs-body-color: #e8efea;
+  --bs-link-color: #5bd6a5; --bs-link-hover-color: #8be6c0;
 }
-html[data-theme="dark"] body { background-color: #151311; }
+html[data-theme="dark"] body { background-color: #0a100d; }
 html[data-theme="dark"] .site-nav { background: rgba(21,19,17,.92); }
 
 /* surfaces that were hard-coded white */
@@ -38,16 +38,16 @@ html[data-theme="dark"] .status,
 html[data-theme="dark"] .step.on,
 html[data-theme="dark"] .step:not(.on) .ic { background-color: var(--card); }
 html[data-theme="dark"] .browser-bar,
-html[data-theme="dark"] .shop-foot { background: #211e1c; }
-html[data-theme="dark"] .phone-screen { background: #1a1c1b; }
-html[data-theme="dark"] .demo { background: #231a15; }
+html[data-theme="dark"] .shop-foot { background: #111915; }
+html[data-theme="dark"] .phone-screen { background: #111915; }
+html[data-theme="dark"] .demo { background: #0f1c16; }
 
 /* things that used --ink as a dark background must stay dark */
 html[data-theme="dark"] .signup,
 html[data-theme="dark"] .stock-toast,
-html[data-theme="dark"] .pin i.on { background: #1d1b19; }
+html[data-theme="dark"] .pin i.on { background: #0a100d; }
 html[data-theme="dark"] .band .device-card .btn-ember,
-html[data-theme="dark"] .plan.pop .btn-ember { --bs-btn-hover-bg: #1d1b19; --bs-btn-hover-border-color: #1d1b19; }
+html[data-theme="dark"] .plan.pop .btn-ember { --bs-btn-hover-bg: #0a100d; --bs-btn-hover-border-color: #0a100d; }
 html[data-theme="dark"] .btn-ghost { --bs-btn-hover-bg: var(--card); --bs-btn-hover-color: var(--ink); }
 html[data-theme="dark"] .form-card .form-control,
 html[data-theme="dark"] .form-card .form-select { color: var(--ink); border-color: var(--line); }

@@ -17,12 +17,12 @@
   // (transparent PNG, about 600x600, product centred). A missing file shows the first letter instead.
   var IMG_DIR = 'img/products/';
   var PRODUCTS = [
-    { id: 'flour', name: 'Maize flour 2kg', price: 185, img: 'maize-flour.png',  bg: '#fff3e8' },
-    { id: 'oil',   name: 'Cooking oil 1L',  price: 340, img: 'cooking-oil.png',  bg: '#fff3e8' },
-    { id: 'bread', name: 'Bread 400g',      price: 70,  img: 'bread.png',        bg: '#fff3e8' },
-    { id: 'milk',  name: 'Milk 500ml',      price: 60,  img: 'milk.png',         bg: '#fff3e8' },
-    { id: 'soap',  name: 'Bar soap',        price: 120, img: 'soap.png',         bg: '#fff3e8' },
-    { id: 'sugar', name: 'Sugar 1kg',       price: 190, img: 'sugar.png',        bg: '#fff3e8' }
+    { id: 'flour', name: 'Maize flour 2kg', price: 185, img: 'maize-flour.png',  bg: '#e1f0e7' },
+    { id: 'oil',   name: 'Cooking oil 1L',  price: 340, img: 'cooking-oil.png',  bg: '#e1f0e7' },
+    { id: 'bread', name: 'Bread 400g',      price: 70,  img: 'bread.png',        bg: '#e1f0e7' },
+    { id: 'milk',  name: 'Milk 500ml',      price: 60,  img: 'milk.png',         bg: '#e1f0e7' },
+    { id: 'soap',  name: 'Bar soap',        price: 120, img: 'soap.png',         bg: '#e1f0e7' },
+    { id: 'sugar', name: 'Sugar 1kg',       price: 190, img: 'sugar.png',        bg: '#e1f0e7' }
   ];
   function thumb(p) {
     var letter = p.name.charAt(0);

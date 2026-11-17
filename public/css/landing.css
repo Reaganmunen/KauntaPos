@@ -1,23 +1,23 @@
 /* Kaunta landing page
-   Palette: ink, paper, ember (orange), charcoal band, till green.
-   Type: Bricolage Grotesque (display) + DM Sans (body). */
+   Palette: ink, paper, bottle green (the variable is still named ember), deep green band, till green.
+   Type: Geist. */
 
 :root {
-  --ink: #1d1b19;
-  --ink-soft: #5d5953;
+  --ink: #13201a;
+  --ink-soft: #4a5a52;
   --paper: #ffffff;
-  --paper-line: rgba(29, 27, 25, 0.055);
+  --paper-line: rgba(19, 32, 26, 0.055);
   --card: #ffffff;
-  --ember: #f0602a;
-  --ember-deep: #c8491a;
-  --section: #db4a12; /* orange for full-width sections; white text on it passes contrast */
-  --ember-tint: #fde8dd;
-  --band: #252321;
-  --band-2: #34312e;
-  --green: #1f9d62;
-  --line: rgba(29, 27, 25, 0.1);
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-body: "DM Sans", system-ui, sans-serif;
+  --ember: #0f5c44;
+  --ember-deep: #0a4735;
+  --section: #0f5c44; /* deep green for full-width sections; white text on it passes contrast */
+  --ember-tint: #e1f0e7;
+  --band: #0b2a21;
+  --band-2: #12392d;
+  --green: #0f8a5f;
+  --line: rgba(19, 32, 26, 0.1);
+  --font-display: "Geist", system-ui, sans-serif;
+  --font-body: "Geist", system-ui, sans-serif;
   --bs-body-font-family: var(--font-body);
   --bs-body-color: var(--ink);
   --bs-body-bg: #ffffff;
@@ -50,7 +50,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
 
 /* ---------- nav ---------- */
 .site-nav { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
-.brand { display: inline-flex; align-items: center; gap: .6rem; font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; color: var(--ink); text-decoration: none; }
+.brand { display: inline-flex; align-items: center; gap: .6rem; font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; color: var(--ink); text-decoration: none; }
 .brand-logo { height: 34px; width: auto; display: block; }
 .site-nav .nav-link { color: var(--ink); font-weight: 500; font-size: .95rem; }
 .site-nav .nav-link:hover { color: var(--ember-deep); }
@@ -62,7 +62,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
   border-radius: 999px; padding: .35rem .9rem .35rem .5rem; font-size: .85rem; font-weight: 500; box-shadow: 0 6px 20px rgba(29,27,25,.05);
 }
 .pill i { width: 22px; height: 22px; border-radius: 50%; background: var(--ember-tint); display: grid; place-items: center; font-style: normal; color: var(--ember-deep); font-size: .75rem; }
-.hero h1 { font-size: clamp(2.4rem, 4.1vw, 3.7rem); line-height: 1.02; margin: 1.3rem 0 1.2rem; font-weight: 800; }
+.hero h1 { font-size: clamp(2.4rem, 4.1vw, 3.7rem); line-height: 1.02; margin: 1.3rem 0 1.2rem; font-weight: 700; }
 .hero .lead { color: var(--ink-soft); font-size: 1.125rem; max-width: 33rem; line-height: 1.6; }
 .hero-notes { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; margin-top: 2rem; color: var(--ink-soft); font-size: .9rem; }
 .hero-notes span { display: inline-flex; align-items: center; gap: .45rem; }
@@ -154,7 +154,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
 /* ---------- section scaffolding ---------- */
 .section { padding: 6.5rem 0; }
 .section-head { max-width: 40rem; margin-bottom: 3rem; }
-.section-head h2 { font-size: clamp(2rem, 3.8vw, 3.1rem); line-height: 1.06; font-weight: 800; }
+.section-head h2 { font-size: clamp(2rem, 3.8vw, 3.1rem); line-height: 1.06; font-weight: 700; }
 .section-head p { color: var(--ink-soft); font-size: 1.1rem; margin-top: 1rem; line-height: 1.6; }
 
 /* ---------- demo (sticky steps + screen) ---------- */
@@ -190,10 +190,10 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
 .mini-table td:first-child { border-radius: 12px 0 0 12px; font-weight: 600; }
 .mini-table td:last-child { border-radius: 0 12px 12px 0; text-align: right; }
 .chip { display: inline-block; font-size: .75rem; padding: .15rem .6rem; border-radius: 999px; background: var(--ember-tint); color: var(--ember-deep); font-weight: 600; }
-.chip.ok { background: #dff3e8; color: #167548; }
+.chip.ok { background: #d6efe2; color: #0f6b3d; }
 .feed { display: flex; flex-direction: column; gap: .6rem; }
 .feed-item { background: #fff; border-radius: 14px; padding: .8rem 1rem; display: flex; align-items: center; gap: .8rem; font-size: .92rem; }
-.feed-item .dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #dff3e8; color: #167548; flex: none; }
+.feed-item .dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #d6efe2; color: #0f6b3d; flex: none; }
 .feed-item span:last-child { margin-left: auto; font-weight: 700; }
 .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; margin-bottom: 1rem; }
 .kpi { background: #fff; border-radius: 14px; padding: .8rem 1rem; }
@@ -264,7 +264,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
 /* ---------- pricing ---------- */
 .plan { background: #fff; border: 1px solid var(--line); border-radius: 28px; padding: 2rem; height: 100%; display: flex; flex-direction: column; }
 .plan.pop { background: var(--section); color: #fff; border-color: var(--section); transform: translateY(-14px); }
-.plan .price { font-family: var(--font-display); font-size: 2.6rem; font-weight: 800; margin: .8rem 0 .2rem; }
+.plan .price { font-family: var(--font-display); font-size: 2.6rem; font-weight: 700; margin: .8rem 0 .2rem; }
 .plan .price small { font-size: .95rem; font-weight: 500; opacity: .6; font-family: var(--font-body); }
 .plan ul { list-style: none; padding: 0; margin: 1.4rem 0 2rem; display: grid; gap: .7rem; flex: 1; font-size: .95rem; }
 .plan li { display: flex; gap: .6rem; }
@@ -288,17 +288,17 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
 .signup { background: var(--section); color: #fff; border-radius: 40px; margin: 0 .75rem; padding: 5rem 0; position: relative; overflow: hidden; }
 .signup::before { content: ""; position: absolute; right: -120px; top: -120px; width: 420px; height: 420px; border-radius: 50%; background: #fff; opacity: .14; }
 .signup .container { position: relative; }
-.signup h2 { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; line-height: 1.05; }
+.signup h2 { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 700; line-height: 1.05; }
 .signup p.lead { color: rgba(255,255,255,.94); max-width: 28rem; }
 .form-card { background: #ffffff; color: var(--ink); border-radius: 28px; padding: 2rem; box-shadow: 0 30px 70px rgba(0,0,0,.35); }
 .form-card .form-control, .form-card .form-select { border-radius: 14px; padding: .7rem .95rem; border-color: var(--line); background-color: #fff; }
-.form-card .form-control:focus, .form-card .form-select:focus { border-color: var(--ember); box-shadow: 0 0 0 .22rem rgba(240,96,42,.18); }
+.form-card .form-control:focus, .form-card .form-select:focus { border-color: var(--ember); box-shadow: 0 0 0 .22rem rgba(15, 92, 68,.18); }
 .form-card label { font-size: .85rem; font-weight: 600; margin-bottom: .3rem; }
 .slug-hint { font-size: .82rem; color: var(--ink-soft); margin-top: .35rem; }
 .slug-hint b { color: var(--ember-deep); }
 .form-msg { border-radius: 14px; padding: .8rem 1rem; font-size: .92rem; margin-top: 1rem; display: none; }
-.form-msg.err { display: block; background: #fdebe6; color: #9c2f0b; }
-.form-msg.ok { display: block; background: #dff3e8; color: #167548; }
+.form-msg.err { display: block; background: #fbe5e0; color: #8f2412; }
+.form-msg.ok { display: block; background: #d6efe2; color: #0f6b3d; }
 
 /* ---------- footer ---------- */
 .foot { padding: 4rem 0 2.5rem; color: var(--ink-soft); font-size: .92rem; }
@@ -307,7 +307,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
 .status { display: inline-flex; align-items: center; gap: .5rem; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: .3rem .85rem; font-size: .82rem; }
 .status i { width: 8px; height: 8px; border-radius: 50%; background: #b9b4ab; }
 .status.up i { background: var(--green); }
-.status.down i { background: #d64a1e; }
+.status.down i { background: #cf4129; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 991.98px) {
@@ -345,7 +345,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
 /* product photos supplied by the owner (public/img/products/*) */
 .tile .sw, .shop-item .sw { overflow: hidden; }
 .tile .sw img, .shop-item .sw img { max-width: 82%; max-height: 88%; width: auto; height: auto; object-fit: contain; display: block; }
-.sw .ph { font-family: var(--font-display); font-weight: 800; font-size: 1.1em; color: var(--ember-deep); }
+.sw .ph { font-family: var(--font-display); font-weight: 700; font-size: 1.1em; color: var(--ember-deep); }
 
 /* till: category row above the product grid, and the scene bleeds a little past the container on wide screens */
 .till-main { display: flex; flex-direction: column; min-width: 0; }
@@ -357,10 +357,10 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; font
 
 /* ---------- colour rhythm: orange is the accent; only the stats band and one plan are solid orange ---------- */
 /* How it works: soft orange tint with dark text */
-.demo { background: #fff4ec; color: var(--ink); }
+.demo { background: #eef5f0; color: var(--ink); }
 .demo::before { background-image: linear-gradient(rgba(29,27,25,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(29,27,25,.045) 1px, transparent 1px); }
 .demo .section-head p { color: var(--ink-soft); }
-.step:hover { background: rgba(240,96,42,.08); }
+.step:hover { background: rgba(15, 92, 68,.08); }
 .step .ic { background: #fff; color: var(--ember-deep); border: 1px solid var(--line); }
 .step p { color: var(--ink-soft); }
 .step.on { background: #fff; border-color: var(--line); box-shadow: 0 12px 30px rgba(200,73,26,.12); }

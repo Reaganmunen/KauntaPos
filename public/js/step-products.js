@@ -1,17 +1,154 @@
-/* Add products one at a time, or import a CSV. POST /products and POST /products/import. */
+/* Products: browse (GET /products), see details (GET /products/:id), add one (POST /products), import a CSV (POST /products/import).
+   Photos and stock levels on the cards come from GET /sync/catalog when the signed-in person may read it; without it the cards simply show a letter. */
 (function () {
   'use strict';
   var K = window.KApp; if (!K) return;
   var $ = function (s) { return document.querySelector(s); };
+  var S = { page: 1, pages: 1, q: '', cat: '', view: 'grid', rows: [], info: {}, vinfo: {}, cats: {} };
+  try { S.view = localStorage.getItem('kaunta.products.view') === 'table' ? 'table' : 'grid'; } catch (e) { /* ignore */ }
 
-  /* ---------- tabs ---------- */
-  function tab(which) {
-    var one = which === 'one';
-    $('#tabOne').setAttribute('aria-selected', String(one)); $('#tabMany').setAttribute('aria-selected', String(!one));
-    $('#paneOne').hidden = !one; $('#paneMany').hidden = one;
+  function thumb(url, name, cls) {
+    var ph = function () { return K.el('span', (name || '?').trim().charAt(0).toUpperCase(), cls || 'ph'); };
+    if (!url) return ph();
+    var im = K.el('img', undefined, 'thumb'); im.alt = ''; im.loading = 'lazy'; im.src = url; im.addEventListener('error', function () { im.replaceWith(ph()); }); return im;
   }
-  $('#tabOne').addEventListener('click', function () { tab('one'); });
-  $('#tabMany').addEventListener('click', function () { tab('many'); });
+  function range(p) { var lo = Number(p.min_price), hi = Number(p.max_price); if (!isFinite(lo)) return 'No price'; return lo === hi || !isFinite(hi) ? K.money(lo) : K.money(lo) + ' to ' + K.money(hi); }
+  function stockTag(info) {
+    if (!info) return null;
+    if (!info.track) return K.el('span', 'Not tracked', 'tag');
+    return K.el('span', info.qty <= 0 ? 'Out of stock' : info.qty <= 5 ? info.qty + ' left' : info.qty + ' in stock', 'tag dot ' + (info.qty <= 0 ? 'bad' : info.qty <= 5 ? 'warn' : 'ok'));
+  }
+
+  /* ---------- load ---------- */
+  async function loadExtras() {
+    try {
+      var b = await K.branches(); if (!b[0]) return;
+      var d = await K.api('GET', '/sync/catalog', undefined, { 'X-Branch-Id': b[0].id });
+      ((d && d.items) || []).forEach(function (it) {
+        if (it.removed) return;
+        var i = S.info[it.product_id] || (S.info[it.product_id] = { image: null, qty: 0, track: false });
+        if (!i.image && it.image_url) i.image = it.image_url;
+        if (it.track_stock !== false && it.product_type !== 'service') { i.track = true; i.qty += Math.max(0, Number(it.quantity_on_hand) || 0); }
+        S.vinfo[it.variant_id] = { qty: Number(it.quantity_on_hand) || 0, track: it.track_stock !== false && it.product_type !== 'service' };
+      });
+    } catch (e) { /* photos and stock are a bonus */ }
+  }
+  async function loadCats() {
+    try {
+      var list = await K.api('GET', '/categories?all=true'); (list || []).forEach(function (c) { S.cats[c.id] = c.name; });
+      [$('#pcat'), $('#pCategory')].forEach(function (sel) { (list || []).forEach(function (c) { var o = K.el('option', c.name); o.value = c.id; sel.appendChild(o); }); });
+    } catch (e) { $('#pcat').hidden = true; $('#pCategory').closest('.fld').hidden = true; }
+  }
+  async function load() {
+    var err = $('#listErr'); K.notice(err, '');
+    var box = $('#list'); box.textContent = '';
+    for (var i = 0; i < 6; i++) box.appendChild(K.el('div', undefined, 'sk-row'));
+    try {
+      var qs = '?page=' + S.page + '&limit=24&is_active=true' + (S.q ? '&q=' + encodeURIComponent(S.q) : '') + (S.cat ? '&category_id=' + encodeURIComponent(S.cat) : '');
+      var res = await K.apiFull('GET', '/products' + qs);
+      S.rows = Array.isArray(res.data) ? res.data : (res.data && res.data.rows) || []; S.pages = (res.meta && res.meta.pages) || 1;
+      render();
+    } catch (ex) { box.textContent = ''; if (ex.message) K.notice(err, ex.status === 403 ? 'Your role does not include products. Ask the shop owner for access.' : ex.message, 'err'); }
+  }
+
+  function empty() {
+    var e = K.el('div', undefined, 'empty card'), ic = K.el('span', undefined, 'ic lg'); ic.appendChild(K.icon('package')); e.appendChild(ic);
+    if (S.q || S.cat) { e.appendChild(K.el('b', 'No products match')); e.appendChild(K.el('p', 'Try a different word or clear the category.')); }
+    else {
+      e.appendChild(K.el('b', 'Add your first product')); e.appendChild(K.el('p', 'A name and a price is enough. Add a photo and stock when you are ready.'));
+      var b = K.el('button', 'Add product', 'btn primary'); b.type = 'button'; b.addEventListener('click', openAdd); e.appendChild(b);
+    }
+    return e;
+  }
+  function render() {
+    var box = $('#list'); box.textContent = '';
+    if (!S.rows.length) { box.appendChild(empty()); $('#pager').hidden = true; return; }
+    if (S.view === 'grid') {
+      var g = K.el('div', undefined, 'pgrid');
+      S.rows.forEach(function (p) {
+        var info = S.info[p.id], c = K.el('button', undefined, 'pcard'); c.type = 'button';
+        c.appendChild(thumb(info && info.image, p.name));
+        var t = K.el('div', undefined, 't'); t.appendChild(K.el('b', p.name)); t.appendChild(K.el('span', range(p), 'p'));
+        var sm = p.category_name || (p.variant_count > 1 ? p.variant_count + ' options' : ''); if (sm) t.appendChild(K.el('small', sm));
+        var row = K.el('div', undefined, 'row'); row.style.flexWrap = 'wrap'; var st = stockTag(info); if (st) row.appendChild(st); if (p.is_online) row.appendChild(K.el('span', 'Online', 'tag info')); if (row.children.length) t.appendChild(row);
+        c.appendChild(t); c.addEventListener('click', function () { openDetail(p); }); g.appendChild(c);
+      });
+      box.appendChild(g);
+    } else {
+      var card = K.el('div', undefined, 'card flush'), sc = K.el('div', undefined, 'scroll'), tb = K.el('table'), tr = K.el('tr');
+      ['Product', 'Category', 'Price', 'Stock', 'Online'].forEach(function (h, i) { tr.appendChild(K.el('th', h, i === 2 ? 'r' : '')); });
+      var th = K.el('thead'); th.appendChild(tr); tb.appendChild(th); var body = K.el('tbody');
+      S.rows.forEach(function (p) {
+        var info = S.info[p.id], r = K.el('tr', undefined, 'go'), c1 = K.el('td'), wrap = K.el('div', undefined, 'row');
+        var tn = thumb(info && info.image, p.name, 'ph'); tn.style.width = '44px'; tn.style.height = '44px'; tn.style.fontSize = '18px'; tn.style.flex = 'none'; tn.style.aspectRatio = '1'; wrap.appendChild(tn);
+        var nm = K.el('div'); nm.appendChild(K.el('b', p.name)); if (p.variant_count > 1) nm.appendChild(K.el('small', p.variant_count + ' options', 'muted')).style.display = 'block'; wrap.appendChild(nm); c1.appendChild(wrap); r.appendChild(c1);
+        r.appendChild(K.el('td', p.category_name || 'None', p.category_name ? '' : 'muted')); r.appendChild(K.el('td', range(p), 'r num nw'));
+        var c4 = K.el('td'), st = stockTag(info); if (st) c4.appendChild(st); else c4.appendChild(K.el('span', 'Unknown', 'muted')); r.appendChild(c4);
+        r.appendChild(K.el('td')).appendChild(K.el('span', p.is_online ? 'Online' : 'Till only', 'tag' + (p.is_online ? ' info' : '')));
+        r.addEventListener('click', function () { openDetail(p); }); body.appendChild(r);
+      });
+      tb.appendChild(body); sc.appendChild(tb); card.appendChild(sc); box.appendChild(card);
+    }
+    var pg = $('#pager'); pg.hidden = S.pages <= 1; $('#pageInfo').textContent = 'Page ' + S.page + ' of ' + S.pages; $('#prev').disabled = S.page <= 1; $('#next').disabled = S.page >= S.pages;
+  }
+
+  var t = null;
+  $('#pq').addEventListener('input', function () { clearTimeout(t); var v = this.value.trim(); t = setTimeout(function () { S.q = v; S.page = 1; load(); }, 260); });
+  $('#pcat').addEventListener('change', function () { S.cat = this.value; S.page = 1; load(); });
+  $('#prev').addEventListener('click', function () { S.page--; load(); window.scrollTo({ top: 0 }); });
+  $('#next').addEventListener('click', function () { S.page++; load(); window.scrollTo({ top: 0 }); });
+  $('#pview').querySelectorAll('button').forEach(function (b) {
+    b.setAttribute('aria-pressed', String(b.dataset.v === S.view));
+    b.addEventListener('click', function () { S.view = b.dataset.v; try { localStorage.setItem('kaunta.products.view', S.view); } catch (e) { /* ignore */ } $('#pview').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); render(); });
+  });
+
+  /* ---------- details ---------- */
+  async function openDetail(row) {
+    var d = $('#detail'), body = $('#dBody'); body.textContent = ''; $('#dTitle').textContent = row.name;
+    body.appendChild(K.el('div', undefined, 'sk-row')); body.appendChild(K.el('div', undefined, 'sk-row')); d.showModal();
+    try {
+      var p = await K.api('GET', '/products/' + encodeURIComponent(row.id)); body.textContent = '';
+      var imgs = (p.images || []).map(function (i) { return i.url; }).filter(Boolean);
+      var gal = K.el('div', undefined, 'gal'), main;
+      function show(u) { var n; if (u) { n = K.el('img', undefined, 'main-pic'); n.alt = p.name; n.src = u; } else n = K.el('span', (p.name || '?').charAt(0).toUpperCase(), 'ph main-pic'); if (main) main.replaceWith(n); else gal.insertBefore(n, gal.firstChild); main = n; }
+      show(imgs[0] || (S.info[row.id] && S.info[row.id].image)); 
+      if (imgs.length > 1) { var th = K.el('div', undefined, 'thumbs'); imgs.forEach(function (u, i) { var x = K.el('img'); x.src = u; x.alt = ''; x.setAttribute('aria-current', String(i === 0)); x.addEventListener('click', function () { show(u); th.querySelectorAll('img').forEach(function (y) { y.setAttribute('aria-current', String(y === x)); }); }); th.appendChild(x); }); gal.appendChild(th); }
+      body.appendChild(gal);
+      var tags = K.el('div', undefined, 'd-tags'); tags.style.display = 'flex'; tags.style.gap = '8px'; tags.style.flexWrap = 'wrap';
+      if (row.category_name) tags.appendChild(K.el('span', row.category_name, 'tag'));
+      tags.appendChild(K.el('span', p.is_online ? 'Sold online' : 'Till only', 'tag' + (p.is_online ? ' info' : ''))); if (p.track_stock === false) tags.appendChild(K.el('span', 'Stock not tracked', 'tag'));
+      (Array.isArray(p.tags) ? p.tags : []).forEach(function (x) { tags.appendChild(K.el('span', String(x), 'tag')); });
+      body.appendChild(tags);
+      if (p.description) body.appendChild(K.el('p', p.description, 'muted')).style.whiteSpace = 'pre-line';
+      var card = K.el('div', undefined, 'card flush'), sc = K.el('div', undefined, 'scroll'), tb = K.el('table'), hr = K.el('tr');
+      var showCost = (p.variants || []).some(function (v) { return v.cost_price != null; });
+      ['Option', 'SKU', 'Barcode', 'Price'].concat(showCost ? ['Margin'] : []).concat(['Stock']).forEach(function (h, i) { hr.appendChild(K.el('th', h, h === 'Price' || h === 'Margin' ? 'r' : '')); });
+      var thd = K.el('thead'); thd.appendChild(hr); tb.appendChild(thd); var tbody = K.el('tbody');
+      (p.variants || []).forEach(function (v) {
+        var r = K.el('tr'); r.appendChild(K.el('td', v.name && v.name !== 'Default' ? v.name : 'Standard')); r.appendChild(K.el('td', v.sku || '', 'mono')); r.appendChild(K.el('td', v.barcode || '', 'mono'));
+        r.appendChild(K.el('td', K.money(v.selling_price), 'r num nw'));
+        if (showCost) { var sp = Number(v.selling_price) || 0, cp = Number(v.cost_price); r.appendChild(K.el('td', v.cost_price != null && sp > 0 ? Math.round((sp - cp) / sp * 100) + '%' : '', 'r num')); }
+        var vi = S.vinfo[v.id]; var c = K.el('td'); if (vi) { var tg = stockTag({ track: vi.track, qty: vi.qty }); c.appendChild(tg); } r.appendChild(c); tbody.appendChild(r);
+      });
+      tb.appendChild(tbody); sc.appendChild(tb); card.appendChild(sc); body.appendChild(card);
+    } catch (ex) { body.textContent = ''; body.appendChild(K.el('p', ex.message || 'We could not load that product.', 'note err')); }
+  }
+
+  /* ---------- add one ---------- */
+  var photo = null; /* data URL of the shrunk photo, or null */
+  function paintPhoto() {
+    var prev = $('#pPrev'); prev.hidden = !photo; if (photo) prev.src = photo;
+    $('#pPhotoX').hidden = !photo; $('#pPhotoTxt').textContent = photo ? 'Change photo' : 'Add photo';
+  }
+  $('#pPhoto').addEventListener('change', async function () {
+    var f = this.files && this.files[0]; K.notice($('#oneErr'), '');
+    if (!f) return;
+    try { photo = await K.photo(f, { max: 800 }); } catch (ex) { photo = null; K.notice($('#oneErr'), ex.message, 'err'); }
+    this.value = ''; paintPhoto();
+  });
+  $('#pPhotoX').addEventListener('click', function () { photo = null; paintPhoto(); });
+  function openAdd() { K.notice($('#oneErr'), ''); $('#addSheet').showModal(); setTimeout(function () { $('#pName').focus(); }, 60); }
+  $('#openAdd').addEventListener('click', openAdd);
 
   /* The branch opening stock is booked to (main branch). */
   async function stockBranchHeader(needed) {
@@ -20,49 +157,6 @@
     if (!list.length) throw new Error('Your shop has no active branch to book stock into.');
     return { 'X-Branch-Id': list[0].id };
   }
-  function listAdded(text) {
-    $('#added').hidden = false;
-    var li = K.el('li'); li.appendChild(K.el('span', text)); li.appendChild(K.el('span', 'Saved', 'tag'));
-    $('#addedList').insertBefore(li, $('#addedList').firstChild);
-  }
-
-  /* ---------- photo ----------
-     Shrunk in the browser to a JPEG of at most 800px, then uploaded to POST /media when the product is saved.
-     A phone photo of several MB becomes roughly 60 to 150 KB. */
-  var photo = null; // data URL of the shrunk photo, or null
-  var MAX_CHARS = 520000; // about 380 KB of image, under the server's 400 KB cap
-  function shrink(file) {
-    return new Promise(function (resolve, reject) {
-      var url = URL.createObjectURL(file), img = new Image();
-      img.onload = function () {
-        URL.revokeObjectURL(url);
-        var out = null;
-        [[800, 0.82], [800, 0.68], [600, 0.7], [480, 0.65]].some(function (try_) {
-          var scale = Math.min(1, try_[0] / Math.max(img.width, img.height)), c = document.createElement('canvas');
-          c.width = Math.max(1, Math.round(img.width * scale)); c.height = Math.max(1, Math.round(img.height * scale));
-          var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
-          out = c.toDataURL('image/jpeg', try_[1]);
-          return out.length <= MAX_CHARS;
-        });
-        out && out.length <= MAX_CHARS ? resolve(out) : reject(new Error('That photo is too detailed to shrink enough. Try another one.'));
-      };
-      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('We could not read that photo. Use a JPEG, PNG or WebP image.')); };
-      img.src = url;
-    });
-  }
-  function paintPhoto() {
-    var prev = $('#pPrev'); prev.hidden = !photo; if (photo) prev.src = photo;
-    $('#pPhotoX').hidden = !photo; $('#pPhotoTxt').textContent = photo ? 'Change photo' : 'Add photo';
-  }
-  $('#pPhoto').addEventListener('change', async function () {
-    var f = this.files && this.files[0]; K.notice($('#oneErr'), '');
-    if (!f) return;
-    try { photo = await shrink(f); } catch (ex) { photo = null; K.notice($('#oneErr'), ex.message, 'err'); }
-    this.value = ''; paintPhoto();
-  });
-  $('#pPhotoX').addEventListener('click', function () { photo = null; paintPhoto(); });
-
-  /* ---------- add one ---------- */
   $('#oneForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     var err = $('#oneErr'), btn = $('#oneSave'); K.notice(err, '');
@@ -73,14 +167,15 @@
     if ($('#pCost').value !== '') body.cost_price = K.num($('#pCost').value);
     if (qty > 0) body.opening_quantity = qty;
     if ($('#pSku').value.trim()) body.sku = $('#pSku').value.trim();
+    if ($('#pCategory').value) body.category_id = $('#pCategory').value;
     body.is_online = $('#pOnline').checked;
     K.busy(btn, true, 'Saving...');
     try {
       var headers = await stockBranchHeader(qty > 0);
       if (photo) { var up = await K.api('POST', '/media', { data: photo }); body.images = [{ url: up.url, alt_text: name }]; }
       await K.api('POST', '/products', body, headers);
-      listAdded(name + ' at ' + K.money(price) + (qty > 0 ? ', ' + qty + ' in stock' : '') + (photo ? ', with photo' : ''));
-      $('#oneForm').reset(); photo = null; paintPhoto(); $('#pName').focus();
+      $('#oneForm').reset(); photo = null; paintPhoto(); $('#addSheet').close(); K.toast(name + ' saved');
+      S.page = 1; await loadExtras(); load();
     } catch (ex) { K.notice(err, ex.message, 'err'); }
     K.busy(btn, false);
   });
@@ -90,10 +185,9 @@
     qty: 'opening_quantity', quantity: 'opening_quantity', stock: 'opening_quantity', opening_stock: 'opening_quantity', product: 'name', product_name: 'name', item: 'name',
     reorder: 'reorder_level', tax: 'tax_code' };
   var rows = [];
-
   function parseCsv(text) {
     var out = [], row = [], cur = '', q = false, i = 0;
-    text = text.replace(/^﻿/, '');
+    text = text.replace(/^\uFEFF/, '');
     for (; i < text.length; i++) {
       var c = text[i];
       if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
@@ -109,7 +203,7 @@
     var head = table[0].map(function (h) { var k = String(h).trim().toLowerCase().replace(/[\s-]+/g, '_'); return ALIAS[k] || k; });
     return table.slice(1).map(function (r) { var o = {}; head.forEach(function (h, i) { var v = (r[i] || '').trim(); if (h && v !== '') o[h] = v; }); return o; });
   }
-
+  $('#openImport').addEventListener('click', function () { $('#importModal').showModal(); });
   $('#file').addEventListener('change', function () {
     var f = this.files && this.files[0], info = $('#manyInfo'), err = $('#manyErr'), btn = $('#manySave');
     K.notice(info, ''); K.notice(err, ''); $('#manyErrors').hidden = true; rows = []; btn.disabled = true;
@@ -125,12 +219,10 @@
     rd.onerror = function () { K.notice(err, 'We could not read that file.', 'err'); };
     rd.readAsText(f);
   });
-
   $('#tpl').addEventListener('click', function () {
     var csv = 'name,selling_price,cost_price,opening_quantity,sku,category\r\nMaize flour 2kg,180,150,24,MF-2KG,Flour\r\nCooking oil 1L,320,280,12,OIL-1L,Oils\r\n';
     this.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   });
-
   $('#manySave').addEventListener('click', async function () {
     var btn = this, err = $('#manyErr'), info = $('#manyInfo'), list = $('#manyErrors');
     K.notice(err, ''); list.hidden = true; list.textContent = '';
@@ -145,9 +237,12 @@
         (res.errors || []).forEach(function (x) { failed.push({ row: x.row + i + 1, name: x.name, error: x.error }); }); /* +1: row 1 of the file is the header */
       }
     } catch (ex) { K.notice(err, (imported ? imported + ' imported before it stopped. ' : '') + ex.message, 'err'); }
-    if (imported) { K.notice(info, imported + ' product' + (imported === 1 ? '' : 's') + ' imported.' + (failed.length ? ' ' + failed.length + ' could not be imported (below).' : ''), 'ok'); listAdded(imported + ' imported from your file'); rows = []; $('#file').value = ''; btn.disabled = true; }
+    if (imported) { K.notice(info, imported + ' product' + (imported === 1 ? '' : 's') + ' imported.' + (failed.length ? ' ' + failed.length + ' could not be imported (below).' : ''), 'ok'); rows = []; $('#file').value = ''; btn.disabled = true; S.page = 1; loadExtras().then(load); }
     failed.slice(0, 50).forEach(function (f) { var li = K.el('li'); li.appendChild(K.el('span', 'Row ' + f.row + (f.name ? ' (' + f.name + ')' : '') + ': ' + f.error)); list.appendChild(li); });
     list.hidden = !failed.length;
     K.busy(btn, false); if (!imported) btn.disabled = false;
   });
+
+  loadCats(); loadExtras().then(load);
+  if (/[?&]new=1/.test(location.search)) openAdd();
 })();

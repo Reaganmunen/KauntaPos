@@ -3,113 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard | Kaunta</title>
-  <meta name="theme-color" content="#ffffff">
+  <title>Overview | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
   <link rel="icon" href="favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16.png">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
   <script src="js/theme.js"></script>
-  <link href="css/dashboard.css" rel="stylesheet">
+  <link href="css/ui.css" rel="stylesheet">
   <link href="css/theme.css" rel="stylesheet">
+  <link href="css/dash.css" rel="stylesheet">
 </head>
-<body>
-<div class="app">
-  <aside class="side" id="side">
-    <a class="brand" href="dashboard.html"><img src="img/logo-mark.png" alt="" width="30" height="30"><span>Kaunta<small>Shop assistant</small></span></a>
-    <nav aria-label="Main">
-      <a class="nav-i on" href="dashboard.html" aria-current="page"><i class="ph ph-squares-four"></i>Overview</a>
-      <p class="nav-h">Sell</p>
-      <a class="nav-i" href="pos.html"><i class="ph ph-cash-register"></i>New sale</a>
-      <a class="nav-i" href="sales.html"><i class="ph ph-receipt"></i>Sales</a>
-      <a class="nav-i" href="shifts.html"><i class="ph ph-clock"></i>Shifts</a>
-      <a class="nav-i" href="online-orders.html"><i class="ph ph-shopping-bag"></i>Online orders</a>
-      <p class="nav-h">Stock</p>
-      <a class="nav-i" href="products.html"><i class="ph ph-package"></i>Products</a>
-      <a class="nav-i" href="inventory.html"><i class="ph ph-stack"></i>Inventory</a>
-      <a class="nav-i" href="purchases.html"><i class="ph ph-truck"></i>Purchases</a>
-      <p class="nav-h">People</p>
-      <a class="nav-i" href="customers.html"><i class="ph ph-users"></i>Customers</a>
-      <a class="nav-i" href="suppliers.html"><i class="ph ph-handshake"></i>Suppliers</a>
-      <p class="nav-h">Money</p>
-      <a class="nav-i" href="expenses.html"><i class="ph ph-wallet"></i>Expenses</a>
-      <a class="nav-i" href="mpesa.html"><i class="ph ph-device-mobile"></i>M-Pesa</a>
-      <a class="nav-i" href="etims.html"><i class="ph ph-file-text"></i>eTIMS</a>
-      <a class="nav-i" href="reports.html"><i class="ph ph-chart-bar"></i>Reports</a>
-      <p class="nav-h">Shop</p>
-      <a class="nav-i" href="team.html"><i class="ph ph-users-three"></i>Team</a>
-      <a class="nav-i" href="branches.html"><i class="ph ph-git-branch"></i>Branches</a>
-      <a class="nav-i" href="storefront.html"><i class="ph ph-storefront"></i>Online store</a>
-      <a class="nav-i" href="profile.html"><i class="ph ph-user-circle"></i>Profile &amp; shop</a>
-    </nav>
-    <button class="nav-i out" id="signOut" type="button"><i class="ph ph-sign-out"></i>Sign out</button>
-  </aside>
-
-  <div class="main">
-    <header class="top">
-      <button class="chip menu" id="menuBtn" type="button" aria-label="Open menu" aria-controls="side" aria-expanded="false"><i class="ph ph-list"></i></button>
-      <a class="chip" href="profile.html" title="Your shop profile"><span class="av sq" id="avatar">K</span><b id="shopName">Your shop</b></a>
-      <label class="sr" for="branch">Branch</label>
-      <select class="chip" id="branch" hidden></select>
-      <div class="top-r">
-        <span class="chip hide-s"><i class="ph ph-calendar-blank"></i><span id="dateLine"></span></span>
-        <a class="chip" id="viewStore" href="storefront.html" hidden><i class="ph ph-storefront"></i><span id="viewStoreText">View store</span></a>
-        <span data-theme-slot></span>
-        <a class="chip hide-s" id="meChip" href="profile.html" title="Your profile"><span class="av" id="meAv">K</span><span id="userName"></span></a>
-      </div>
-    </header>
-
-    <main class="page" id="page" aria-live="polite">
-      <div class="head"><h1 id="greet">Today</h1><p class="muted">Here is how the shop is doing today.</p></div>
-      <div class="err" id="err" role="alert" hidden><span id="errText"></span><button class="btn primary" id="retry" type="button">Try again</button></div>
-
-      <section class="card gs" id="gs" aria-labelledby="gsTitle" hidden>
-        <div class="gs-h">
-          <div><h2 id="gsTitle">Get started</h2><p class="muted" id="gsSub"></p></div>
-          <button class="btn" id="gsDismiss" type="button"><i class="ph ph-x"></i>Dismiss</button>
-        </div>
-        <div class="gs-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="gsTitle" id="gsBar"><i></i></div>
-        <ol class="gs-list" id="gsList"></ol>
-        <p class="gs-foot" id="gsFoot" hidden>Registered with KRA for VAT? <button class="link" id="gsVat" type="button">Add the eTIMS step</button></p>
-      </section>
-
-      <div class="cols">
-        <div class="stack">
-          <section class="kpis">
-            <article class="card kpi"><span class="ic"><i class="ph ph-coins"></i></span><p class="lbl">Net sales</p><p class="num" id="net"><i class="sk"></i></p><p class="sub" id="netSub"></p></article>
-            <article class="card kpi"><span class="ic"><i class="ph ph-receipt"></i></span><p class="lbl">Sales made</p><p class="num" id="cnt"><i class="sk"></i></p></article>
-            <article class="card kpi"><span class="ic"><i class="ph ph-basket"></i></span><p class="lbl">Average sale</p><p class="num" id="avg"><i class="sk"></i></p></article>
-            <article class="card kpi"><span class="ic"><i class="ph ph-trend-up"></i></span><p class="lbl">Gross profit</p><p class="num" id="gp"><i class="sk"></i></p></article>
-          </section>
-          <article class="card">
-            <div class="card-h"><h2>Last 7 days</h2><span class="pill">Net sales</span></div>
-            <div class="bars" id="bars" role="img" aria-label="Net sales for the last 7 days"></div>
-          </article>
-          <article class="card">
-            <div class="card-h"><h2>Running low</h2></div>
-            <div class="scroll"><table><thead><tr><th>Product</th><th>SKU</th><th class="r">In stock</th><th class="r">Reorder at</th></tr></thead><tbody id="low"><tr><td colspan="4"><i class="sk"></i></td></tr></tbody></table></div>
-          </article>
-        </div>
-
-        <aside class="rail">
-          <article class="card">
-            <div class="card-h"><h2>Needs your attention</h2></div>
-            <ul class="rows" id="attn"><li class="sk-row"></li><li class="sk-row"></li><li class="sk-row"></li></ul>
-          </article>
-          <article class="card">
-            <div class="card-h"><h2>How customers paid</h2></div>
-            <ul class="rows" id="pay"><li class="sk-row"></li><li class="sk-row"></li></ul>
-          </article>
-        </aside>
-      </div>
-    </main>
+<body data-nav="dashboard.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1 id="greet">Today</h1><p id="lede">Here is how your shop is doing today.</p></div>
+    <div class="actions">
+      <label class="sr" for="branch">Branch</label><select class="chip" id="branch" hidden></select>
+      <a class="btn" id="viewStore" href="storefront.html" hidden><i class="ph ph-storefront"></i><span id="viewStoreText">View store</span></a>
+      <a class="btn primary" href="pos.html"><i class="ph ph-cash-register"></i>New sale</a>
+    </div>
   </div>
-</div>
+
+  <div class="note err row" id="err" role="alert" hidden><span class="grow" id="errText"></span><button class="btn sm" id="retry" type="button">Try again</button></div>
+
+  <section class="card gs" id="gs" aria-labelledby="gsTitle" hidden>
+    <div class="gs-h">
+      <div class="gs-ring" id="gsRing" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="gsTitle"><b id="gsPct">0%</b></div>
+      <div class="grow"><h2 id="gsTitle">Get your shop ready</h2><p class="muted" id="gsSub"></p></div>
+      <button class="btn sm ghost" id="gsDismiss" type="button"><i class="ph ph-x"></i>Dismiss</button>
+    </div>
+    <ol class="gs-list" id="gsList"></ol>
+    <p class="gs-foot muted" id="gsFoot" hidden>Registered with KRA for VAT? <button class="link" id="gsVat" type="button">Add the eTIMS step</button></p>
+  </section>
+
+  <section class="dash-top">
+    <article class="hero-sales" aria-label="Net sales today">
+      <div class="hs-top"><span class="ic"><i class="ph ph-coins"></i></span><span>Net sales today</span><span class="hs-delta" id="delta" hidden></span></div>
+      <p class="hs-num num" id="net"><i class="sk"></i></p>
+      <p class="hs-sub" id="netSub">&nbsp;</p>
+      <div class="hs-chart" id="chart" role="img" aria-label="Net sales for the last 7 days"></div>
+      <div class="hs-days" id="days"></div>
+    </article>
+    <div class="kpi-col">
+      <article class="card kpi"><span class="ic gold"><i class="ph ph-receipt"></i></span><div><p class="lbl">Sales made</p><p class="num" id="cnt"><i class="sk"></i></p></div></article>
+      <article class="card kpi"><span class="ic blue"><i class="ph ph-basket"></i></span><div><p class="lbl">Average sale</p><p class="num" id="avg"><i class="sk"></i></p></div></article>
+      <article class="card kpi"><span class="ic"><i class="ph ph-chart-line"></i></span><div><p class="lbl">Gross profit</p><p class="num" id="gp"><i class="sk"></i></p></div></article>
+    </div>
+  </section>
+
+  <section class="dash-mid">
+    <article class="card flush">
+      <div class="card-h pad"><div><h2>Running low</h2><p class="sub">Products at or under their reorder level</p></div><a class="btn sm" href="products.html"><i class="ph ph-package"></i>All products</a></div>
+      <div class="scroll"><table><thead><tr><th>Product</th><th>SKU</th><th>Stock</th><th class="r">Reorder at</th></tr></thead><tbody id="low"><tr><td colspan="4"><i class="sk"></i></td></tr></tbody></table></div>
+    </article>
+    <article class="card">
+      <div class="card-h"><div><h2>Needs your attention</h2><p class="sub">Things that stop sales or tax filing</p></div></div>
+      <ul class="rows attn" id="attn"><li class="sk-row"></li><li class="sk-row"></li><li class="sk-row"></li></ul>
+    </article>
+  </section>
+
+  <section class="dash-low">
+    <article class="card">
+      <div class="card-h"><div><h2>How customers paid</h2><p class="sub">Today, all payment methods</p></div></div>
+      <div class="pay" id="pay"><i class="sk-row"></i></div>
+    </article>
+    <article class="card">
+      <div class="card-h"><div><h2>Jump to</h2><p class="sub">The things most shops do every day</p></div></div>
+      <div class="qa">
+        <a href="pos.html"><span class="ic"><i class="ph ph-cash-register"></i></span><span><b>New sale</b><small>Open the till</small></span></a>
+        <a href="products.html?new=1"><span class="ic gold"><i class="ph ph-plus"></i></span><span><b>Add a product</b><small>Price, photo and stock</small></span></a>
+        <a href="mpesa.html"><span class="ic blue"><i class="ph ph-device-mobile"></i></span><span><b>Connect M-Pesa</b><small>Till or paybill</small></span></a>
+        <a href="storefront.html"><span class="ic dark"><i class="ph ph-storefront"></i></span><span><b>Online store</b><small>Edit and publish</small></span></a>
+      </div>
+    </article>
+  </section>
+</main>
+
 <script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
 <script src="js/dashboard.js"></script>
 </body>
 </html>
