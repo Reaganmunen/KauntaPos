@@ -1,0 +1,41 @@
+/* Shifts and online orders. Builds on ui.css; only what those pages need on top. */
+.tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.tabs button { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink-2); font: 500 13.5px/1 var(--font); cursor: pointer; }
+.tabs button:hover { border-color: var(--ink-3); }
+.tabs button[aria-pressed=true] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); font-weight: 600; }
+.tabs .n { min-width: 22px; padding: 2px 7px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); font-size: 12px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+.tabs button[aria-pressed=true] .n { background: rgba(255, 255, 255, .2); color: inherit; }
+.tabs .n.hot { background: var(--gold); color: #3a2800; }
+
+.shift-now { display: grid; gap: 18px; }
+.shift-now .top { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.shift-now .top .grow h2 { font-size: 18px; letter-spacing: -.03em; }
+.shift-now .top .grow p { color: var(--ink-3); font-size: 13.5px; margin-top: 2px; }
+.kfacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.kfact { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.kfact small { display: block; color: var(--ink-3); font-size: 12.5px; }
+.kfact b { display: block; margin-top: 4px; font-size: 22px; font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.kfact.key { background: var(--tint); border-color: transparent; }
+.kfact.key b { color: var(--brand-ink); }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.two h3 { font-size: 14px; margin-bottom: 10px; }
+.rows li .sub { display: block; color: var(--ink-3); font-size: 12.5px; margin-top: 2px; }
+.pos { color: var(--brand-ink); } .neg { color: var(--red-ink); }
+.seg-wide { display: flex; width: 100%; } .seg-wide button { flex: 1; justify-content: center; }
+.vline { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+.o-who b { display: block; font-weight: 600; }
+.o-who small { color: var(--ink-3); }
+.blk { display: grid; gap: 8px; }
+.blk > h3 { font-size: 13px; color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.line-i { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid var(--line); }
+.line-i:first-of-type { border-top: 0; }
+.line-i small { color: var(--ink-3); display: block; }
+.tl { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.tl li { display: flex; gap: 12px; align-items: baseline; font-size: 13.5px; }
+.tl li i { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); flex: none; transform: translateY(-1px); }
+.tl li.bad i { background: var(--red); }
+.tl li span { color: var(--ink-3); margin-left: auto; font-size: 12.5px; white-space: nowrap; }
+.sheet-f.multi { flex-wrap: wrap; }
+.sheet-f.multi .btn { flex: 1 1 140px; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } }

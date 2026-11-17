@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shifts | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/ops.css" rel="stylesheet">
+</head>
+<body data-nav="shifts.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Shifts</h1><p>Open a shift with your starting cash, record money in and out of the drawer, and count the cash when you hand over.</p></div>
+    <div class="actions">
+      <label class="sr" for="branch">Branch</label><select class="chip" id="branch" hidden></select>
+    </div>
+  </div>
+
+  <section id="current" aria-live="polite"></section>
+
+  <section class="card flush" aria-labelledby="histTitle">
+    <div class="card-h pad"><div><h2 id="histTitle">Shift history</h2><div class="sub">Every shift, newest first. Tap one to see the details.</div></div>
+      <div class="seg" id="status" role="group" aria-label="Filter by status"><button type="button" data-s="" aria-pressed="true">All</button><button type="button" data-s="open" aria-pressed="false">Open</button><button type="button" data-s="closed" aria-pressed="false">Closed</button></div>
+    </div>
+    <p class="note err" id="listErr" hidden style="margin:0 20px 16px"></p>
+    <div class="scroll" id="histWrap"></div>
+  </section>
+  <div class="pager" id="pager" hidden><button class="btn sm" id="prev" type="button">Previous</button><span id="pageInfo"></span><button class="btn sm" id="next" type="button">Next</button></div>
+</main>
+
+<dialog class="modal" id="openDlg" aria-labelledby="oTitle">
+  <form class="dlg" id="openForm" novalidate>
+    <div class="row"><h2 class="grow" id="oTitle">Open a shift</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted">Count the cash in the drawer and enter it as your opening float.</p>
+    <label class="fld" id="oBranchF" hidden><span>Branch</span><select id="oBranch"></select></label>
+    <label class="fld" id="oTermF" hidden><span>Till</span><select id="oTerm"><option value="">No particular till</option></select><small>Optional. Only one cashier can have a shift open on a till at a time.</small></label>
+    <label class="fld"><span>Opening float (KES)</span><input type="number" id="oFloat" min="0" step="0.01" inputmode="decimal" value="0"></label>
+    <p class="note err" id="oErr" hidden></p>
+    <button class="btn primary lg block" id="oGo" type="submit">Open shift</button>
+  </form>
+</dialog>
+
+<dialog class="modal" id="cashDlg" aria-labelledby="cTitle">
+  <form class="dlg" id="cashForm" novalidate>
+    <div class="row"><h2 class="grow" id="cTitle">Cash in or out</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="seg seg-wide" id="cType" role="group" aria-label="What happened">
+      <button type="button" data-t="pay_in" aria-pressed="true">Pay in</button>
+      <button type="button" data-t="pay_out" aria-pressed="false">Pay out</button>
+      <button type="button" data-t="drop" aria-pressed="false">Cash drop</button>
+    </div>
+    <p class="muted" id="cHelp"></p>
+    <label class="fld"><span>Amount (KES)</span><input type="number" id="cAmt" min="0" step="0.01" inputmode="decimal" required></label>
+    <label class="fld"><span>Reason</span><input type="text" id="cWhy" required autocomplete="off" placeholder="e.g. Bought sugar from the next shop"></label>
+    <p class="note err" id="cErr" hidden></p>
+    <button class="btn primary lg block" id="cGo" type="submit">Save</button>
+  </form>
+</dialog>
+
+<dialog class="modal" id="closeDlg" aria-labelledby="xTitle">
+  <form class="dlg" id="closeForm" novalidate>
+    <div class="row"><h2 class="grow" id="xTitle">Close shift</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted">Count all the cash in the drawer, then enter the total. Kaunta compares it with what the drawer should hold.</p>
+    <div class="facts"><div class="fact"><small>Should be in the drawer</small><b id="xExpected">-</b></div><div class="fact"><small>Difference</small><b id="xDiff">-</b></div></div>
+    <label class="fld"><span>Cash counted (KES)</span><input type="number" id="xCount" min="0" step="0.01" inputmode="decimal" required></label>
+    <label class="fld"><span>Notes</span><textarea id="xNotes" placeholder="Optional. Explain any difference."></textarea></label>
+    <p class="note err" id="xErr" hidden></p>
+    <button class="btn primary lg block" id="xGo" type="submit">Close shift</button>
+  </form>
+</dialog>
+
+<dialog class="sheet wide" id="detail" aria-labelledby="dTitle">
+  <div class="sheet-h"><h2 id="dTitle">Shift</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b" id="dBody"></div>
+  <div class="sheet-f"><button class="btn danger" id="dClose" type="button" hidden><i class="ph ph-lock-key"></i>Close this shift</button><button class="btn" type="button" data-close>Done</button></div>
+</dialog>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/step-shifts.js"></script>
+</body>
+</html>

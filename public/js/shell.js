@@ -17,13 +17,13 @@
       { href: 'pos.html', label: 'New sale', icon: 'cash-register', desc: 'Open the till', ready: true },
       { href: 'test-sale.html', label: 'Practice sale', icon: 'flask', desc: 'Try a cash sale and its receipt', ready: true },
       { href: 'sales.html', label: 'Sales', icon: 'receipt', desc: 'Every receipt, searchable', ready: true },
-      { href: 'shifts.html', label: 'Shifts', icon: 'clock', desc: 'Cash drawer and handover' },
-      { href: 'online-orders.html', label: 'Online orders', icon: 'shopping-bag', desc: 'Orders from your store' }
+      { href: 'shifts.html', label: 'Shifts', icon: 'clock', desc: 'Cash drawer and handover', ready: true },
+      { href: 'online-orders.html', label: 'Online orders', icon: 'shopping-bag', desc: 'Orders from your store', ready: true}
     ] },
     { id: 'stock', label: 'Stock', icon: 'package', title: 'Stock', blurb: 'What you sell and what is on the shelf.', items: [
       { href: 'products.html', label: 'Products', icon: 'package', desc: 'Prices, photos and variants', ready: true },
-      { href: 'inventory.html', label: 'Inventory', icon: 'stack', desc: 'Stock levels by branch' },
-      { href: 'purchases.html', label: 'Purchases', icon: 'truck', desc: 'Orders to your suppliers' }
+      { href: 'inventory.html', label: 'Inventory', icon: 'stack', desc: 'Stock levels by branch', ready:true },
+      { href: 'purchases.html', label: 'Purchases', icon: 'truck', desc: 'Orders to your suppliers', ready:true }
     ] },
     { id: 'people', label: 'People', icon: 'users-three', title: 'People', blurb: 'Customers, suppliers and your team.', items: [
       { href: 'customers.html', label: 'Customers', icon: 'users', desc: 'Who buys and who owes' },

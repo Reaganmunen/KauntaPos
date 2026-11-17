@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Online orders | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/ops.css" rel="stylesheet">
+</head>
+<body data-nav="online-orders.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Online orders</h1><p>Orders placed on your online store. Check the payment, get the order ready, then mark it collected or delivered. New orders appear here by themselves.</p></div>
+    <div class="actions">
+      <label class="sr" for="branch">Branch</label><select class="chip" id="branch" hidden></select>
+      <button class="btn" id="refresh" type="button"><i class="ph ph-arrows-clockwise"></i>Refresh</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs" role="group" aria-label="Filter by status"></div>
+
+  <div class="toolbar">
+    <div class="search"><i class="ph ph-magnifying-glass"></i><input type="search" id="q" placeholder="Search by customer, phone or order number" autocomplete="off" aria-label="Search orders"></div>
+  </div>
+
+  <p class="note err" id="listErr" hidden></p>
+  <section class="card flush"><div class="scroll" id="list"></div></section>
+  <div class="pager" id="pager" hidden><button class="btn sm" id="prev" type="button">Previous</button><span id="pageInfo"></span><button class="btn sm" id="next" type="button">Next</button></div>
+</main>
+
+<dialog class="sheet wide" id="detail" aria-labelledby="dTitle">
+  <div class="sheet-h"><h2 id="dTitle">Order</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b" id="dBody"></div>
+  <div class="sheet-f multi" id="dFoot"></div>
+</dialog>
+
+<dialog class="modal" id="payDlg" aria-labelledby="pTitle">
+  <form class="dlg" id="payForm" novalidate>
+    <div class="row"><h2 class="grow" id="pTitle">Record cash payment</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted">Use this when the customer pays in cash, for example on delivery or when they collect. The order moves on once it is fully paid.</p>
+    <div class="facts"><div class="fact"><small>Amount due</small><b id="pDue">-</b></div><div class="fact"><small>Change to give</small><b id="pChange">-</b></div></div>
+    <label class="fld"><span>Cash received (KES)</span><input type="number" id="pGot" min="0" step="0.01" inputmode="decimal" required></label>
+    <p class="note err" id="pErr" hidden></p>
+    <button class="btn primary lg block" id="pGo" type="submit">Record payment</button>
+  </form>
+</dialog>
+
+<dialog class="modal" id="cancelDlg" aria-labelledby="xTitle">
+  <form class="dlg" id="cancelForm" novalidate>
+    <div class="row"><h2 class="grow" id="xTitle">Cancel this order</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted">The sale is voided or refunded and the stock held for this order goes back on the shelf. If the customer already paid, return their money.</p>
+    <label class="fld"><span>Reason</span><textarea id="xWhy" required placeholder="e.g. Customer asked to cancel, item out of stock"></textarea></label>
+    <p class="note err" id="xErr" hidden></p>
+    <div class="row"><button class="btn grow" type="button" data-close>Keep the order</button><button class="btn danger grow" id="xGo" type="submit">Cancel order</button></div>
+  </form>
+</dialog>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/step-online-orders.js"></script>
+</body>
+</html>
