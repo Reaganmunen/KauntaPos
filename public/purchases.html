@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Purchases | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body data-nav="purchases.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Purchases</h1><p>Orders you place with suppliers. Receive the goods to add them to your stock, and record what you pay.</p></div>
+    <div class="actions">
+      <button class="btn primary" id="openNew" type="button"><i class="ph ph-plus"></i>New purchase order</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <label class="sr" for="branch">Branch</label>
+    <select class="chip" id="branch" hidden></select>
+    <label class="sr" for="pstatus">Status</label>
+    <select class="chip" id="pstatus">
+      <option value="">All statuses</option>
+      <option value="draft">Draft</option>
+      <option value="ordered">Ordered</option>
+      <option value="partially_received">Partly received</option>
+      <option value="received">Received</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+    <label class="sr" for="psupplier">Supplier</label>
+    <select class="chip" id="psupplier"><option value="">All suppliers</option></select>
+    <span class="grow"></span>
+    <button class="btn" id="refresh" type="button"><i class="ph ph-arrows-clockwise"></i>Refresh</button>
+  </div>
+
+  <p class="note err" id="listErr" hidden></p>
+  <div id="list"></div>
+  <div class="pager" id="pager" hidden><button class="btn sm" id="prev" type="button">Previous</button><span id="pageInfo"></span><button class="btn sm" id="next" type="button">Next</button></div>
+</main>
+
+<!-- Order details -->
+<dialog class="sheet wide" id="detail" aria-labelledby="dTitle">
+  <div class="sheet-h"><h2 id="dTitle">Purchase order</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b" id="dBody"></div>
+  <div class="sheet-f">
+    <button class="btn danger" id="dCancel" type="button" hidden><i class="ph ph-prohibit"></i>Cancel order</button>
+    <button class="btn" id="dOrder" type="button" hidden><i class="ph ph-paper-plane-tilt"></i>Mark as ordered</button>
+    <button class="btn" id="dPay" type="button" hidden><i class="ph ph-money"></i>Record payment</button>
+    <button class="btn primary" id="dReceive" type="button" hidden><i class="ph ph-package"></i>Receive goods</button>
+    <button class="btn" type="button" data-close>Close</button>
+  </div>
+</dialog>
+
+<!-- New order -->
+<dialog class="sheet wide" id="newSheet" aria-labelledby="nTitle">
+  <form class="form" id="newForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="nTitle">New purchase order</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <div class="row2">
+        <label class="fld"><span>Supplier</span><select id="nSupplier" required><option value="">Choose a supplier</option></select></label>
+        <label class="fld"><span>Expected on</span><input type="date" id="nExpected"><small>Optional.</small></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>Supplier invoice no.</span><input type="text" id="nInvoice" autocomplete="off"><small>Optional.</small></label>
+        <label class="fld"><span>Branch receiving the goods</span><input type="text" id="nBranchName" readonly></label>
+      </div>
+
+      <div class="row"><h3 class="grow">Items</h3></div>
+      <div class="search"><i class="ph ph-magnifying-glass"></i><input type="search" id="nSearch" placeholder="Search a product by name, SKU or barcode to add it" autocomplete="off" aria-label="Search products to add"></div>
+      <ul class="rows" id="nResults" hidden></ul>
+      <div id="nLines" class="stack"></div>
+      <p class="muted" id="nNoLines">No items yet. Search above to add products.</p>
+
+      <div class="facts" id="nTotals"></div>
+      <p class="muted" style="font-size:13px">Costs are entered before tax. Tax is added on top using each item's tax rate.</p>
+
+      <label class="fld"><span>Notes</span><textarea id="nNotes" placeholder="Optional"></textarea></label>
+      <label class="chk"><input type="checkbox" id="nOrdered"><span><b>Already sent to the supplier</b><small>Leave off to save it as a draft first.</small></span></label>
+      <p class="note err" id="nErr" hidden></p>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="nSave" type="submit">Save order</button></div>
+  </form>
+</dialog>
+
+<!-- Receive goods -->
+<dialog class="sheet wide" id="recvDlg" aria-labelledby="rTitle">
+  <form class="form" id="recvForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="rTitle">Receive goods</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <p class="muted">Enter how many of each item arrived. The stock is added to this order's branch. Batch number and expiry date are optional (useful for medicines).</p>
+      <div id="rBody" class="stack"></div>
+      <p class="note err" id="rErr" hidden></p>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="rGo" type="submit">Add to stock</button></div>
+  </form>
+</dialog>
+
+<!-- Payment -->
+<dialog class="modal" id="payDlg" aria-labelledby="yTitle">
+  <form class="dlg form" id="payForm" novalidate>
+    <div class="row"><h2 class="grow" id="yTitle">Record payment</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted" id="yInfo"></p>
+    <label class="fld"><span>Amount paid (KES)</span><input type="number" id="yAmount" min="0" step="0.01" inputmode="decimal" required></label>
+    <p class="note err" id="yErr" hidden></p>
+    <button class="btn primary lg block" id="yGo" type="submit">Save payment</button>
+  </form>
+</dialog>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/step-purchases.js"></script>
+</body>
+</html>

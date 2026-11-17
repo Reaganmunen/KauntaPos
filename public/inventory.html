@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventory | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body data-nav="inventory.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Inventory</h1><p>How much of each product you have in stock. Tap a product to see its history or correct its count.</p></div>
+    <div class="actions">
+      <label class="sr" for="branch">Branch</label><select class="chip" id="branch" hidden></select>
+      <button class="btn" id="refresh" type="button"><i class="ph ph-arrows-clockwise"></i>Refresh</button>
+    </div>
+  </div>
+
+  <div class="facts" id="stats" hidden></div>
+
+  <div class="toolbar">
+    <div class="search"><i class="ph ph-magnifying-glass"></i><input type="search" id="iq" placeholder="Search by name, SKU or barcode" autocomplete="off" aria-label="Search stock"></div>
+    <span class="grow"></span>
+    <div class="seg" id="iview" role="group" aria-label="Show"><button type="button" data-v="all" aria-pressed="true">All stock</button><button type="button" data-v="low" aria-pressed="false"><i class="ph ph-warning"></i>Low stock</button></div>
+  </div>
+
+  <p class="note err" id="listErr" hidden></p>
+  <div id="list"></div>
+  <div class="pager" id="pager" hidden><button class="btn sm" id="prev" type="button">Previous</button><span id="pageInfo"></span><button class="btn sm" id="next" type="button">Next</button></div>
+</main>
+
+<dialog class="sheet wide" id="detail" aria-labelledby="dTitle">
+  <div class="sheet-h"><h2 id="dTitle">Stock</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b" id="dBody"></div>
+  <div class="sheet-f"><button class="btn primary" id="dAdjust" type="button" hidden><i class="ph ph-sliders-horizontal"></i>Adjust stock</button><button class="btn" type="button" data-close>Close</button></div>
+</dialog>
+
+<dialog class="modal" id="adjDlg" aria-labelledby="aTitle">
+  <form class="dlg" id="adjForm" novalidate>
+    <div class="row"><h2 class="grow" id="aTitle">Adjust stock</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted" id="aWho"></p>
+    <div class="seg" id="aMode" role="group" aria-label="What are you doing">
+      <button type="button" data-m="set" aria-pressed="true">Set the count</button>
+      <button type="button" data-m="add" aria-pressed="false">Add stock</button>
+      <button type="button" data-m="remove" aria-pressed="false">Remove stock</button>
+    </div>
+    <label class="fld"><span id="aQtyLabel">Counted quantity</span><input type="number" id="aQty" min="0" step="any" inputmode="decimal" required></label>
+    <label class="fld"><span>Reason</span>
+      <select id="aReason"><option value="adjustment">Correction or recount</option><option value="damage">Damaged</option><option value="expiry">Expired</option></select>
+    </label>
+    <div id="aBatchBox" hidden>
+      <label class="fld"><span>Batch</span><select id="aBatch"></select></label>
+      <div id="aNewBatch" class="row2" hidden>
+        <label class="fld"><span>Batch number</span><input type="text" id="aBatchNo" autocomplete="off"></label>
+        <label class="fld"><span>Expiry date</span><input type="date" id="aExpiry"></label>
+      </div>
+    </div>
+    <label class="fld"><span>Note</span><textarea id="aNote" required placeholder="e.g. Recount after delivery, 2 broken in transit"></textarea></label>
+    <p class="muted" id="aPreview"></p>
+    <p class="note err" id="aErr" hidden></p>
+    <button class="btn primary lg block" id="aGo" type="submit">Save adjustment</button>
+  </form>
+</dialog>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/step-inventory.js"></script>
+</body>
+</html>
