@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expenses | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/expenses.css" rel="stylesheet">
+</head>
+<body data-nav="expenses.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Expenses</h1><p>Rent, power, transport and everything else you spend on running the shop.</p></div>
+    <div class="actions">
+      <button class="btn" id="openCats" type="button"><i class="ph ph-tag"></i>Categories</button>
+      <button class="btn primary" id="openAdd" type="button"><i class="ph ph-plus"></i>Add expense</button>
+    </div>
+  </div>
+
+  <div class="ex-stats" id="stats" hidden></div>
+
+  <div class="toolbar">
+    <div class="search"><i class="ph ph-magnifying-glass"></i><input type="search" id="eq" placeholder="Search description or reference" autocomplete="off" aria-label="Search expenses"></div>
+    <span class="grow"></span>
+    <select id="eCat" aria-label="Filter by category"><option value="">All categories</option></select>
+    <label class="ex-date"><span>From</span><input type="date" id="eFrom" aria-label="From date"></label>
+    <label class="ex-date"><span>To</span><input type="date" id="eTo" aria-label="To date"></label>
+    <button class="btn" id="eClear" type="button" hidden>Clear dates</button>
+    <button class="btn" id="refresh" type="button"><i class="ph ph-arrows-clockwise"></i>Refresh</button>
+  </div>
+
+  <p class="note err" id="listErr" hidden></p>
+  <div id="list"></div>
+  <div class="pager" id="pager" hidden><button class="btn sm" id="prev" type="button">Previous</button><span id="pageInfo"></span><button class="btn sm" id="next" type="button">Next</button></div>
+</main>
+
+<!-- Expense details -->
+<dialog class="sheet wide" id="detail" aria-labelledby="dTitle">
+  <div class="sheet-h"><h2 id="dTitle">Expense</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b" id="dBody"></div>
+  <div class="sheet-f">
+    <button class="btn" id="dEdit" type="button"><i class="ph ph-pencil-simple"></i>Edit</button>
+    <button class="btn danger" id="dDelete" type="button"><i class="ph ph-trash"></i>Delete</button>
+    <button class="btn" type="button" data-close>Close</button>
+  </div>
+</dialog>
+
+<!-- Add / edit expense -->
+<dialog class="sheet" id="formSheet" aria-labelledby="fTitle">
+  <form class="form" id="expForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="fTitle">Add an expense</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <div class="row2">
+        <label class="fld"><span>Amount (KES)</span><input type="number" id="fAmount" min="0" step="0.01" inputmode="decimal" required></label>
+        <label class="fld"><span>Date</span><input type="date" id="fDate" required></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>Category</span><select id="fCat"></select></label>
+        <label class="fld"><span>Paid by</span>
+          <select id="fMethod">
+            <option value="cash">Cash</option>
+            <option value="mpesa">M-Pesa</option>
+            <option value="card">Card</option>
+            <option value="bank_transfer">Bank transfer</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+      </div>
+      <label class="fld"><span>Description</span><input type="text" id="fDesc" autocomplete="off" placeholder="e.g. Shop rent for November"></label>
+      <div class="row2">
+        <label class="fld"><span>Reference</span><input type="text" id="fRef" autocomplete="off"><small>Optional. For example the M-Pesa code.</small></label>
+        <label class="fld"><span>Supplier</span><select id="fSupplier"><option value="">None</option></select><small>Optional.</small></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>Supplier eTIMS invoice no.</span><input type="text" id="fEtims" autocomplete="off"><small>Optional. Needed to claim input VAT.</small></label>
+        <label class="fld"><span>Receipt link</span><input type="text" id="fReceipt" autocomplete="off" placeholder="https://..."><small>Optional.</small></label>
+      </div>
+      <p class="note err" id="fErr" hidden></p>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="fSave" type="submit">Save expense</button></div>
+  </form>
+</dialog>
+
+<!-- Categories -->
+<dialog class="sheet" id="catSheet" aria-labelledby="cTitle">
+  <div class="sheet-h"><h2 id="cTitle">Expense categories</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b">
+    <div id="cList"></div>
+    <form class="form" id="catForm" novalidate>
+      <div class="row2">
+        <label class="fld"><span>New category</span><input type="text" id="cName" autocomplete="off" placeholder="e.g. Rent"></label>
+        <div class="fld"><span>&nbsp;</span><button class="btn primary" id="cAdd" type="submit"><i class="ph ph-plus"></i>Add</button></div>
+      </div>
+    </form>
+    <p class="note err" id="cErr" hidden></p>
+  </div>
+  <div class="sheet-f"><button class="btn" type="button" data-close>Close</button></div>
+</dialog>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/expenses.js"></script>
+</body>
+</html>
