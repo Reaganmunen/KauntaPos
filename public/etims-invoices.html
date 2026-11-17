@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>eTIMS receipts | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/etims-invoices.css" rel="stylesheet">
+</head>
+<body data-nav="etims-invoices.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>eTIMS receipts</h1><p>Every sale sent to KRA: what went through, what bounced and why, and the receipt for each one.</p></div>
+    <div class="actions">
+      <a class="btn" href="etims.html"><i class="ph ph-gear"></i>Connection</a>
+      <button class="btn" id="syncItems" type="button"><i class="ph ph-package"></i>Register products</button>
+      <button class="btn primary" id="retryAll" type="button" hidden><i class="ph ph-arrow-counter-clockwise"></i><span id="retryAllLabel">Retry all problems</span></button>
+    </div>
+  </div>
+
+  <div class="ei-stats" id="stats"></div>
+
+  <div class="toolbar">
+    <div class="seg" id="sview" role="group" aria-label="Status">
+      <button type="button" data-v="" aria-pressed="true">All</button>
+      <button type="button" data-v="submitted" aria-pressed="false">Sent</button>
+      <button type="button" data-v="problems" aria-pressed="false">Problems</button>
+      <button type="button" data-v="pending" aria-pressed="false">Waiting</button>
+    </div>
+    <span class="grow"></span>
+    <label class="ei-date"><span>From</span><input type="date" id="eFrom" aria-label="From date"></label>
+    <label class="ei-date"><span>To</span><input type="date" id="eTo" aria-label="To date"></label>
+    <button class="btn" id="eClear" type="button" hidden>Clear dates</button>
+    <button class="btn" id="refresh" type="button"><i class="ph ph-arrows-clockwise"></i>Refresh</button>
+  </div>
+
+  <p class="note err" id="listErr" hidden></p>
+  <p class="note ok" id="listOk" hidden></p>
+  <div id="list"></div>
+  <div class="pager" id="pager" hidden><button class="btn sm" id="prev" type="button">Previous</button><span id="pageInfo"></span><button class="btn sm" id="next" type="button">Next</button></div>
+</main>
+
+<!-- Invoice details -->
+<dialog class="sheet wide" id="detail" aria-labelledby="dTitle">
+  <div class="sheet-h"><h2 id="dTitle">eTIMS invoice</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b" id="dBody"></div>
+  <div class="sheet-f">
+    <button class="btn" id="dReceipt" type="button" hidden><i class="ph ph-receipt"></i>View receipt</button>
+    <button class="btn" id="dRetry" type="button" hidden><i class="ph ph-arrow-counter-clockwise"></i>Put back in queue</button>
+    <button class="btn primary" id="dSubmit" type="button" hidden><i class="ph ph-paper-plane-tilt"></i>Send to KRA now</button>
+    <button class="btn" type="button" data-close>Close</button>
+  </div>
+</dialog>
+
+<!-- Receipt -->
+<dialog class="sheet" id="rcptDlg" aria-labelledby="rTitle">
+  <div class="sheet-h"><h2 id="rTitle">KRA receipt</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <div class="sheet-b"><div id="rcpt"></div></div>
+  <div class="sheet-f">
+    <button class="btn primary" id="rPrint" type="button"><i class="ph ph-printer"></i>Print</button>
+    <button class="btn" type="button" data-close>Close</button>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/etims-invoices.js"></script>
+</body>
+</html>
