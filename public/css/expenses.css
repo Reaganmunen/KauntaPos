@@ -1,0 +1,26 @@
+/* Expenses page: small additions on top of ui.css / theme.css */
+.ex-stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin: 0 0 14px; }
+.ex-stat { padding: 14px 16px; border: 1px solid var(--line, #dfe3da); border-radius: 14px; background: var(--card, #fff); }
+.ex-stat small { display: block; color: var(--muted, #6b7280); margin-bottom: 4px; }
+.ex-stat b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.ex-stat.main { grid-column: span 1; }
+.ex-stat .sub { display: block; margin-top: 2px; font-size: 12px; color: var(--muted, #6b7280); }
+
+.ex-date { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted, #6b7280); }
+.ex-date input { min-width: 0; }
+
+.ex-cell small { display: block; color: var(--muted, #6b7280); }
+.ex-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+.ex-cat { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line, #dfe3da); }
+.ex-cat .grow { min-width: 0; font-weight: 500; }
+.ex-cat:last-of-type { border-bottom: 0; margin-bottom: 8px; }
+
+#detail .facts { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+#detail .fact small { display: block; color: var(--muted, #6b7280); }
+#detail .fact b { word-break: break-word; }
+
+@media (max-width: 640px) {
+  .ex-date { flex: 1 1 140px; }
+  .ex-date input { flex: 1; }
+}
