@@ -1,0 +1,13 @@
+/* Suppliers page: small additions on top of ui.css and theme.css. */
+
+#dBody .facts { margin-bottom: 8px; }
+#dBody td.num, #dBody th.r { white-space: nowrap; }
+
+/* The "you owe them" figure is the one to notice */
+#dBody .facts .fact:first-child b { color: var(--bad, #b42318); }
+
+#fDelete { margin-top: 4px; }
+
+@media (max-width: 640px) {
+  #sview { order: 3; }
+}

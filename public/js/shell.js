@@ -26,8 +26,8 @@
       { href: 'purchases.html', label: 'Purchases', icon: 'truck', desc: 'Orders to your suppliers', ready:true }
     ] },
     { id: 'people', label: 'People', icon: 'users-three', title: 'People', blurb: 'Customers, suppliers and your team.', items: [
-      { href: 'customers.html', label: 'Customers', icon: 'users', desc: 'Who buys and who owes' },
-      { href: 'suppliers.html', label: 'Suppliers', icon: 'handshake', desc: 'Who you buy from' },
+      { href: 'customers.html', label: 'Customers', icon: 'users', desc: 'Who buys and who owes', ready:true },
+      { href: 'suppliers.html', label: 'Suppliers', icon: 'handshake', desc: 'Who you buy from', ready:true },
       { href: 'team.html', label: 'Team', icon: 'identification-badge', desc: 'Staff, roles and PINs' }
     ] },
     { id: 'money', label: 'Money', icon: 'wallet', title: 'Money', blurb: 'Payments, tax and reports.', items: [

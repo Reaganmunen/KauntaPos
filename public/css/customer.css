@@ -1,0 +1,24 @@
+/* Customers page: small additions on top of ui.css and theme.css. */
+
+.cu-stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 16px; }
+.cu-stats .fact { min-width: 180px; }
+
+/* Balances */
+.cu-owes { font-weight: 600; color: var(--bad, #b42318); }
+.cu-credit { font-weight: 500; color: var(--ok, #067647); }
+.cu-in { color: var(--ok, #067647); }
+
+/* Account history */
+#dBody .facts { margin-bottom: 8px; }
+#dBody td.num, #dBody th.r { white-space: nowrap; }
+
+/* Result and line lists inside dialogs */
+#payDlg .dlg, #adjDlg .dlg { display: grid; gap: 14px; }
+#jMode { justify-self: start; }
+#jPreview:empty { display: none; }
+
+/* Keep the toolbar tidy on small screens */
+@media (max-width: 640px) {
+  .cu-stats .fact { flex: 1 1 100%; }
+  #cview { order: 3; }
+}
