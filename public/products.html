@@ -41,7 +41,36 @@
 <dialog class="sheet wide" id="detail" aria-labelledby="dTitle">
   <div class="sheet-h"><h2 id="dTitle">Product</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
   <div class="sheet-b" id="dBody"></div>
-  <div class="sheet-f"><a class="btn" href="pos.html"><i class="ph ph-cash-register"></i>Open the till</a><button class="btn" type="button" data-close>Close</button></div>
+  <div class="sheet-f"><button class="btn primary" id="dEdit" type="button" hidden><i class="ph ph-pencil-simple"></i>Edit product</button><a class="btn" href="pos.html"><i class="ph ph-cash-register"></i>Open the till</a><button class="btn" type="button" data-close>Close</button></div>
+</dialog>
+
+<dialog class="sheet wide" id="editSheet" aria-labelledby="eTitle">
+  <form class="form" id="editForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="eTitle">Edit product</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <div class="fld"><span>Photo</span>
+        <div class="photo">
+          <img id="ePrev" alt="" hidden>
+          <label class="btn" for="ePhoto"><i class="ph ph-camera"></i><span id="ePhotoTxt">Add photo</span></label>
+          <input type="file" id="ePhoto" accept="image/*" class="sr">
+          <button class="link" id="ePhotoX" type="button" hidden>Remove</button>
+        </div>
+      </div>
+      <label class="fld"><span>Product name</span><input type="text" id="eName" required autocomplete="off"></label>
+      <label class="fld"><span>Category</span><select id="eCategory"><option value="">No category</option></select></label>
+      <label class="fld"><span>Description</span><textarea id="eDesc" placeholder="Shown in your online store"></textarea></label>
+      <div class="opts">
+        <label class="chk"><input type="checkbox" id="eOnline"><span><b>Sell this online</b><small>Shows in your online store.</small></span></label>
+        <label class="chk"><input type="checkbox" id="eActive"><span><b>Active</b><small>Switch off to hide it from the till and the store without deleting it.</small></span></label>
+      </div>
+      <div class="row"><h3 class="grow">Prices and codes</h3><button class="btn sm" id="eAddVar" type="button"><i class="ph ph-plus"></i>Add option</button></div>
+      <div id="eVars" class="stack"></div>
+      <p class="muted" style="font-size:13px">To change how many you have in stock, use the Inventory page.</p>
+      <p class="note err" id="eErr" hidden></p>
+      <button class="btn danger sm" id="eDelete" type="button" style="justify-self:start"><i class="ph ph-trash"></i>Delete product</button>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="eSave" type="submit">Save changes</button></div>
+  </form>
 </dialog>
 
 <dialog class="sheet" id="addSheet" aria-labelledby="aTitle">

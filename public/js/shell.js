@@ -16,7 +16,7 @@
     { id: 'sell', label: 'Sell', icon: 'cash-register', title: 'Sell', blurb: 'Take payments and follow orders.', items: [
       { href: 'pos.html', label: 'New sale', icon: 'cash-register', desc: 'Open the till', ready: true },
       { href: 'test-sale.html', label: 'Practice sale', icon: 'flask', desc: 'Try a cash sale and its receipt', ready: true },
-      { href: 'sales.html', label: 'Sales', icon: 'receipt', desc: 'Every receipt, searchable' },
+      { href: 'sales.html', label: 'Sales', icon: 'receipt', desc: 'Every receipt, searchable', ready: true },
       { href: 'shifts.html', label: 'Shifts', icon: 'clock', desc: 'Cash drawer and handover' },
       { href: 'online-orders.html', label: 'Online orders', icon: 'shopping-bag', desc: 'Orders from your store' }
     ] },

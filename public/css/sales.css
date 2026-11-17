@@ -1,0 +1,28 @@
+/* Sales page */
+.toolbar .chip.dt { padding: 0 12px; border-radius: 12px; width: auto; min-width: 140px; }
+.sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.sum .fact b { font-size: 18px; letter-spacing: -.02em; }
+.sale-no { font-weight: 600; font-variant-numeric: tabular-nums; }
+.sale-sub { display: block; color: var(--ink-3); font-size: 12.5px; }
+.row-acts { display: flex; gap: 6px; justify-content: flex-end; }
+.sale-card { display: grid; gap: 8px; padding: 14px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; font: inherit; color: inherit; width: 100%; }
+.sale-card:hover { border-color: var(--brand); }
+.sale-card .top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.sale-list { display: none; gap: 10px; }
+.tag.void { background: var(--red-tint); color: var(--red-ink); border-color: transparent; text-decoration: line-through; }
+.d-lines .qty { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.d-tot { display: grid; gap: 6px; font-variant-numeric: tabular-nums; }
+.d-tot div { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-2); }
+.d-tot div.big { color: var(--ink); font-weight: 600; font-size: 18px; padding-top: 8px; border-top: 1px solid var(--line); letter-spacing: -.02em; }
+.d-tot div.due b { color: var(--red-ink); }
+.share-row { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); }
+.share-row .row { flex-wrap: wrap; }
+.share-row input { flex: 1; min-width: 160px; }
+.pm-wait { display: grid; justify-items: center; gap: 10px; text-align: center; padding: 10px 0 4px; }
+.pm-wait .ic i { animation: ring 1.4s ease-in-out infinite; }
+@keyframes ring { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-12deg); } 40% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } }
+@media (max-width: 760px) {
+  #list .card.flush { display: none; }
+  .sale-list { display: grid; }
+  .toolbar .chip.dt { flex: 1; min-width: 120px; }
+}

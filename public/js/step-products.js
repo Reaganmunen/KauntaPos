@@ -36,7 +36,7 @@
   async function loadCats() {
     try {
       var list = await K.api('GET', '/categories?all=true'); (list || []).forEach(function (c) { S.cats[c.id] = c.name; });
-      [$('#pcat'), $('#pCategory')].forEach(function (sel) { (list || []).forEach(function (c) { var o = K.el('option', c.name); o.value = c.id; sel.appendChild(o); }); });
+      [$('#pcat'), $('#pCategory'), $('#eCategory')].forEach(function (sel) { (list || []).forEach(function (c) { var o = K.el('option', c.name); o.value = c.id; sel.appendChild(o); }); });
     } catch (e) { $('#pcat').hidden = true; $('#pCategory').closest('.fld').hidden = true; }
   }
   async function load() {
@@ -108,6 +108,7 @@
     body.appendChild(K.el('div', undefined, 'sk-row')); body.appendChild(K.el('div', undefined, 'sk-row')); d.showModal();
     try {
       var p = await K.api('GET', '/products/' + encodeURIComponent(row.id)); body.textContent = '';
+      S.curP = p; S.curRow = row; showEdit();
       var imgs = (p.images || []).map(function (i) { return i.url; }).filter(Boolean);
       var gal = K.el('div', undefined, 'gal'), main;
       function show(u) { var n; if (u) { n = K.el('img', undefined, 'main-pic'); n.alt = p.name; n.src = u; } else n = K.el('span', (p.name || '?').charAt(0).toUpperCase(), 'ph main-pic'); if (main) main.replaceWith(n); else gal.insertBefore(n, gal.firstChild); main = n; }
@@ -241,6 +242,100 @@
     failed.slice(0, 50).forEach(function (f) { var li = K.el('li'); li.appendChild(K.el('span', 'Row ' + f.row + (f.name ? ' (' + f.name + ')' : '') + ': ' + f.error)); list.appendChild(li); });
     list.hidden = !failed.length;
     K.busy(btn, false); if (!imported) btn.disabled = false;
+  });
+
+  /* ---------- edit one ---------- */
+  var ed = { photo: null, removePhoto: false, oldImage: null, vars: [] };
+  var me = null;
+  function showEdit() { K.identity().then(function (d) { me = d && d.user; $('#dEdit').hidden = !(me && K.can(me, 'products.manage')); }); }
+  function paintEditPhoto() {
+    var url = ed.photo || (!ed.removePhoto && ed.oldImage && ed.oldImage.url) || null, prev = $('#ePrev');
+    prev.hidden = !url; if (url) prev.src = url; $('#ePhotoX').hidden = !url; $('#ePhotoTxt').textContent = url ? 'Change photo' : 'Add photo';
+  }
+  $('#ePhoto').addEventListener('change', async function () {
+    var f = this.files && this.files[0]; K.notice($('#eErr'), ''); if (!f) return;
+    try { ed.photo = await K.photo(f, { max: 800 }); } catch (ex) { ed.photo = null; K.notice($('#eErr'), ex.message, 'err'); }
+    this.value = ''; paintEditPhoto();
+  });
+  $('#ePhotoX').addEventListener('click', function () { ed.photo = null; ed.removePhoto = true; paintEditPhoto(); });
+
+  function field(label, cls, attrs, value, hint) {
+    var l = K.el('label', undefined, 'fld'); l.appendChild(K.el('span', label));
+    var i = K.el('input'); Object.keys(attrs).forEach(function (k) { i.setAttribute(k, attrs[k]); }); i.className = cls; i.value = value == null ? '' : value; l.appendChild(i);
+    if (hint) l.appendChild(K.el('small', hint)); return l;
+  }
+  function varRow(v, multi) {
+    var box = K.el('div', undefined, 'card'); box.style.display = 'grid'; box.style.gap = '14px'; box.style.padding = '16px';
+    var r = { id: v && v.id, box: box, removed: false };
+    var head = K.el('div', undefined, 'row');
+    if (multi || !v) { var nm = field('Option name', 'v-name', { type: 'text', autocomplete: 'off', placeholder: 'e.g. 500ml' }, v && v.name !== 'Default' ? v.name : ''); nm.classList.add('grow'); head.appendChild(nm); }
+    else head.appendChild(K.el('b', 'Standard', 'grow'));
+    if (multi || !v) { var x = K.el('button', undefined, 'icon-btn sm'); x.type = 'button'; x.title = 'Remove this option'; x.setAttribute('aria-label', 'Remove this option'); x.appendChild(K.icon('trash')); x.addEventListener('click', function () { r.removed = true; box.hidden = true; }); head.appendChild(x); }
+    box.appendChild(head);
+    var a = K.el('div', undefined, 'row2'); a.appendChild(field('Selling price (KES)', 'v-price', { type: 'number', min: '0', step: '0.01', inputmode: 'decimal' }, v && v.selling_price));
+    a.appendChild(field('Buying price (KES)', 'v-cost', { type: 'number', min: '0', step: '0.01', inputmode: 'decimal' }, v && v.cost_price)); box.appendChild(a);
+    var b = K.el('div', undefined, 'row2'); b.appendChild(field('SKU', 'v-sku', { type: 'text', autocomplete: 'off' }, v && v.sku)); b.appendChild(field('Barcode', 'v-bar', { type: 'text', autocomplete: 'off' }, v && v.barcode)); box.appendChild(b);
+    box.appendChild(field('Reorder level', 'v-reorder', { type: 'number', min: '0', step: '1', inputmode: 'decimal' }, v && v.reorder_level, 'You are warned when stock falls to this number.'));
+    r.get = function () { function g(c) { return box.querySelector('.' + c); } return { name: g('v-name') ? g('v-name').value.trim() : undefined, price: g('v-price').value, cost: g('v-cost').value, sku: g('v-sku').value.trim(), bar: g('v-bar').value.trim(), reorder: g('v-reorder').value }; };
+    return r;
+  }
+  function addVar(v, multi) { var r = varRow(v, multi); ed.vars.push(r); $('#eVars').appendChild(r.box); return r; }
+
+  $('#dEdit').addEventListener('click', function () {
+    var p = S.curP; if (!p) return; K.notice($('#eErr'), '');
+    ed = { photo: null, removePhoto: false, oldImage: (p.images || [])[0] || null, vars: [] };
+    $('#eName').value = p.name || ''; $('#eDesc').value = p.description || ''; $('#eCategory').value = p.category_id || '';
+    $('#eOnline').checked = Boolean(p.is_online); $('#eActive').checked = p.is_active !== false;
+    var box = $('#eVars'); box.textContent = ''; var vs = p.variants || []; vs.forEach(function (v) { addVar(v, vs.length > 1); });
+    paintEditPhoto(); $('#detail').close(); $('#editSheet').showModal();
+  });
+  $('#eAddVar').addEventListener('click', function () {
+    var live = ed.vars.filter(function (r) { return !r.removed; });
+    if (live.length === 1 && !live[0].box.querySelector('.v-name')) { /* a single standard option becomes a named one once there are two */
+      var old = live[0], idx = ed.vars.indexOf(old), v = (S.curP.variants || []).filter(function (x) { return x.id === old.id; })[0];
+      var vals = old.get(); var nr = varRow(v, true); nr.box.querySelector('.v-price').value = vals.price; nr.box.querySelector('.v-cost').value = vals.cost; nr.box.querySelector('.v-sku').value = vals.sku; nr.box.querySelector('.v-bar').value = vals.bar; nr.box.querySelector('.v-reorder').value = vals.reorder;
+      nr.box.querySelector('.v-name').value = (v && v.name !== 'Default') ? v.name : 'Standard'; old.box.replaceWith(nr.box); ed.vars[idx] = nr;
+    }
+    var r = addVar(null, true); var n = r.box.querySelector('.v-name'); if (n) n.focus();
+  });
+
+  $('#editForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var err = $('#eErr'), btn = $('#eSave'), p = S.curP; K.notice(err, '');
+    var name = $('#eName').value.trim(); if (!name) return K.notice(err, 'Enter the product name.', 'err');
+    var live = ed.vars.filter(function (r) { return !r.removed; });
+    if (!live.length) return K.notice(err, 'A product needs at least one price. Add an option or delete the product.', 'err');
+    for (var i = 0; i < live.length; i++) {
+      var g = live[i].get();
+      if (g.price === '' || K.num(g.price) < 0) return K.notice(err, 'Enter a selling price for every option.', 'err');
+      if (g.name !== undefined && !g.name) return K.notice(err, 'Give every option a name.', 'err');
+    }
+    K.busy(btn, true, 'Saving...');
+    try {
+      var id = encodeURIComponent(p.id);
+      await K.api('PATCH', '/products/' + id, { name: name, description: $('#eDesc').value.trim() || null, category_id: $('#eCategory').value || null, is_online: $('#eOnline').checked, is_active: $('#eActive').checked });
+      for (var j = 0; j < ed.vars.length; j++) {
+        var r = ed.vars[j], v = r.get(), body = { selling_price: K.num(v.price), cost_price: v.cost === '' ? null : K.num(v.cost), sku: v.sku || null, barcode: v.bar || null, reorder_level: v.reorder === '' ? 0 : K.num(v.reorder) };
+        if (v.name !== undefined) body.name = v.name;
+        if (r.removed) { if (r.id) await K.api('DELETE', '/products/' + id + '/variants/' + encodeURIComponent(r.id)); continue; }
+        if (r.id) await K.api('PATCH', '/products/' + id + '/variants/' + encodeURIComponent(r.id), body);
+        else await K.api('POST', '/products/' + id + '/variants', body);
+      }
+      if ((ed.photo || ed.removePhoto) && ed.oldImage) await K.api('DELETE', '/products/' + id + '/images/' + encodeURIComponent(ed.oldImage.id));
+      if (ed.photo) { var up = await K.api('POST', '/media', { data: ed.photo }); await K.api('POST', '/products/' + id + '/images', { url: up.url, alt_text: name, is_primary: true }); }
+      $('#editSheet').close(); K.toast(name + ' updated'); await loadExtras(); await load();
+      var row = S.rows.filter(function (x) { return x.id === p.id; })[0]; if (row) openDetail(row);
+    } catch (ex) { K.notice(err, ex.message, 'err'); }
+    K.busy(btn, false);
+  });
+
+  $('#eDelete').addEventListener('click', async function () {
+    var p = S.curP; if (!p) return;
+    if (!window.confirm('Delete "' + p.name + '"? It disappears from the till and your store. Past sales keep their receipts.')) return;
+    var btn = this; btn.disabled = true; K.notice($('#eErr'), '');
+    try { await K.api('DELETE', '/products/' + encodeURIComponent(p.id)); $('#editSheet').close(); K.toast(p.name + ' deleted'); await load(); }
+    catch (ex) { K.notice($('#eErr'), ex.message, 'err'); }
+    btn.disabled = false;
   });
 
   loadCats(); loadExtras().then(load);
