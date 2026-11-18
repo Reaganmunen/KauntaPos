@@ -38,7 +38,7 @@
     ] },
     { id: 'shop', label: 'Shop', icon: 'storefront', title: 'Shop', blurb: 'Your online store, branches and profile.', items: [
       { href: 'storefront.html', label: 'Online store', icon: 'storefront', desc: 'Name, delivery and publishing', ready: true },
-      { href: 'branches.html', label: 'Branches', icon: 'git-branch', desc: 'Every place you sell from' },
+      { href: 'branches.html', label: 'Branches', icon: 'git-branch', desc: 'Every place you sell from', ready:true},
       { href: 'profile.html', label: 'Profile and shop', icon: 'user-circle', desc: 'Your details, logo and password', ready: true }
     ] }
   ];
