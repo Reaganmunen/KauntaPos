@@ -18,7 +18,12 @@
 </head>
 <body data-nav="etims.html">
 <main class="page narrow" id="page">
-  <div class="head"><div><h1>Set up eTIMS</h1><p>Kaunta sends each sale to KRA as an eTIMS receipt through Digitax. Paste your Digitax API key to connect.</p></div></div>
+  <div class="head">
+    <div><h1>Set up eTIMS</h1><p>Kaunta sends each sale to KRA as an eTIMS receipt through Digitax. Paste your Digitax API key to connect.</p></div>
+    <div class="actions">
+      <a class="btn" id="goReceipts" href="etims-invoices.html"><i class="ph ph-receipt"></i><span id="goReceiptsLabel">View eTIMS receipts</span></a>
+    </div>
+  </div>
   <section class="card">
     <div class="card-h"><div class="row"><span class="ic"><i class="ph ph-seal-check"></i></span><div><h2>Digitax connection</h2><p class="sub">Receipts are signed and sent after each sale</p></div></div><span class="tag" id="state">Not connected</span></div>
     <form class="form" id="etForm" novalidate>
@@ -31,7 +36,7 @@
       <div class="actions"><button class="btn primary" id="eSave" type="submit">Save and verify</button></div>
     </form>
   </section>
-  <p class="muted">Your shop's KRA PIN and VAT status come from your shop profile. Make sure they are filled in there before going live.</p>
+  <p class="muted">Your shop's KRA PIN and VAT status come from your shop profile. Make sure they are filled in there before going live. To see what has been sent to KRA, what bounced and the receipts, open <a href="etims-invoices.html">eTIMS receipts</a>.</p>
 </main>
 
 <script src="js/config.js"></script>
