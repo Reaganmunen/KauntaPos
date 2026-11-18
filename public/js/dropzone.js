@@ -3,7 +3,7 @@
           dz.set(url)  show a saved picture (or clear with a falsy value)
           dz.busy()    true while a picture is still being shrunk or uploaded
    The hidden input always holds the saved picture address, so forms read it like any other field.
-   Pictures are shrunk in the browser first (smaller upload, faster store), then sent to POST /storefront/upload.
+   Pictures are shrunk in the browser first (smaller upload, faster store), then sent to the shop's existing POST /media (kept in the media table), which returns the address to store.
    Colours come from the system variables in css/ui.css (see css/dropzone.css), so light and dark themes both work. */
 (function () {
   'use strict';
@@ -12,9 +12,18 @@
 
   var TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
   var MAX_SOURCE = 12 * 1024 * 1024;   // the file the person picks
-  var TARGET_BYTES = 450 * 1024;       // what we actually send
+  var TARGET_BYTES = 360 * 1024;       // aim under the server's 400 KB cap
+  var HARD_LIMIT = 400 * 1024;         // POST /media refuses anything bigger
   var SIZES = { logo: 512, banner: 1600 };
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // Saved pictures are paths like /api/media/<id>. If the API is on another address than this page, point them at the API.
+  function asset(u) {
+    if (typeof u !== 'string' || u.charAt(0) !== '/' || u.charAt(1) === '/') return u;
+    var api = (window.KAUNTA_CONFIG && window.KAUNTA_CONFIG.API) || '';
+    if (!/^https?:\/\//i.test(api)) return u;
+    try { return new URL(api).origin + u; } catch (e) { return u; }
+  }
 
   /* ---------- the hoop ---------- */
   function hoopSvg() {
@@ -69,7 +78,7 @@
       scale *= 0.75;
     }
     if (!blob) throw new Error('We could not prepare that picture.');
-    if (blob.size > TARGET_BYTES * 2) throw new Error('That picture is too detailed to upload. Try a smaller one.');
+    if (blob.size > HARD_LIMIT) throw new Error('That picture is too detailed to upload. Try a smaller one.');
     return blob;
   }
   function kb(n) { return n >= 1024 * 1024 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
@@ -105,7 +114,7 @@
       var has = Boolean(url);
       if (input) input.value = url || '';
       zone.hidden = has; done.hidden = !has;
-      if (has) { img.src = url; info.textContent = note || 'Saved to your store.'; } else { img.removeAttribute('src'); }
+      if (has) { img.src = asset(url); info.textContent = note || 'Saved to your store.'; } else { img.removeAttribute('src'); }
       idle();
     }
 
@@ -120,7 +129,7 @@
       try {
         // the ball flies for about a second while the picture is prepared and sent
         var results = await Promise.all([shrink(f, kind).then(async function (blob) {
-          var res = await K.api('POST', '/storefront/upload', { kind: kind, filename: f.name, data: await readDataUrl(blob) });
+          var res = await K.api('POST', '/media', { data: await readDataUrl(blob) });
           return { url: res && res.url, bytes: (res && res.bytes) || blob.size };
         }), wait(1250)]);
         if (mine !== token) return;
@@ -162,5 +171,5 @@
     };
   }
 
-  window.KDrop = { mount: mount };
+  window.KDrop = { mount: mount, asset: asset };
 })();

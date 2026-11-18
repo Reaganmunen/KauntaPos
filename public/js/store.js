@@ -9,6 +9,14 @@
   var base = ((window.KAUNTA_CONFIG && window.KAUNTA_CONFIG.API) || '/api').replace(/\/$/, '') + '/store';
   var kes = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0, maximumFractionDigits: 2 });
   var money = function (n) { return kes.format(Number(n) || 0); };
+  // Uploaded pictures are saved as paths like /api/media/<id>. When the API lives on another address than this page
+  // (config.js API is a full https://... address), that path must point at the API, not at this page.
+  function asset(u) {
+    if (typeof u !== 'string' || u.charAt(0) !== '/' || u.charAt(1) === '/') return u;
+    var api = (window.KAUNTA_CONFIG && window.KAUNTA_CONFIG.API) || '';
+    if (!/^https?:\/\//i.test(api)) return u;
+    try { return new URL(api).origin + u; } catch (e) { return u; }
+  }
 
   function el(tag, text, cls) { var e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
   function icon(n) { var i = document.createElement('i'); i.className = 'ph ph-' + n; i.setAttribute('aria-hidden', 'true'); return i; }
@@ -83,7 +91,7 @@
   function pic(url, name, cls) {
     var box = el('div', undefined, cls || 'pic');
     function none() { box.textContent = ''; box.appendChild(el('span', (name || '?').trim().charAt(0).toUpperCase(), 'none')); }
-    if (url) { var im = el('img'); im.alt = ''; im.loading = 'lazy'; im.src = url; im.addEventListener('error', none); box.appendChild(im); } else none();
+    if (url) { var im = el('img'); im.alt = ''; im.loading = 'lazy'; im.src = asset(url); im.addEventListener('error', none); box.appendChild(im); } else none();
     return box;
   }
   function stepper(value, min, onChange) {
@@ -100,9 +108,9 @@
     var name = s.store_name || 'Online store';
     $('#shopName').textContent = name; $('#fName').textContent = name; document.title = s.seo_title || name;
     if (s.seo_description) $('meta[name=description]').setAttribute('content', s.seo_description);
-    if (s.favicon_url) $('#favicon').setAttribute('href', s.favicon_url);
+    if (s.favicon_url) $('#favicon').setAttribute('href', asset(s.favicon_url));
     var logo = $('#logo'), mark = $('#mark'); mark.textContent = name.trim().charAt(0).toUpperCase(); mark.hidden = Boolean(s.logo_url);
-    if (s.logo_url) { logo.src = s.logo_url; logo.hidden = false; logo.addEventListener('error', function () { logo.hidden = true; mark.hidden = false; }); }
+    if (s.logo_url) { logo.src = asset(s.logo_url); logo.hidden = false; logo.addEventListener('error', function () { logo.hidden = true; mark.hidden = false; }); }
     if (s.announcement) { $('#announce').textContent = s.announcement; $('#announce').hidden = false; }
     $('#tagline').textContent = s.tagline || 'Order from ' + name; $('#hello').hidden = false;
     var perks = $('#perks'); perks.textContent = '';
@@ -122,7 +130,7 @@
     var hero = $('#hero'); hero.textContent = '';
     (list || []).forEach(function (b) {
       var a = el(b.link_url && /^(https?:\/\/|\/)/.test(b.link_url) ? 'a' : 'div', undefined, 'slide'); if (a.tagName === 'A') a.href = b.link_url;
-      if (b.image_url) { var im = el('img'); im.alt = ''; im.src = b.image_url; a.appendChild(im); }
+      if (b.image_url) { var im = el('img'); im.alt = ''; im.src = asset(b.image_url); a.appendChild(im); }
       var d = el('div'); if (b.title) d.appendChild(el('h2', b.title)); if (b.subtitle) d.appendChild(el('p', b.subtitle)); a.appendChild(d); hero.appendChild(a);
     });
     hero.hidden = !(list && list.length);
@@ -181,8 +189,8 @@
         var imgs = (p.images || []).filter(function (i) { return i.url; });
         var gal = el('div', undefined, 'gal');
         if (imgs.length) {
-          var main = el('img', undefined, 'main'); main.alt = p.name; main.src = imgs[0].url; gal.appendChild(main);
-          if (imgs.length > 1) { var th = el('div', undefined, 'thumbs'); imgs.forEach(function (i, n) { var t = el('img'); t.src = i.url; t.alt = ''; t.setAttribute('aria-current', String(n === 0)); t.addEventListener('click', function () { main.src = i.url; th.querySelectorAll('img').forEach(function (x) { x.setAttribute('aria-current', 'false'); }); t.setAttribute('aria-current', 'true'); }); th.appendChild(t); }); gal.appendChild(th); }
+          var main = el('img', undefined, 'main'); main.alt = p.name; main.src = asset(imgs[0].url); gal.appendChild(main);
+          if (imgs.length > 1) { var th = el('div', undefined, 'thumbs'); imgs.forEach(function (i, n) { var t = el('img'); t.src = asset(i.url); t.alt = ''; t.setAttribute('aria-current', String(n === 0)); t.addEventListener('click', function () { main.src = i.url; th.querySelectorAll('img').forEach(function (x) { x.setAttribute('aria-current', 'false'); }); t.setAttribute('aria-current', 'true'); }); th.appendChild(t); }); gal.appendChild(th); }
         } else gal.appendChild(pic(null, p.name));
         b.appendChild(gal);
         var vs = p.variants || [], cur = vs.filter(function (v) { return v.in_stock; })[0] || vs[0];

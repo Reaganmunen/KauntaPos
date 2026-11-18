@@ -67,7 +67,7 @@
     var name = $('#sName').value.trim() || 'Your store';
     $('#pvName').textContent = name; $('#pvTag').textContent = $('#sTag').value.trim() || 'Your tagline shows here';
     var ann = $('#sAnn').value.trim(); $('#pvAnn').hidden = !ann; $('#pvAnn').textContent = ann;
-    K.avatar($('#pvLogo'), $('#sLogo').value.trim() || null, name);
+    K.avatar($('#pvLogo'), KDrop.asset($('#sLogo').value.trim()) || null, name);
     var foot = $('#pvFoot'); foot.textContent = '';
     [$('#sAddr').value.trim(), $('#sPhone').value.trim() && 'Call ' + $('#sPhone').value.trim(), $('#sWa').value.trim() && 'WhatsApp ' + $('#sWa').value.trim(), $('#sDel').checked && 'Delivery', $('#sPick').checked && 'Pickup'].filter(Boolean).forEach(function (t) { foot.appendChild(K.el('span', t)); });
   }
@@ -171,7 +171,7 @@
         if (!rows.length) { box.appendChild(emptyBox('image', 'No banners yet', 'Add a picture with a headline to show at the top of your store.')); return; }
         var t = tableOf(['Picture', 'Banner', 'Shows', 'Status']), now = Date.now();
         rows.forEach(function (b) {
-          var r = K.el('tr', undefined, 'go'), p = K.el('td'), im = K.el('img', undefined, 'sf-thumb'); im.alt = ''; im.loading = 'lazy'; im.src = b.image_url || ''; p.appendChild(im); r.appendChild(p);
+          var r = K.el('tr', undefined, 'go'), p = K.el('td'), im = K.el('img', undefined, 'sf-thumb'); im.alt = ''; im.loading = 'lazy'; im.src = KDrop.asset(b.image_url) || ''; p.appendChild(im); r.appendChild(p);
           var c = K.el('td', undefined, 'sf-cell'); c.appendChild(K.el('b', b.title || 'Untitled banner')); if (b.subtitle) c.appendChild(K.el('small', b.subtitle)); r.appendChild(c);
           var from = b.starts_at ? new Date(b.starts_at).getTime() : null, to = b.ends_at ? new Date(b.ends_at).getTime() : null;
           r.appendChild(K.el('td', from || to ? (from ? 'From ' + when(b.starts_at) : '') + (from && to ? ' ' : '') + (to ? 'until ' + when(b.ends_at) : '') : 'Always', 'muted'));
