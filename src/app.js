@@ -16,6 +16,7 @@ const express = require('express');
 const cors = require('cors');
 const { requestContext, corsOptions, notFound, errorHandler } = require('./middleware');
 const routes = require('./routes');
+const media = require('./controllers/mediaController');
 const { isPlatformHost } = require('./middleware/tenant');
 
 const prefix = (process.env.API_PREFIX || '/api').replace(/\/$/, '');
@@ -54,6 +55,10 @@ app.use(express.static(publicDir, {
     if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
   },
 }));
+
+// Storefront pictures (logos, banners) are stored in the database and served here. Public on purpose: shoppers
+// and the admin page load them in plain <img> tags. The ids are random, and files are immutable so they cache for a year.
+app.get('/media/:tenantId/:id', media.serve);
 
 // ---------- API ----------
 // A batch of offline sales or a 1000-row product import is bigger than the 1 MB default. These two

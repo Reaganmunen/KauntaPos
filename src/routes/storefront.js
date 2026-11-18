@@ -19,6 +19,7 @@ storefrontRouter.get('/settings', manage, admin.getSettings);
 storefrontRouter.put('/settings', manage, admin.saveSettings);
 storefrontRouter.post('/publish', manage, admin.publish);
 storefrontRouter.post('/unpublish', manage, admin.unpublish);
+storefrontRouter.post('/upload', manage, admin.uploadImage); // logo and banner pictures
 
 crudRoutes(storefrontRouter, '/banners', admin.banners, { read: [manage], write: [manage] });
 crudRoutes(storefrontRouter, '/pages', admin.pages, { read: [manage], write: [manage] });

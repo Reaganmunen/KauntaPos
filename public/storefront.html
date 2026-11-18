@@ -16,6 +16,7 @@
   <link href="css/ui.css" rel="stylesheet">
   <link href="css/theme.css" rel="stylesheet">
   <link href="css/storefront.css" rel="stylesheet">
+  <link href="css/dropzone.css" rel="stylesheet">
 </head>
 <body data-nav="storefront.html">
 <main class="page" id="page">
@@ -40,7 +41,7 @@
         <form class="form" id="sfForm" novalidate>
           <label class="fld"><span>Store name</span><input type="text" id="sName" autocomplete="off"></label>
           <label class="fld"><span>Tagline</span><input type="text" id="sTag" autocomplete="off" placeholder="e.g. Fresh groceries, delivered fast"></label>
-          <label class="fld"><span>Logo link</span><input type="url" id="sLogo" autocomplete="off" placeholder="https://..."><small>Optional. You can also upload a logo on the profile page and tick "use on my online store".</small></label>
+          <div class="fld"><span>Logo</span><div class="dz-host" id="dzLogo"></div><input type="hidden" id="sLogo"><small>Optional. A square picture works best. You can also upload a logo on the profile page and tick "use on my online store".</small></div>
           <div class="row2">
             <label class="fld"><span>Phone</span><input type="tel" id="sPhone" autocomplete="off"></label>
             <label class="fld"><span>WhatsApp</span><input type="tel" id="sWa" autocomplete="off"></label>
@@ -118,8 +119,7 @@
   <form class="form" id="bnForm" novalidate style="display:contents">
     <div class="sheet-h"><h2 id="bnTitle">Add a banner</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
     <div class="sheet-b">
-      <label class="fld"><span>Picture link</span><input type="url" id="bnImage" autocomplete="off" placeholder="https://..." required><small>A wide picture works best.</small></label>
-      <div class="sf-prev" id="bnPrev" hidden></div>
+      <div class="fld"><span>Picture</span><div class="dz-host" id="dzBanner"></div><input type="hidden" id="bnImage"><small>A wide picture works best.</small></div>
       <label class="fld"><span>Headline</span><input type="text" id="bnHead" autocomplete="off" maxlength="80"></label>
       <label class="fld"><span>Smaller text</span><input type="text" id="bnSub" autocomplete="off" maxlength="140"></label>
       <label class="fld"><span>Link</span><input type="text" id="bnLink" autocomplete="off" placeholder="https://..."><small>Optional. Where the banner takes people when tapped.</small></label>
@@ -160,6 +160,7 @@
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/shell.js"></script>
+<script src="js/dropzone.js"></script>
 <script src="js/step-storefront.js"></script>
 </body>
 </html>

@@ -9,6 +9,12 @@
   if (!K) { console.error('step-storefront.js: window.KApp is missing. js/config.js, js/app.js or js/shell.js did not load or did not define it.'); return; }
   var $ = function (s) { return document.querySelector(s); };
   var S = { live: false, settings: {}, zones: [], banners: [], pages: [], loaded: {}, edit: {} };
+  if (!window.KDrop) { console.error('step-storefront.js: window.KDrop is missing. js/dropzone.js did not load.'); return; }
+  // Picture uploads. The hidden inputs #sLogo and #bnImage hold the saved picture address, so the rest of this file reads them as before.
+  var DZ = {
+    logo: KDrop.mount($('#dzLogo'), { kind: 'logo', input: $('#sLogo'), onChange: function () { preview(); } }),
+    banner: KDrop.mount($('#dzBanner'), { kind: 'banner', input: $('#bnImage') })
+  };
 
   /* ---------- helpers ---------- */
   function rowsOf(d) { return Array.isArray(d) ? d : (d && (d.rows || d.data || d.items)) || []; }
@@ -41,7 +47,7 @@
   /* ---------- settings ---------- */
   function paint(s, branches) {
     s = s || {}; S.settings = s;
-    $('#sName').value = s.store_name || (K.session && K.session.tenant && K.session.tenant.name) || ''; $('#sTag').value = s.tagline || ''; $('#sLogo').value = s.logo_url || '';
+    $('#sName').value = s.store_name || (K.session && K.session.tenant && K.session.tenant.name) || ''; $('#sTag').value = s.tagline || ''; DZ.logo.set(s.logo_url);
     $('#sPhone').value = s.contact_phone || ''; $('#sWa').value = s.whatsapp_number || ''; $('#sAddr').value = s.address || ''; $('#sAnn').value = s.announcement || '';
     $('#sMin').value = s.min_order_amount && num(s.min_order_amount) > 0 ? s.min_order_amount : '';
     $('#sDel').checked = s.enable_delivery !== false; $('#sPick').checked = s.enable_pickup !== false;
@@ -65,7 +71,7 @@
     var foot = $('#pvFoot'); foot.textContent = '';
     [$('#sAddr').value.trim(), $('#sPhone').value.trim() && 'Call ' + $('#sPhone').value.trim(), $('#sWa').value.trim() && 'WhatsApp ' + $('#sWa').value.trim(), $('#sDel').checked && 'Delivery', $('#sPick').checked && 'Pickup'].filter(Boolean).forEach(function (t) { foot.appendChild(K.el('span', t)); });
   }
-  ['#sName', '#sTag', '#sLogo', '#sPhone', '#sWa', '#sAddr', '#sAnn'].forEach(function (id) { $(id).addEventListener('input', preview); });
+  ['#sName', '#sTag', '#sPhone', '#sWa', '#sAddr', '#sAnn'].forEach(function (id) { $(id).addEventListener('input', preview); });
   ['#sDel', '#sPick'].forEach(function (id) { $(id).addEventListener('change', function () { preview(); checklist(); }); });
   ['#sPhone', '#sWa'].forEach(function (id) { $(id).addEventListener('input', checklist); });
   $('#sBranch').addEventListener('change', checklist);
@@ -100,6 +106,7 @@
   }
   async function save(andPublish) {
     var err = $('#sErr'), ok = $('#sOk'); K.notice(err, ''); K.notice(ok, '');
+    if (DZ.logo.busy()) return K.notice(err, 'Wait for the logo to finish uploading, then save.', 'err');
     var btns = [$('#sSave'), $('#sPub'), $('#sUnpub')]; btns.forEach(function (b) { b.disabled = true; });
     try {
       if (andPublish) {
@@ -151,9 +158,10 @@
     banners: {
       path: '/storefront/banners', list: '#bnList', err: '#bnListErr', noun: 'banner',
       dlg: '#bnDlg', form: '#bnForm', ferr: '#bnErr', save: '#bnSave', del: '#bnDel', title: '#bnTitle', newTitle: 'Add a banner', editTitle: 'Edit banner',
-      fill: function (b) { $('#bnImage').value = b.image_url || ''; $('#bnHead').value = b.title || ''; $('#bnSub').value = b.subtitle || ''; $('#bnLink').value = b.link_url || ''; $('#bnFrom').value = localInput(b.starts_at); $('#bnTo').value = localInput(b.ends_at); $('#bnSort').value = b.sort_order !== undefined && b.sort_order !== null ? b.sort_order : ''; $('#bnActive').checked = b.is_active !== false; bannerPreview(); },
+      fill: function (b) { DZ.banner.set(b.image_url); $('#bnHead').value = b.title || ''; $('#bnSub').value = b.subtitle || ''; $('#bnLink').value = b.link_url || ''; $('#bnFrom').value = localInput(b.starts_at); $('#bnTo').value = localInput(b.ends_at); $('#bnSort').value = b.sort_order !== undefined && b.sort_order !== null ? b.sort_order : ''; $('#bnActive').checked = b.is_active !== false; },
       read: function () {
-        var img = $('#bnImage').value.trim(); if (!/^(https?:\/\/|\/)/i.test(img)) return { error: 'Enter a picture link that starts with https://' };
+        if (DZ.banner.busy()) return { error: 'Wait for the picture to finish uploading.' };
+        var img = $('#bnImage').value.trim(); if (!/^(https?:\/\/|\/)/i.test(img)) return { error: 'Add a picture for the banner.' };
         var link = blank($('#bnLink').value); if (link && !/^(https?:\/\/|\/)/i.test(link)) return { error: 'The link must start with https://' };
         var from = isoFrom($('#bnFrom').value), to = isoFrom($('#bnTo').value); if (from && to && from >= to) return { error: 'The end time must be after the start time.' };
         var sort = $('#bnSort').value.trim();
@@ -237,11 +245,6 @@
   $('#addBanner').addEventListener('click', function () { openForm('banners', null); });
   $('#addPage').addEventListener('click', function () { openForm('pages', null); });
 
-  function bannerPreview() {
-    var u = $('#bnImage').value.trim(), box = $('#bnPrev'); box.textContent = '';
-    if (/^(https?:\/\/|\/)/i.test(u)) { var im = K.el('img'); im.alt = ''; im.src = u; im.addEventListener('error', function () { box.hidden = true; }); box.appendChild(im); box.hidden = false; } else box.hidden = true;
-  }
-  $('#bnImage').addEventListener('input', bannerPreview);
   document.querySelectorAll('dialog [data-close]').forEach(function (b) { b.addEventListener('click', function () { var d = b.closest('dialog'); if (d && d.open) d.close(); }); });
 
   /* ---------- start ---------- */

@@ -89,6 +89,47 @@ exports.unpublish = asyncHandler(async (req, res) => {
   return ok(res, settings);
 });
 
+// ---------- picture upload ----------
+// Pictures live in the database (storefront_media), not on disk, so they survive redeploys and work on
+// hosts without a persistent disk. The page shrinks the picture in the browser and sends it as a data URL.
+// mediaController.serve hands it back at /media/<tenant>/<id>.
+const MAX_IMAGE_BYTES = 1024 * 1024;
+const MIME = { png: 'image/png', jpg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' };
+
+// Decide the real type from the first bytes. The declared type and file name are never trusted.
+function sniffImage(buf) {
+  if (buf.length < 12) return null;
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'png';
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
+  if (buf.toString('ascii', 0, 4) === 'GIF8') return 'gif';
+  if (buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') return 'webp';
+  return null;
+}
+
+// POST /storefront/upload   { kind: 'logo' | 'banner', data: 'data:image/webp;base64,...' }  returns { url }
+exports.uploadImage = asyncHandler(async (req, res) => {
+  const data = req.body && req.body.data;
+  const comma = typeof data === 'string' ? data.indexOf(',') : -1;
+  if (comma < 0 || !/^data:image\/(png|jpeg|webp|gif);base64$/.test(data.slice(0, comma))) {
+    throw ApiError.unprocessable('Upload a PNG, JPG, WebP or GIF picture');
+  }
+  const buf = Buffer.from(data.slice(comma + 1), 'base64');
+  if (!buf.length) throw ApiError.unprocessable('That picture is empty');
+  if (buf.length > MAX_IMAGE_BYTES) throw ApiError.unprocessable('That picture is too large. Keep it under 1 MB.');
+  const ext = sniffImage(buf);
+  if (!ext) throw ApiError.unprocessable('That file is not a picture we can use');
+
+  const kind = ['logo', 'banner'].includes(req.body.kind) ? req.body.kind : 'image';
+  const row = await run(req, async (db) => {
+    const { rows } = await db.query(
+      'INSERT INTO storefront_media (tenant_id, kind, mime_type, byte_size, data) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [req.tenantId, kind, MIME[ext], buf.length, buf]
+    );
+    return rows[0];
+  });
+  return ok(res, { url: `/media/${req.tenantId}/${row.id}`, bytes: buf.length });
+});
+
 // Banners, pages and delivery zones: list / get / create / update / remove
 exports.banners = makeCrud(StorefrontBanner, { label: 'Banner' });
 

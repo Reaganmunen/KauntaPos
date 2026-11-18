@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Branches | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/branches.css" rel="stylesheet">
+</head>
+<body data-nav="branches.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Branches</h1><p>Your shops and the tills inside them. Stock, sales and online orders are kept for each branch.</p></div>
+    <div class="actions"><button class="btn primary" id="addBranch" type="button"><i class="ph ph-plus"></i>Add branch</button></div>
+  </div>
+
+  <p class="note err" id="brErr" hidden></p>
+
+  <section class="card br-stats" id="stats" aria-label="Summary" aria-live="polite"></section>
+
+  <div class="br-grid" id="brList"></div>
+</main>
+
+<!-- Branch form -->
+<dialog class="sheet" id="brDlg" aria-labelledby="brTitle">
+  <form class="form" id="brForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="brTitle">Add a branch</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <div class="row2">
+        <label class="fld"><span>Branch name</span><input type="text" id="bName" required autocomplete="off" placeholder="e.g. Westlands"></label>
+        <label class="fld"><span>Code</span><input type="text" id="bCode" required autocomplete="off" maxlength="12" placeholder="e.g. WLD" style="text-transform:uppercase"><small>Short and unique.</small></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>Phone</span><input type="tel" id="bPhone" autocomplete="off" placeholder="0712 345 678"></label>
+        <label class="fld"><span>County</span><input type="text" id="bCounty" list="countyList" autocomplete="off" placeholder="Start typing"><small>Optional.</small></label>
+      </div>
+      <label class="fld"><span>Address</span><input type="text" id="bAddr" autocomplete="off" placeholder="Street, building, floor"></label>
+      <label class="fld"><span>eTIMS branch ID</span><input type="text" id="bEtims" autocomplete="off" class="mono" maxlength="20"><small>Optional. The branch ID KRA gave this location for tax invoices.</small></label>
+      <div class="opts">
+        <label class="chk"><input type="checkbox" id="bMain"><span><b>Main branch</b><small class="muted" id="bMainHelp">Your head office. Only one branch can be the main one.</small></span></label>
+        <label class="chk"><input type="checkbox" id="bActive" checked><span><b>Active</b><small class="muted">Switch off to stop using this branch without losing its history.</small></span></label>
+      </div>
+
+      <section class="br-tills" id="brTills" hidden>
+        <div class="card-h"><div><h3>Tills</h3><p class="sub">Devices that ring up sales in this branch.</p></div><button class="btn sm" id="addTill" type="button"><i class="ph ph-plus"></i>Add till</button></div>
+        <p class="note err" id="tillErr" hidden></p>
+        <ul class="br-till-list" id="tillList"></ul>
+      </section>
+      <p class="muted" id="tillHint">Save the branch first, then you can add its tills.</p>
+
+      <p class="note err" id="brFormErr" hidden></p>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="brSave" type="submit">Save branch</button></div>
+  </form>
+</dialog>
+
+<!-- Till form -->
+<dialog class="modal" id="tmDlg" aria-labelledby="tmTitle">
+  <form class="dlg" id="tmForm" novalidate>
+    <h2 id="tmTitle">Add a till</h2>
+    <label class="fld"><span>Till name</span><input type="text" id="tmName" required autocomplete="off" placeholder="e.g. Counter 1"></label>
+    <label class="fld"><span>Device ID</span><input type="text" id="tmDevice" autocomplete="off" class="mono"><small>Optional. The till's device ID, so it can show as online here.</small></label>
+    <label class="chk" id="tmActiveWrap"><input type="checkbox" id="tmActive" checked><span><b>Active</b><small class="muted">Switch off to retire a till you no longer use.</small></span></label>
+    <p class="note err" id="tmErr" hidden></p>
+    <div class="actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="tmSave" type="submit">Save till</button></div>
+  </form>
+</dialog>
+
+<datalist id="countyList">
+  <option value="Baringo"><option value="Bomet"><option value="Bungoma"><option value="Busia"><option value="Elgeyo-Marakwet"><option value="Embu"><option value="Garissa"><option value="Homa Bay"><option value="Isiolo"><option value="Kajiado"><option value="Kakamega"><option value="Kericho"><option value="Kiambu"><option value="Kilifi"><option value="Kirinyaga"><option value="Kisii"><option value="Kisumu"><option value="Kitui"><option value="Kwale"><option value="Laikipia"><option value="Lamu"><option value="Machakos"><option value="Makueni"><option value="Mandera"><option value="Marsabit"><option value="Meru"><option value="Migori"><option value="Mombasa"><option value="Murang'a"><option value="Nairobi"><option value="Nakuru"><option value="Nandi"><option value="Narok"><option value="Nyamira"><option value="Nyandarua"><option value="Nyeri"><option value="Samburu"><option value="Siaya"><option value="Taita-Taveta"><option value="Tana River"><option value="Tharaka-Nithi"><option value="Trans Nzoia"><option value="Turkana"><option value="Uasin Gishu"><option value="Vihiga"><option value="Wajir"><option value="West Pokot">
+</datalist>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/step-branches.js"></script>
+</body>
+</html>
