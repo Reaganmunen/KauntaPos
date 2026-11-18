@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reports | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/reports.css" rel="stylesheet">
+</head>
+<body data-nav="reports.html">
+<main class="page rp" id="page">
+  <div class="head">
+    <div><h1>Reports</h1><p id="rangeLabel">How the shop is doing, and where the money goes.</p></div>
+    <div class="actions">
+      <button class="btn" id="print" type="button"><i class="ph ph-printer"></i>Print</button>
+      <button class="btn" id="refresh" type="button"><i class="ph ph-arrows-clockwise"></i>Refresh</button>
+    </div>
+  </div>
+
+  <div class="toolbar rp-controls">
+    <div class="seg" id="period" role="group" aria-label="Period">
+      <button type="button" data-p="today" aria-pressed="false">Today</button>
+      <button type="button" data-p="yesterday" aria-pressed="false">Yesterday</button>
+      <button type="button" data-p="week" aria-pressed="false">This week</button>
+      <button type="button" data-p="month" aria-pressed="false">This month</button>
+      <button type="button" data-p="last_30_days" aria-pressed="true">Last 30 days</button>
+      <button type="button" data-p="year" aria-pressed="false">This year</button>
+      <button type="button" data-p="custom" aria-pressed="false">Custom</button>
+    </div>
+    <span id="customBox" class="rp-custom" hidden>
+      <label class="rp-date"><span>From</span><input type="date" id="cFrom" aria-label="From date"></label>
+      <label class="rp-date"><span>To</span><input type="date" id="cTo" aria-label="To date"></label>
+    </span>
+    <span class="grow"></span>
+    <select id="branch" aria-label="Branch"><option value="">All branches</option></select>
+  </div>
+
+  <div class="rp-attn" id="b-attn" aria-live="polite"></div>
+
+  <section class="rp-card rp-hero" id="s-sales">
+    <div class="rp-h">
+      <h2>Sales</h2>
+      <div class="rp-tools">
+        <div class="seg sm" id="group" role="group" aria-label="Group sales by">
+          <button type="button" data-g="hour" aria-pressed="false">Hour</button>
+          <button type="button" data-g="day" aria-pressed="true">Day</button>
+          <button type="button" data-g="week" aria-pressed="false">Week</button>
+          <button type="button" data-g="month" aria-pressed="false">Month</button>
+        </div>
+        <button class="btn sm" id="csvSales" type="button"><i class="ph ph-download-simple"></i>CSV</button>
+      </div>
+    </div>
+    <div id="b-sales"></div>
+  </section>
+
+  <div class="rp-figures" id="b-figures"></div>
+
+  <div class="rp-grid">
+    <section class="rp-card" id="s-profit">
+      <div class="rp-h"><h2>Where the money went</h2></div>
+      <div id="b-profit"></div>
+    </section>
+    <section class="rp-card" id="s-pay">
+      <div class="rp-h"><h2>How customers paid</h2></div>
+      <div id="b-pay"></div>
+    </section>
+
+    <section class="rp-card" id="s-products">
+      <div class="rp-h">
+        <h2>Top products</h2>
+        <div class="rp-tools">
+          <div class="seg sm" id="by" role="group" aria-label="Rank products by">
+            <button type="button" data-b="revenue" aria-pressed="true">Revenue</button>
+            <button type="button" data-b="quantity" aria-pressed="false">Quantity</button>
+            <button type="button" data-b="profit" aria-pressed="false">Profit</button>
+          </div>
+          <button class="btn sm" id="csvProducts" type="button"><i class="ph ph-download-simple"></i>CSV</button>
+        </div>
+      </div>
+      <div id="b-products"></div>
+    </section>
+    <section class="rp-card" id="s-cats">
+      <div class="rp-h"><h2>Sales by category</h2></div>
+      <div id="b-cats"></div>
+    </section>
+
+    <section class="rp-card" id="s-exp">
+      <div class="rp-h"><h2>Expenses</h2></div>
+      <div id="b-exp"></div>
+    </section>
+    <section class="rp-card" id="s-cash">
+      <div class="rp-h"><h2>Cashiers</h2><div class="rp-tools"><button class="btn sm" id="csvCash" type="button"><i class="ph ph-download-simple"></i>CSV</button></div></div>
+      <div id="b-cash"></div>
+    </section>
+
+    <section class="rp-card rp-wide" id="s-vat">
+      <div class="rp-h"><h2>VAT collected</h2><div class="rp-tools"><button class="btn sm" id="csvVat" type="button"><i class="ph ph-download-simple"></i>CSV</button></div></div>
+      <div id="b-vat"></div>
+    </section>
+
+    <section class="rp-card rp-wide" id="s-stock">
+      <div class="rp-h"><h2>Stock value</h2><span class="rp-note">Right now, not for the period above</span></div>
+      <div id="b-stock"></div>
+    </section>
+  </div>
+</main>
+
+<div class="rp-tip" id="tip" role="status" hidden></div>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/reports.js"></script>
+</body>
+</html>
