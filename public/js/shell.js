@@ -34,7 +34,7 @@
       { href: 'expenses.html', label: 'Expenses', icon: 'wallet', desc: 'Rent, wages and running costs', ready:true },
       { href: 'mpesa.html', label: 'M-Pesa', icon: 'device-mobile', desc: 'Till or paybill connection', ready: true },
       { href: 'etims.html', label: 'eTIMS', icon: 'seal-check', desc: 'KRA receipts through Digitax', ready: true },
-      { href: 'reports.html', label: 'Reports', icon: 'chart-bar', desc: 'Sales, profit and tax' }
+      { href: 'reports.html', label: 'Reports', icon: 'chart-bar', desc: 'Sales, profit and tax', ready:true }
     ] },
     { id: 'shop', label: 'Shop', icon: 'storefront', title: 'Shop', blurb: 'Your online store, branches and profile.', items: [
       { href: 'storefront.html', label: 'Online store', icon: 'storefront', desc: 'Name, delivery and publishing', ready: true },

@@ -94,20 +94,27 @@
     var out = []; for (var v = Math.floor(min / step) * step; v <= Math.ceil(max / step) * step + step / 1000; v += step) out.push(Math.round(v * 1e6) / 1e6);
     return out;
   }
+  // The tooltip lives inside the chart while shown. Clearing the chart removes it from the page,
+  // so it is looked up (and recreated when missing) every time instead of kept as a fixed element.
+  function tipEl() {
+    var t = document.getElementById('tip');
+    if (!t) { t = el('div', 'rp-tip'); t.id = 'tip'; t.setAttribute('role', 'status'); t.hidden = true; document.body.appendChild(t); }
+    return t;
+  }
   function showTip(box, html, cx, topY) {
-    var tip = $('#tip'); tip.textContent = '';
+    var tip = tipEl(); tip.textContent = '';
     var b = el('b', null, html[0]); tip.appendChild(b); html.slice(1).forEach(function (l) { tip.appendChild(el('span', null, l)); });
     tip.hidden = false; box.appendChild(tip);
     var w = tip.offsetWidth, h = tip.offsetHeight, bw = box.clientWidth;
     tip.style.left = Math.max(0, Math.min(bw - w, cx - w / 2)) + 'px';
     tip.style.top = Math.max(0, topY - h - 8) + 'px';
   }
-  function hideTip() { $('#tip').hidden = true; }
+  function hideTip() { tipEl().hidden = true; }
 
   function drawTrend() {
     var box = $('#chart'); if (!box || !S.data.sales) return;
     var series = S.data.sales.series || [], g = S.data.sales.group_by || S.group;
-    var saved = $('#tip'); if (saved.parentNode === box) document.body.appendChild(saved); hideTip();
+    var saved = tipEl(); if (saved.parentNode === box) document.body.appendChild(saved); hideTip();
     box.textContent = '';
     var vals = series.map(function (r) { return num(r.net_sales); });
     var W = Math.max(280, box.clientWidth || 600), H = W < 480 ? 220 : 280, m = { l: 46, r: 6, t: 10, b: 26 };

@@ -15,44 +15,147 @@
   <script src="js/theme.js"></script>
   <link href="css/ui.css" rel="stylesheet">
   <link href="css/theme.css" rel="stylesheet">
+  <link href="css/storefront.css" rel="stylesheet">
 </head>
 <body data-nav="storefront.html">
 <main class="page" id="page">
   <div class="head"><div><h1>Online store</h1><p>Put your shop online so customers can order and pay with M-Pesa. Your products, stock and prices come straight from the till.</p></div>
-    <div class="actions"><span class="tag" id="liveTag">Offline</span></div></div>
-  <div class="split">
-    <section class="card">
-      <form class="form" id="sfForm" novalidate>
-        <label class="fld"><span>Store name</span><input type="text" id="sName" autocomplete="off"></label>
-        <label class="fld"><span>Tagline</span><input type="text" id="sTag" autocomplete="off" placeholder="e.g. Fresh groceries, delivered fast"></label>
-        <label class="fld"><span>Logo link</span><input type="url" id="sLogo" autocomplete="off" placeholder="https://..."><small>Optional. You can also upload a logo on the profile page and tick "use on my online store".</small></label>
-        <div class="row2">
-          <label class="fld"><span>Phone</span><input type="tel" id="sPhone" autocomplete="off"></label>
-          <label class="fld"><span>WhatsApp</span><input type="tel" id="sWa" autocomplete="off"></label>
-        </div>
-        <label class="fld"><span>Address</span><input type="text" id="sAddr" autocomplete="off"></label>
-        <label class="fld"><span>Announcement</span><input type="text" id="sAnn" autocomplete="off" placeholder="Shown at the top of your store"></label>
-        <label class="fld"><span>Orders are fulfilled from</span><select id="sBranch"></select></label>
-        <div class="opts">
-          <label class="chk"><input type="checkbox" id="sDel" checked><span><b>Offer delivery</b><small class="muted">Customers enter an address.</small></span></label>
-          <label class="chk"><input type="checkbox" id="sPick" checked><span><b>Offer pickup</b><small class="muted">Customers collect from the branch.</small></span></label>
-        </div>
-        <p class="note err" id="sErr" hidden></p>
-        <p class="note ok" id="sOk" hidden></p>
-        <div class="actions"><button class="btn primary" id="sSave" type="submit">Save</button><button class="btn gold" id="sPub" type="button"><i class="ph ph-globe"></i>Save and publish</button><button class="btn" id="sUnpub" type="button" hidden>Take offline</button></div>
-        <p class="muted" id="sLive" hidden></p>
-      </form>
+    <div class="actions"><a class="btn" href="online-orders.html"><i class="ph ph-package"></i>Orders</a><span class="tag" id="liveTag">Offline</span></div></div>
+
+  <div class="seg sf-tabs" id="tabs" role="group" aria-label="Section">
+    <button type="button" data-t="settings" aria-pressed="true">Settings</button>
+    <button type="button" data-t="zones" aria-pressed="false">Delivery areas</button>
+    <button type="button" data-t="banners" aria-pressed="false">Banners</button>
+    <button type="button" data-t="pages" aria-pressed="false">Pages</button>
+  </div>
+
+  <!-- Settings -->
+  <div id="tab-settings">
+    <section class="card sf-check" id="checkCard">
+      <div class="card-h"><div><h2>Before you publish</h2><p class="sub" id="checkSub"></p></div></div>
+      <ul class="sf-list" id="checkList"></ul>
     </section>
-    <aside class="preview" aria-label="Preview of your store">
-      <div class="pv-bar"><i></i><i></i><i></i><span>Preview</span></div>
-      <div class="pv-ann" id="pvAnn" hidden></div>
-      <div class="pv-head"><span class="av sq" id="pvLogo">K</span><b id="pvName">Your store</b><span class="pv-cart"><i class="ph ph-shopping-bag"></i></span></div>
-      <p class="pv-tag" id="pvTag">Your tagline shows here</p>
-      <div class="pv-grid"><span></span><span></span><span></span><span></span></div>
-      <div class="pv-foot" id="pvFoot"></div>
-    </aside>
+    <div class="split">
+      <section class="card">
+        <form class="form" id="sfForm" novalidate>
+          <label class="fld"><span>Store name</span><input type="text" id="sName" autocomplete="off"></label>
+          <label class="fld"><span>Tagline</span><input type="text" id="sTag" autocomplete="off" placeholder="e.g. Fresh groceries, delivered fast"></label>
+          <label class="fld"><span>Logo link</span><input type="url" id="sLogo" autocomplete="off" placeholder="https://..."><small>Optional. You can also upload a logo on the profile page and tick "use on my online store".</small></label>
+          <div class="row2">
+            <label class="fld"><span>Phone</span><input type="tel" id="sPhone" autocomplete="off"></label>
+            <label class="fld"><span>WhatsApp</span><input type="tel" id="sWa" autocomplete="off"></label>
+          </div>
+          <label class="fld"><span>Address</span><input type="text" id="sAddr" autocomplete="off"></label>
+          <label class="fld"><span>Announcement</span><input type="text" id="sAnn" autocomplete="off" placeholder="Shown at the top of your store"></label>
+          <div class="row2">
+            <label class="fld"><span>Orders are fulfilled from</span><select id="sBranch"></select></label>
+            <label class="fld"><span>Minimum order (KES)</span><input type="number" id="sMin" min="0" step="0.01" inputmode="decimal"><small>Optional. Leave empty for no minimum.</small></label>
+          </div>
+          <div class="opts">
+            <label class="chk"><input type="checkbox" id="sDel" checked><span><b>Offer delivery</b><small class="muted">Customers enter an address. Set your areas and fees under Delivery areas.</small></span></label>
+            <label class="chk"><input type="checkbox" id="sPick" checked><span><b>Offer pickup</b><small class="muted">Customers collect from the branch.</small></span></label>
+          </div>
+          <p class="note err" id="sErr" hidden></p>
+          <p class="note ok" id="sOk" hidden></p>
+          <div class="actions"><button class="btn primary" id="sSave" type="submit">Save</button><button class="btn gold" id="sPub" type="button"><i class="ph ph-globe"></i>Save and publish</button><button class="btn" id="sUnpub" type="button" hidden>Take offline</button></div>
+          <p class="muted" id="sLive" hidden></p>
+        </form>
+      </section>
+      <aside class="preview" aria-label="Preview of your store">
+        <div class="pv-bar"><i></i><i></i><i></i><span>Preview</span></div>
+        <div class="pv-ann" id="pvAnn" hidden></div>
+        <div class="pv-head"><span class="av sq" id="pvLogo">K</span><b id="pvName">Your store</b><span class="pv-cart"><i class="ph ph-shopping-bag"></i></span></div>
+        <p class="pv-tag" id="pvTag">Your tagline shows here</p>
+        <div class="pv-grid"><span></span><span></span><span></span><span></span></div>
+        <div class="pv-foot" id="pvFoot"></div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Delivery areas -->
+  <div id="tab-zones" hidden>
+    <div class="sf-bar"><p class="muted">Where you deliver and what it costs. Customers pick one of these at checkout.</p><button class="btn primary" id="addZone" type="button"><i class="ph ph-plus"></i>Add delivery area</button></div>
+    <p class="note err" id="znListErr" hidden></p>
+    <div id="znList"></div>
+  </div>
+
+  <!-- Banners -->
+  <div id="tab-banners" hidden>
+    <div class="sf-bar"><p class="muted">The big pictures at the top of your store. Use them for offers and new arrivals.</p><button class="btn primary" id="addBanner" type="button"><i class="ph ph-plus"></i>Add banner</button></div>
+    <p class="note err" id="bnListErr" hidden></p>
+    <div id="bnList"></div>
+  </div>
+
+  <!-- Pages -->
+  <div id="tab-pages" hidden>
+    <div class="sf-bar"><p class="muted">Simple pages linked from your store footer, such as About us, Delivery info or Returns.</p><button class="btn primary" id="addPage" type="button"><i class="ph ph-plus"></i>Add page</button></div>
+    <p class="note err" id="pgListErr" hidden></p>
+    <div id="pgList"></div>
   </div>
 </main>
+
+<!-- Delivery area form -->
+<dialog class="sheet" id="znDlg" aria-labelledby="znTitle">
+  <form class="form" id="znForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="znTitle">Add a delivery area</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <label class="fld"><span>Area name</span><input type="text" id="znName" required autocomplete="off" placeholder="e.g. Westlands"></label>
+      <div class="row2">
+        <label class="fld"><span>Delivery fee (KES)</span><input type="number" id="znFee" min="0" step="0.01" inputmode="decimal" required><small>Enter 0 for free delivery.</small></label>
+        <label class="fld"><span>Takes about (minutes)</span><input type="number" id="znMins" min="0" step="1" inputmode="numeric"><small>Optional.</small></label>
+      </div>
+      <label class="fld"><span>Minimum order for this area (KES)</span><input type="number" id="znMin" min="0" step="0.01" inputmode="decimal"><small>Optional.</small></label>
+      <label class="chk"><input type="checkbox" id="znActive" checked><span><b>Active</b><small>Switch off to stop delivering here without deleting it.</small></span></label>
+      <p class="note err" id="znErr" hidden></p>
+      <button class="btn danger sm" id="znDel" type="button" style="justify-self:start" hidden><i class="ph ph-trash"></i>Delete area</button>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="znSave" type="submit">Save area</button></div>
+  </form>
+</dialog>
+
+<!-- Banner form -->
+<dialog class="sheet" id="bnDlg" aria-labelledby="bnTitle">
+  <form class="form" id="bnForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="bnTitle">Add a banner</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <label class="fld"><span>Picture link</span><input type="url" id="bnImage" autocomplete="off" placeholder="https://..." required><small>A wide picture works best.</small></label>
+      <div class="sf-prev" id="bnPrev" hidden></div>
+      <label class="fld"><span>Headline</span><input type="text" id="bnHead" autocomplete="off" maxlength="80"></label>
+      <label class="fld"><span>Smaller text</span><input type="text" id="bnSub" autocomplete="off" maxlength="140"></label>
+      <label class="fld"><span>Link</span><input type="text" id="bnLink" autocomplete="off" placeholder="https://..."><small>Optional. Where the banner takes people when tapped.</small></label>
+      <div class="row2">
+        <label class="fld"><span>Starts</span><input type="datetime-local" id="bnFrom"><small>Optional.</small></label>
+        <label class="fld"><span>Ends</span><input type="datetime-local" id="bnTo"><small>Optional.</small></label>
+      </div>
+      <label class="fld"><span>Order</span><input type="number" id="bnSort" step="1" inputmode="numeric"><small>Lower numbers come first.</small></label>
+      <label class="chk"><input type="checkbox" id="bnActive" checked><span><b>Show on my store</b></span></label>
+      <p class="note err" id="bnErr" hidden></p>
+      <button class="btn danger sm" id="bnDel" type="button" style="justify-self:start" hidden><i class="ph ph-trash"></i>Delete banner</button>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="bnSave" type="submit">Save banner</button></div>
+  </form>
+</dialog>
+
+<!-- Page form -->
+<dialog class="sheet wide" id="pgDlg" aria-labelledby="pgTitle">
+  <form class="form" id="pgForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="pgTitle">Add a page</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <div class="row2">
+        <label class="fld"><span>Title</span><input type="text" id="pgHead" required autocomplete="off" placeholder="e.g. About us"></label>
+        <label class="fld"><span>Web address ending</span><input type="text" id="pgSlug" autocomplete="off" placeholder="about-us"><small>Optional. Made from the title if empty.</small></label>
+      </div>
+      <label class="fld"><span>Content</span><textarea id="pgBody" rows="10" maxlength="20000" placeholder="Plain text. Blank lines start a new paragraph."></textarea></label>
+      <div class="row2">
+        <label class="fld"><span>Order</span><input type="number" id="pgSort" step="1" inputmode="numeric"><small>Lower numbers come first.</small></label>
+        <label class="chk"><input type="checkbox" id="pgPub" checked><span><b>Published</b><small>Draft pages are hidden from customers.</small></span></label>
+      </div>
+      <p class="note err" id="pgErr" hidden></p>
+      <button class="btn danger sm" id="pgDel" type="button" style="justify-self:start" hidden><i class="ph ph-trash"></i>Delete page</button>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="pgSave" type="submit">Save page</button></div>
+  </form>
+</dialog>
 
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>

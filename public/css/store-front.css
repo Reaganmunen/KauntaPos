@@ -1,0 +1,27 @@
+/* Online store settings: tabs, checklist and the small lists. Sits on top of ui.css / theme.css. */
+.sf-tabs { margin: 0 0 14px; }
+.sf-tabs button { min-width: 100px; }
+.sf-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; }
+.sf-bar p { margin: 0; max-width: 60ch; }
+
+.sf-check { margin-bottom: 14px; }
+.sf-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.sf-list li { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line, #dfe3da); font-size: 14px; }
+.sf-list li:first-child { border-top: 0; }
+.sf-list .mk { width: 18px; height: 18px; flex: none; margin-top: 2px; border-radius: 50%; border: 2px solid var(--line, #dfe3da); display: grid; place-items: center; font-size: 11px; line-height: 1; }
+.sf-list li.ok .mk { background: var(--accent, #1f6f4a); border-color: var(--accent, #1f6f4a); color: #fff; }
+.sf-list li.bad .mk { border-color: var(--danger, #b42318); }
+.sf-list li.bad b { color: var(--danger, #b42318); }
+.sf-list small { display: block; color: var(--muted, #6b7280); }
+.sf-list .opt { color: var(--muted, #6b7280); font-size: 12px; margin-left: 6px; font-weight: 400; }
+
+.sf-thumb { width: 96px; height: 44px; object-fit: cover; border-radius: 8px; background: var(--line, #dfe3da); display: block; }
+.sf-prev img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 12px; display: block; }
+.tag.bad { color: var(--danger, #b42318); }
+.tag.wait { color: var(--muted, #6b7280); }
+.sf-cell small { display: block; color: var(--muted, #6b7280); }
+
+@media (max-width: 560px) {
+  .sf-tabs { display: flex; overflow-x: auto; max-width: 100%; }
+  .sf-tabs button { flex: 1 0 auto; min-width: 0; }
+}
