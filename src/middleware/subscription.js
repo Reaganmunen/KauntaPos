@@ -1,49 +1,47 @@
 'use strict';
 
 const ApiError = require('../utils/ApiError');
-const { Tenant } = require('../models');
+const { accessState, canOperate, READ_ONLY_MESSAGES } = require('../utils/entitlements');
 
 /**
  * Subscription gate for logged-in shop requests (run after authenticate).
  *
- *   active / past_due / trial still running -> everything works
- *   trial ended or cancelled                -> READ-ONLY: the shop can still view and export its
- *                                              data and pay, but cannot change anything
- *   suspended                               -> locked out, except login and the payment screens
+ *   trial / active / grace   everything works (grace = the few days after a paid period ends)
+ *   trial ended, expired,    READ-ONLY: the shop can still view and export its data and pay, but
+ *   cancelled                cannot change anything (402 subscription_inactive)
+ *   suspended                locked out (403 account_suspended), except login and the payment screens
  *
- * Always allowed, whatever the status: auth, the subscription/plans screens, and pushing sales that
- * were already made offline (those customers have already been served and taxed).
+ * "Which state" comes from utils/entitlements, which looks at the dates as well as the status, so a
+ * paid period that has run out stops counting without anyone editing the tenant.
+ *
+ * Always allowed, whatever the state: the subscription / plans screens (so the shop can pay), and
+ * pushing sales that were already made offline (those customers have already been served and taxed).
+ * The state is sent back in the X-Subscription-Status header on every answer.
  */
 const prefix = (process.env.API_PREFIX || '/api').replace(/\/$/, '');
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const ALWAYS_ALLOWED = [
-  new RegExp(`^${escape(prefix)}/auth/`),
-  new RegExp(`^${escape(prefix)}/tenant/(subscription|plans)`),
-  new RegExp(`^${escape(prefix)}/sync/sales$`),
-];
+const PAYMENT_SCREENS = new RegExp(`^${escape(prefix)}/tenant/(subscription(/payments)?|plans)/?$`);
+const OFFLINE_SALES = new RegExp(`^${escape(prefix)}/sync/sales/?$`);
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 module.exports = function requireActiveSubscription(req, res, next) {
   const ctx = req.tenantCtx;
   if (!ctx) return next(ApiError.unauthorized());
-  if (Tenant.canOperate(ctx)) return next();
+
+  const state = accessState(ctx);
+  req.accessState = state;
+  res.setHeader('X-Subscription-Status', state);
+  if (canOperate(state)) return next();
 
   const path = req.originalUrl.split('?')[0];
-  if (ALWAYS_ALLOWED.some((re) => re.test(path))) return next();
+  if (PAYMENT_SCREENS.test(path) || OFFLINE_SALES.test(path)) return next();
 
-  const state = ctx.status === 'trial' ? 'trial_ended' : ctx.status;
-  res.setHeader('X-Subscription-Status', state);
-
-  if (ctx.status === 'suspended') {
+  if (state === 'suspended') {
     return next(new ApiError(403, 'This account is suspended. Please contact Kaunta support.', { status: state }, 'account_suspended'));
   }
   if (SAFE_METHODS.has(req.method)) return next(); // read-only mode
 
-  const message =
-    ctx.status === 'trial'
-      ? 'Your free trial has ended. Subscribe to keep making changes.'
-      : 'Your subscription is not active. Renew to keep making changes.';
-  return next(new ApiError(402, message, { status: state }, 'subscription_inactive'));
+  return next(new ApiError(402, READ_ONLY_MESSAGES[state] || READ_ONLY_MESSAGES.inactive, { status: state }, 'subscription_inactive'));
 };

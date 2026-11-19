@@ -60,7 +60,9 @@
   function finish(session, method, identifier) {
     lsSet(KEY_SESSION, session);
     lsSet(KEY_LAST, { method: method, shop: session && session.tenant && session.tenant.slug, identifier: method === 'password' ? identifier : undefined });
-    location.href = nextUrl();
+    /* A suspended shop can only use the payment screen, so that is where it lands. */
+    var access = session && session.tenant && session.tenant.access;
+    location.href = access && access.state === 'suspended' ? 'subscription.html?locked=1' : nextUrl();
   }
 
   /* ---------- show/hide password ---------- */
@@ -78,6 +80,15 @@
     var b = document.createElement('span'); b.className = 'last-badge'; b.textContent = 'Last used'; el.appendChild(b);
   }
   if (last && last.method) tag(last.method === 'google' ? $('#googleBtn') : $('#submitBtn'));
+
+  /* The Google client ID comes from the server (GOOGLE_CLIENT_ID), fetched as the page opens so the popup
+     can open straight from the click. A value pasted into config.js still wins. */
+  if (!CFG.GOOGLE_CLIENT_ID) {
+    fetch(API + '/config', { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.data && j.data.google_client_id) CFG.GOOGLE_CLIENT_ID = j.data.google_client_id; })
+      .catch(function () { /* Google stays off */ });
+  }
 
   /* ---------- Google (popup, no redirect) ----------
      Returns a Google access token. The backend checks it with Google and finds or creates the user. */

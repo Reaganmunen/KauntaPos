@@ -5,6 +5,7 @@ const ApiError = require('../utils/ApiError');
 const { withTransaction } = require('../config/database');
 const { Tenant } = require('../models');
 const { getTenantContext } = require('../utils/contextCache');
+const { accessState, canOperate } = require('../utils/entitlements');
 
 /**
  * Works out WHICH SHOP a request is for when there is no login token yet:
@@ -51,9 +52,11 @@ async function lookupTenant(hostOrSlug) {
 /**
  * Sets req.tenantId / req.tenantSlug when the shop can be determined.
  *   required       404/400 if no shop can be determined (storefront routes)
- *   blockInactive  404 when the shop is suspended, cancelled or its trial has ended (public store)
+ *   blockInactive  404 when the shop is suspended, cancelled, expired or its trial has ended (public store)
+ *   feature        with blockInactive: 404 too when this module is switched off or not in the shop's
+ *                  plan (e.g. 'storefront')
  */
-function resolveTenant({ required = false, blockInactive = false } = {}) {
+function resolveTenant({ required = false, blockInactive = false, feature = null } = {}) {
   return asyncHandler(async (req, res, next) => {
     if (!req.tenantId) {
       const host = (req.hostname || '').toLowerCase();
@@ -77,7 +80,7 @@ function resolveTenant({ required = false, blockInactive = false } = {}) {
 
     if (blockInactive && req.tenantId) {
       const ctx = await getTenantContext(req.tenantId);
-      if (!ctx || !Tenant.canOperate(ctx)) {
+      if (!ctx || !canOperate(accessState(ctx)) || (feature && ctx.features[feature] !== true)) {
         throw ApiError.notFound('This store is not available right now', undefined, 'store_unavailable');
       }
       req.tenantCtx = ctx;

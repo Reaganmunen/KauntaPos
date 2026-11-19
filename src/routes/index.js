@@ -3,7 +3,7 @@
 /**
  * Every route in the API, in one router. app.js mounts it at API_PREFIX (default /api).
  *
- *   Public (no login)           /health  /hooks/pay  /store  /auth (login, signup, recovery)
+ *   Public (no login)           /health  /hooks/pay  /store  /directory  /config  /auth (login, signup, recovery)
  *   Kaunta staff panel          /platform            (own token, secret and audience)
  *   Shop staff (login needed)   everything after `secured` below
  *
@@ -35,6 +35,9 @@ router.get('/health', async (req, res) => {
 
 router.use('/hooks/pay', require('./webhooks'));
 router.use('/store', require('./publicStore'));
+// what the pages need to know before anyone is signed in (the Google client ID is public by design)
+router.get('/config', (req, res) => res.json({ success: true, data: { google_client_id: process.env.GOOGLE_CLIENT_ID || null } }));
+router.get('/directory', rateLimit.publicStore, require('../controllers/directoryController').list); // browse live shops, no login
 router.use('/auth', require('./auth'));
 router.use('/platform', require('./platform'));
 router.get('/media/:id', media.serve); // product photos: <img> tags carry no login

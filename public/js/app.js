@@ -44,7 +44,10 @@
     if (!res.ok || !j || j.success === false) {
       var err = (j && j.error) || {};
       var msg = err.message || 'Something went wrong. Please try again.';
-      if (res.status === 402 || err.code === 'subscription_inactive') msg = 'Your subscription is not active. Renew it to continue.';
+      /* 402 = the shop can look but not change (trial ended, plan expired). The server words the reason. */
+      if ((res.status === 402 || err.code === 'subscription_inactive') && !err.message) msg = 'Your subscription is not active. Renew it to continue.';
+      /* 403 account_suspended = locked by Kaunta: the only page that still works is Plan and billing. */
+      if (err.code === 'account_suspended' && !/subscription\.html$/.test(location.pathname)) { location.replace('subscription.html?locked=1'); }
       var e = new Error(msg); e.status = res.status; e.code = err.code; e.details = err.details; throw e;
     }
     return j;

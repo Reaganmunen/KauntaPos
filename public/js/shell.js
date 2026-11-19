@@ -39,7 +39,8 @@
     { id: 'shop', label: 'Shop', icon: 'storefront', title: 'Shop', blurb: 'Your online store, branches and profile.', items: [
       { href: 'storefront.html', label: 'Online store', icon: 'storefront', desc: 'Name, delivery and publishing', ready: true },
       { href: 'branches.html', label: 'Branches', icon: 'git-branch', desc: 'Every place you sell from', ready:true},
-      { href: 'profile.html', label: 'Profile and shop', icon: 'user-circle', desc: 'Your details, logo and password', ready: true }
+      { href: 'profile.html', label: 'Profile and shop', icon: 'user-circle', desc: 'Your details, logo and password', ready: true },
+      { href: 'subscription.html', label: 'Plan and billing', icon: 'credit-card', desc: 'Your plan, usage and payments', ready: true }
     ] }
   ];
 
@@ -110,8 +111,45 @@
   var slot = shell.querySelector('[data-theme-slot]');
   if (window.KTheme && slot) window.KTheme.mount(slot);
 
+  /* One quiet notice at the top of the page when the subscription needs attention. It reads tenant.access
+     from /auth/me (see utils/entitlements on the server). The Plan and billing page has its own status block. */
+  function lastDay(iso) { var t = iso ? new Date(iso).getTime() : NaN; return isNaN(t) ? '' : new Date(t - 1).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  function days(n) { return n + (n === 1 ? ' day' : ' days'); }
+  var OFF = 'You can still look at and export your records. Selling and editing are off until you pay.';
+  function noticeFor(a) {
+    if (!a) return null;
+    var left = a.days_left, end = lastDay(a.ends_at);
+    switch (a.state) {
+      case 'trial':
+        if (left === null || left > 7) return null;
+        return { head: left <= 0 ? 'Your free trial ends today.' : 'Your free trial ends in ' + days(left) + '.', text: 'Subscribe to keep selling' + (end ? ' after ' + end : '') + '.' };
+      case 'active':
+        if (left === null || left > 5) return null;
+        return { head: 'Your plan ends in ' + days(Math.max(left, 0)) + '.', text: 'Pay' + (end ? ' before ' + end : '') + ' to carry on without a break.' };
+      case 'grace':
+        return { head: 'Your payment is due.', text: 'Everything still works. ' + (a.grace_ends_at ? 'Pay by ' + lastDay(a.grace_ends_at) + ' to avoid losing the ability to sell and edit.' : 'Pay soon to avoid losing the ability to sell and edit.') };
+      case 'trial_expired': return { tone: 'bad', head: 'Your free trial has ended.', text: OFF };
+      case 'expired': return { tone: 'bad', head: 'Your subscription has ended.', text: OFF };
+      case 'cancelled': return { tone: 'bad', head: 'Your subscription is cancelled.', text: OFF };
+      case 'inactive': return { tone: 'bad', head: 'Your subscription is not active.', text: OFF };
+      case 'suspended': return { tone: 'bad', head: 'This account is suspended.', text: 'Contact Kaunta support, or send your payment details on the Plan and billing page.' };
+      default: return null;
+    }
+  }
+  function showNotice(d) {
+    if (here === 'subscription.html') return;
+    var n = noticeFor(d.tenant && d.tenant.access); if (!n) return;
+    var box = document.createElement('div'); box.className = 'sub-note' + (n.tone ? ' ' + n.tone : ''); box.setAttribute('role', 'status');
+    var msg = document.createElement('span'), b = document.createElement('b'); b.textContent = n.head;
+    msg.appendChild(b); msg.appendChild(document.createTextNode(' ' + n.text));
+    var link = document.createElement('a'); link.href = 'subscription.html'; link.textContent = 'Plan and billing';
+    box.appendChild(msg); box.appendChild(link);
+    page.insertBefore(box, page.firstChild);
+  }
+
   K.identity().then(function (d) {
     if (!d) return;
+    showNotice(d);
     var t = d.tenant || {}, u = d.user || {};
     if (t.name) shell.querySelector('#tbShopName').textContent = t.name;
     K.avatar(shell.querySelector('#tbShopAv'), t.logo_url, t.name || shopTitle);

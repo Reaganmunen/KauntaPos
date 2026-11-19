@@ -13,7 +13,8 @@ const { pageParams, clientMeta } = require('../utils/context');
 const { withAdmin } = require('../config/database');
 const { Tenant, Plan, SubscriptionPayment, PlatformAdmin } = require('../models');
 const AuthService = require('../services/AuthService');
-const { invalidateTenant } = require('../utils/contextCache');
+const { invalidateTenant, invalidateAllTenants } = require('../utils/contextCache');
+const { periodDays } = require('../utils/entitlements');
 
 const TENANT_STATUSES = ['trial', 'active', 'past_due', 'suspended', 'cancelled'];
 const PLAN_FIELDS = [
@@ -187,17 +188,29 @@ exports.createPlan = asyncHandler(async (req, res) => {
 exports.updatePlan = asyncHandler(async (req, res) => {
   const plan = await withAdmin((db) => Plan.update(db, req.params.id, pick(req.body, PLAN_FIELDS)));
   if (!plan) throw ApiError.notFound('Plan not found');
+  invalidateAllTenants(); // new limits / modules apply to every shop on this plan straight away
   return ok(res, plan);
 });
 
 // ---------- subscription payments (manual activation flow) ----------
 
-// Sets the paid period (default: 30 days, extending from the current end if still running),
+// Sets the paid period (default: SUBSCRIPTION_PERIOD_DAYS, 30 unless changed, extending from the current end if still running),
 // then confirms the payment and activates the tenant.
-async function confirmPayment(db, paymentId, adminId, { days = 30, period_start, period_end, plan_id } = {}) {
+async function confirmPayment(db, paymentId, adminId, { days = periodDays(), period_start, period_end, plan_id } = {}) {
   const payment = await SubscriptionPayment.findById(db, paymentId);
   if (!payment) throw ApiError.notFound('Payment not found');
   if (payment.status === 'confirmed') throw ApiError.conflict('This payment is already confirmed');
+
+  // One M-Pesa code can pay for one subscription only, even if another shop sent the same code.
+  if (payment.mpesa_receipt) {
+    const used = await db.query(
+      "SELECT 1 FROM subscription_payments WHERE mpesa_receipt = $1 AND status = 'confirmed' AND id <> $2 LIMIT 1",
+      [payment.mpesa_receipt, payment.id]
+    );
+    if (used.rows[0]) {
+      throw ApiError.conflict('This M-Pesa code was already used to confirm another payment', undefined, 'duplicate_receipt');
+    }
+  }
 
   const tenant = await Tenant.findById(db, payment.tenant_id);
   const today = toDate(new Date());
@@ -246,7 +259,7 @@ exports.listPayments = asyncHandler(async (req, res) => {
 exports.confirmPayment = asyncHandler(async (req, res) => {
   const payment = await withAdmin((db) =>
     confirmPayment(db, req.params.id, req.admin.id, {
-      days: req.body.days ? Math.floor(positive(req.body.days, 'days')) : 30,
+      days: req.body.days ? Math.floor(positive(req.body.days, 'days')) : periodDays(),
       period_start: req.body.period_start,
       period_end: req.body.period_end,
       plan_id: req.body.plan_id,
@@ -284,7 +297,7 @@ exports.recordPayment = asyncHandler(async (req, res) => {
         status: 'pending',
       });
       return confirmPayment(db, record.id, req.admin.id, {
-        days: req.body.days ? Math.floor(positive(req.body.days, 'days')) : 30,
+        days: req.body.days ? Math.floor(positive(req.body.days, 'days')) : periodDays(),
         plan_id: req.body.plan_id,
       });
     },

@@ -15,6 +15,8 @@ const router = express.Router();
 router.post('/register', rateLimit.register, ctl.register);
 
 router.post('/login', rateLimit.login, resolveTenant(), ctl.login);
+router.post('/google/login', rateLimit.login, resolveTenant(), ctl.googleLogin);
+router.post('/google/register', rateLimit.register, ctl.googleRegister);
 router.post('/pin-login', rateLimit.login, resolveTenant(), ctl.pinLogin);
 router.post('/refresh', rateLimit.auth, resolveTenant(), ctl.refresh);
 router.post('/logout', rateLimit.auth, resolveTenant(), tenantFromToken, ctl.logout);

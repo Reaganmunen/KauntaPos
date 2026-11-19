@@ -22,6 +22,7 @@ const {
   signAccessToken, signPlatformToken, generateOpaqueToken, hashToken,
 } = require('../utils/jwt');
 const { invalidateUser } = require('../utils/contextCache');
+const { describeAccess } = require('../utils/entitlements');
 const { Tenant, User, RefreshToken, UserToken, PlatformAdmin } = require('../models');
 
 const scrypt = promisify(crypto.scrypt);
@@ -117,12 +118,14 @@ async function issueSession(db, tenantId, user, meta = {}) {
   };
 }
 
+// The shop, as the apps keep it after sign-in. `access` tells them whether to send a suspended shop
+// straight to the payment screen and which notice to show (see utils/entitlements).
 async function tenantSummary(db, tenantId) {
   const { rows } = await db.query(
     'SELECT id, slug, name, status, business_type, trial_ends_at, current_period_end FROM tenants WHERE id = $1',
     [tenantId]
   );
-  return rows[0] || null;
+  return rows[0] ? { ...rows[0], access: describeAccess(rows[0]) } : null;
 }
 
 // ---------- public API ----------
@@ -269,6 +272,77 @@ async function logout({ tenantId, refreshToken }) {
   });
 }
 
+// ---------- Google sign-in ----------
+
+/**
+ * Checks a Google access token (from the popup in js/auth.js) and returns the person behind it.
+ *   GOOGLE_CLIENT_ID   the OAuth "Web application" client ID; the token must have been issued to it
+ * Only a verified Google email is accepted. Uses Node's built-in fetch (Node 18+).
+ */
+async function verifyGoogleToken(accessToken) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) throw new ApiError(503, 'Google sign-in is not switched on yet. Use your phone or email for now.', undefined, 'not_configured');
+  const token = String(accessToken || '');
+  if (!token || token.length > 4096) throw ApiError.unauthorized('Google did not sign you in. Try again.', undefined, 'google_error');
+
+  const get = async (url, headers) => {
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw ApiError.unauthorized('Google did not sign you in. Try again.', undefined, 'google_error');
+    return res.json();
+  };
+  let info;
+  let profile;
+  try {
+    info = await get(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(token)}`);
+    if (info.aud !== clientId && info.azp !== clientId) {
+      throw ApiError.unauthorized('Google did not sign you in. Try again.', undefined, 'google_error');
+    }
+    profile = await get('https://openidconnect.googleapis.com/v1/userinfo', { Authorization: `Bearer ${token}` });
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    throw new ApiError(502, 'We could not reach Google just now. Please try again.', undefined, 'google_unreachable');
+  }
+  if (!profile.email || profile.email_verified !== true) {
+    throw ApiError.unauthorized('Your Google email is not verified.', undefined, 'google_email_unverified');
+  }
+  return { email: String(profile.email).trim().toLowerCase(), name: String(profile.name || profile.email).trim() };
+}
+
+/** Sign in to an existing shop with Google. The Google email must match a user of that shop. */
+async function googleLogin({ tenantId, accessToken, ip, userAgent }) {
+  const person = await verifyGoogleToken(accessToken);
+  const session = await withTenant(tenantId, async (db) => {
+    const user = await User.findByIdentifier(db, person.email);
+    if (!user) return null;
+    await User.touchLogin(db, user.id);
+    return { ...(await issueSession(db, tenantId, user, { ip, userAgent })), tenant: await tenantSummary(db, tenantId) };
+  });
+  if (!session) {
+    throw ApiError.unauthorized(`There is no account for ${person.email} in this shop. Ask the owner to add you, or use your password.`, undefined, 'google_no_account');
+  }
+  return session;
+}
+
+/**
+ * Open a new shop with Google. body: { slug, name, business_type, access_token }. The owner is the
+ * Google account; the password is random and never shown, so they sign in with Google (or use
+ * "forgot password" to set one).
+ */
+async function googleRegister(body, meta = {}) {
+  const person = await verifyGoogleToken(body.access_token);
+  return register(
+    {
+      slug: body.slug,
+      name: body.name,
+      business_type: body.business_type,
+      owner_name: person.name,
+      owner_email: person.email,
+      password: crypto.randomBytes(32).toString('hex'),
+    },
+    meta
+  );
+}
+
 // ---------- password reset ----------
 
 /**
@@ -365,6 +439,8 @@ module.exports = {
   verifyPassword,
   register,
   login,
+  googleLogin,
+  googleRegister,
   pinLogin,
   refresh,
   logout,

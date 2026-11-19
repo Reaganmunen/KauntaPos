@@ -1,0 +1,37 @@
+/* Shop directory. Sits on landing.css: flat grounds, one button style, cards that lift 2px on hover. */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.shops-head { padding: 4rem 0 2rem; border-bottom: 1px solid var(--line); }
+.shops-head h1 { font-size: clamp(2.2rem, 4.5vw, 3.4rem); line-height: 1.04; }
+.shops-head .lead { color: var(--ink-soft); max-width: 40rem; margin: 1rem 0 2rem; }
+.shops-filter { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; max-width: 56rem; }
+.shops-filter .form-control, .shops-filter .form-select { min-height: 48px; border-radius: 12px; border: 1px solid var(--line); background-color: var(--card); color: var(--ink); }
+@media (max-width: 767.98px) { .shops-filter { grid-template-columns: 1fr; } }
+
+.shops-body { padding: 2rem 0 4rem; min-height: 50vh; }
+.shops-count { color: var(--ink-soft); font-size: .95rem; margin: 0 0 1.25rem; min-height: 1.4em; }
+.shops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+
+.shop-card { display: grid; grid-template-rows: auto 1fr auto; gap: .9rem; padding: 1.25rem; background: var(--card); border: 1px solid var(--line); border-radius: 20px; color: var(--ink); text-decoration: none; transition: transform .18s ease, border-color .18s ease; }
+.shop-card:hover { transform: translateY(-2px); border-color: var(--ember); color: var(--ink); }
+.shop-top { display: flex; align-items: center; gap: .85rem; }
+.shop-logo { flex: none; width: 52px; height: 52px; border-radius: 14px; overflow: hidden; display: grid; place-items: center; background: var(--ember); color: #fff; font-weight: 700; font-size: 1.3rem; }
+.shop-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shop-card h2 { font-size: 1.1rem; line-height: 1.2; margin: 0; overflow-wrap: anywhere; }
+.shop-tag { color: var(--ink-soft); font-size: .95rem; line-height: 1.45; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.shop-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.shop-go { margin-left: auto; font-weight: 600; font-size: .9rem; color: var(--ember-deep); }
+html[data-theme="dark"] .shop-go { color: #5bd6a5; }
+
+.shop-sk { height: 190px; border-radius: 20px; background: var(--ember-tint); opacity: .55; }
+
+.shops-empty { text-align: center; max-width: 30rem; margin: 3rem auto; display: grid; justify-items: center; gap: .75rem; }
+.shops-empty h2 { font-size: 1.4rem; margin: 0; }
+.shops-empty p { color: var(--ink-soft); margin: 0; }
+
+.shops-cta { background: var(--section); color: #fff; padding: 3rem 0; }
+.shops-cta .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem; }
+.shops-cta h2 { font-size: 1.7rem; margin: 0 0 .35rem; }
+.shops-cta p { margin: 0; color: rgba(255,255,255,.9); }
+.shops-cta .btn-ember { --bs-btn-bg: #fff; --bs-btn-color: var(--ember-deep); --bs-btn-border-color: #fff; --bs-btn-hover-bg: #e8f3ed; --bs-btn-hover-color: var(--ember-deep); --bs-btn-hover-border-color: #e8f3ed; }
+@media (prefers-reduced-motion: reduce) { .shop-card { transition: none; } .shop-card:hover { transform: none; } }

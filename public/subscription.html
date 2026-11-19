@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plan and billing | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/billing.css" rel="stylesheet">
+</head>
+<body data-nav="subscription.html">
+<main class="page" id="page">
+  <div class="head"><div><h1>Plan and billing</h1><p>Your plan, what you have used and how to pay.</p></div></div>
+
+  <p class="note warn" id="lockedNote" hidden>This account is locked. Send your payment details below, or contact Kaunta support.</p>
+
+  <div class="bl-top">
+    <section class="card" id="stCard" aria-labelledby="stH">
+      <div class="card-h"><h2 id="stH">Your plan</h2><span class="tag" id="stTag" hidden></span></div>
+      <ul class="rows bl-facts" id="stFacts" aria-busy="true"></ul>
+      <p class="note" id="stNote" hidden></p>
+      <p class="bl-err" id="stErr" hidden></p>
+    </section>
+
+    <section class="card" id="usCard" aria-labelledby="usH">
+      <div class="card-h"><div><h2 id="usH">Usage</h2><p class="sub">What your plan allows at one time.</p></div></div>
+      <ul class="bl-uses" id="usList" aria-busy="true"></ul>
+    </section>
+  </div>
+
+  <section class="card" id="mdCard" aria-labelledby="mdH">
+    <div class="card-h"><div><h2 id="mdH">Modules</h2><p class="sub">Switch modules on or off in the shop settings. A plan can leave some out.</p></div></div>
+    <ul class="rows" id="mdList" aria-busy="true"></ul>
+    <p class="muted" id="mdHint" hidden>Some modules are not in your plan. <button class="link" id="mdJump" type="button">See the plans</button></p>
+  </section>
+
+  <section class="card flush" id="plCard" aria-labelledby="plH">
+    <div class="card-h pad"><div><h2 id="plH">Plans</h2><p class="sub">Limits are the most your shop can have at once.</p></div></div>
+    <div class="scroll">
+      <table class="bl-plans">
+        <caption class="sr">Available plans, their prices and limits</caption>
+        <thead><tr><th>Plan</th><th class="r">Per month</th><th class="r">Per year</th><th class="r">Branches</th><th class="r">Team</th><th class="r">Products</th><th><span class="sr">Action</span></th></tr></thead>
+        <tbody id="plBody"></tbody>
+      </table>
+    </div>
+    <p class="bl-err pad" id="plErr" hidden></p>
+  </section>
+
+  <section class="card" id="payCard" aria-labelledby="pyH" hidden>
+    <div class="card-h"><div><h2 id="pyH">Pay by M-Pesa</h2><p class="sub">Pay, then enter the code from the confirmation SMS. Kaunta confirms it and extends your plan.</p></div></div>
+    <ol class="bl-steps" id="pySteps"></ol>
+    <p class="muted bl-extra" id="pyExtra" hidden></p>
+    <p class="note" id="pyPending" hidden></p>
+    <form class="form" id="pyForm" novalidate>
+      <div class="row2">
+        <label class="fld"><span>Plan</span><select id="pyPlan"></select></label>
+        <label class="fld"><span>Amount you paid (KES)</span><input type="number" id="pyAmount" min="1" step="1" inputmode="decimal"><small id="pyHint"></small></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>M-Pesa code</span><input type="text" id="pyCode" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SJK1A2B3C4"><small>10 letters and numbers, from the SMS M-Pesa sent you.</small></label>
+        <label class="fld"><span>Note for Kaunta (optional)</span><input type="text" id="pyNote" maxlength="200" autocomplete="off"></label>
+      </div>
+      <p class="bl-result" id="pyResult" hidden></p>
+      <p class="note err" id="pyErr" hidden></p>
+      <p class="note ok" id="pyOk" hidden></p>
+      <div class="actions"><button class="btn primary" id="pySend" type="submit">Send payment details</button></div>
+    </form>
+  </section>
+
+  <section class="card flush" id="hiCard" aria-labelledby="hiH" hidden>
+    <div class="card-h pad"><div><h2 id="hiH">Payments</h2><p class="sub">Your latest ten.</p></div></div>
+    <div class="scroll">
+      <table class="bl-plans">
+        <caption class="sr">Payments you have sent to Kaunta</caption>
+        <thead><tr><th>Sent</th><th>Plan</th><th>M-Pesa code</th><th class="r">Amount</th><th>Status</th></tr></thead>
+        <tbody id="hiBody"></tbody>
+      </table>
+    </div>
+    <p class="bl-empty" id="hiEmpty" hidden>No payments sent yet.</p>
+    <p class="bl-err pad" id="hiErr" hidden></p>
+  </section>
+
+  <p class="muted" id="ownerOnly" hidden>Only the shop owner can pay or see payments. Ask the owner to renew.</p>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/subscription.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 'use strict';
 
 const { withTenant } = require('../config/database');
+const { effectiveFeatures } = require('./entitlements');
 
 /**
  * Every authenticated request needs the user (role, permissions, branches) and the shop
@@ -35,7 +36,15 @@ setInterval(() => {
   sweep(users);
 }, 60000).unref();
 
-/** { id, slug, name, status, business_type, trial_ends_at, current_period_end, plan_id, features, single_branch_id } */
+/**
+ * { id, slug, name, status, business_type, trial_ends_at, current_period_end, plan_id,
+ *   plan: { id, code, name, max_branches, max_users, max_products, features } | null,
+ *   features: { restaurant: true, ... }, single_branch_id }
+ *
+ * `features` is what the shop may actually use: the modules it switched on, minus any its plan does
+ * not include. The access state (trial / grace / read-only ...) is worked out per request from the
+ * dates here, see utils/entitlements.accessState.
+ */
 async function getTenantContext(tenantId) {
   const hit = tenants.get(tenantId);
   if (isFresh(hit)) return hit.value;
@@ -47,11 +56,19 @@ async function getTenantContext(tenantId) {
       [tenantId]
     );
     if (!t.rows[0]) return null;
-    const features = await db.query('SELECT feature_key, enabled FROM tenant_features');
+    const row = t.rows[0];
+    const plan = row.plan_id
+      ? (await db.query(
+          'SELECT id, code, name, max_branches, max_users, max_products, features FROM plans WHERE id = $1',
+          [row.plan_id]
+        )).rows[0] || null
+      : null;
+    const flags = await db.query('SELECT feature_key, enabled FROM tenant_features');
     const branches = await db.query('SELECT id FROM branches WHERE is_active ORDER BY is_main DESC LIMIT 2');
     return {
-      ...t.rows[0],
-      features: Object.fromEntries(features.rows.map((r) => [r.feature_key, r.enabled])),
+      ...row,
+      plan,
+      features: effectiveFeatures(Object.fromEntries(flags.rows.map((r) => [r.feature_key, r.enabled])), plan),
       // when the shop has exactly one active branch, requests need not name it
       single_branch_id: branches.rows.length === 1 ? branches.rows[0].id : null,
     };
@@ -87,6 +104,11 @@ function invalidateTenant(tenantId) {
   tenants.delete(tenantId);
 }
 
+/** After a plan's limits or modules are edited: every shop on any plan may be affected. */
+function invalidateAllTenants() {
+  tenants.clear();
+}
+
 function invalidateUser(tenantId, userId) {
   users.delete(`${tenantId}:${userId}`);
 }
@@ -101,6 +123,7 @@ module.exports = {
   getTenantContext,
   getUserContext,
   invalidateTenant,
+  invalidateAllTenants,
   invalidateUser,
   invalidateTenantUsers,
 };

@@ -13,6 +13,8 @@ const { run, clientMeta } = require('../utils/context');
 const { withTransaction } = require('../config/database');
 const { Tenant, User, Branch, TenantFeature } = require('../models');
 const AuthService = require('../services/AuthService');
+const { planFor } = require('../utils/limits');
+const { describeAccess, effectiveFeatures } = require('../utils/entitlements');
 
 async function resolveTenantId(req) {
   if (req.tenantId) return req.tenantId;
@@ -44,6 +46,21 @@ exports.login = asyncHandler(async (req, res) => {
     ...clientMeta(req),
   });
   return ok(res, result);
+});
+
+// POST /auth/google/login  { shop?, access_token }  (Google access token from the sign-in popup)
+exports.googleLogin = asyncHandler(async (req, res) => {
+  requireFields(req.body, ['access_token']);
+  const tenantId = await resolveTenantId(req);
+  const result = await AuthService.googleLogin({ tenantId, accessToken: req.body.access_token, ...clientMeta(req) });
+  return ok(res, result);
+});
+
+// POST /auth/google/register  { slug, name, business_type, access_token }
+exports.googleRegister = asyncHandler(async (req, res) => {
+  requireFields(req.body, ['slug', 'name', 'access_token']);
+  const result = await AuthService.googleRegister(req.body, clientMeta(req));
+  return created(res, result);
 });
 
 // POST /auth/pin-login  { shop?, user_id, pin }  (fast cashier switch on a shared till)
@@ -80,14 +97,17 @@ exports.logout = asyncHandler(async (req, res) => {
 });
 
 // GET /auth/me  -> user, shop, branches the user can work in, enabled features
+// tenant.access says where the subscription stands ({ state, can_operate, read_only, days_left, ... })
+// so the apps can show the right notice; features leaves out modules the shop's plan does not include.
+// Not behind the subscription gate: a shop whose trial ended must still see who it is and pay.
 exports.me = asyncHandler(async (req, res) => {
   const data = await run(req, async (db) => {
     const user = await User.findWithRole(db, req.user.id);
     if (!user) throw ApiError.unauthorized('This account no longer exists');
     const tenant = await Tenant.findById(db, req.tenantId);
     const branches = await Branch.listForUser(db, user);
-    const features = await TenantFeature.asMap(db);
-    return { user: User.sanitize(user), tenant, branches, features };
+    const features = effectiveFeatures(await TenantFeature.asMap(db), await planFor(db, req.tenantId));
+    return { user: User.sanitize(user), tenant: { ...tenant, access: describeAccess(tenant) }, branches, features };
   });
   return ok(res, data);
 });

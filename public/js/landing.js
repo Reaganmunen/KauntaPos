@@ -330,3 +330,16 @@
 
   var y = $('#year'); if (y) y.textContent = new Date().getFullYear();
 })();
+
+/* Menu links: close the mobile menu, then let the browser jump to the section.
+   (data-bs-dismiss on these links used to cancel the jump, so the top bar did nothing.) */
+(function () {
+  var menu = document.getElementById('menu');
+  if (!menu) return;
+  menu.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || !window.bootstrap) return;
+    var inst = window.bootstrap.Offcanvas.getInstance(menu);
+    if (inst && menu.classList.contains('show')) inst.hide();
+  });
+})();

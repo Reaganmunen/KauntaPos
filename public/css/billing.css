@@ -1,0 +1,41 @@
+/* Plan and billing. Built on the shared system in ui.css: only what this page adds is here.
+   Flat surfaces, 1px lines, figures right-aligned in tabular digits, colour only on status and on usage. */
+
+.bl-top { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .bl-top { grid-template-columns: 1fr; } }
+
+/* plan facts: label left, value right */
+.bl-facts li b { font-weight: 600; text-align: right; }
+.bl-facts + .note { margin-top: 16px; }
+
+/* usage: label and "used of limit" on one line, the bar at its true ratio under it */
+.bl-uses { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.bl-use { display: grid; gap: 8px; }
+.bl-use-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.bl-use-h > span:first-child { font-weight: 500; }
+.bl-use-h .num { color: var(--ink-2); font-size: 13.5px; }
+.bl-use small { font-size: 12.5px; }
+
+/* loading: the final layout in flat grey bars, no shimmer */
+.bl-sk-row { list-style: none; height: 18px; margin: 12px 0; border-radius: 6px; background: var(--surface-2); }
+
+/* an error stays inside the block that failed */
+.bl-err { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--ink-2); font-size: 13.5px; }
+.bl-err i { color: var(--red); font-size: 18px; }
+.bl-err.pad { padding: 0 20px 20px; }
+
+/* modules */
+#mdHint { margin-top: 14px; }
+
+/* tables */
+.bl-plans th, .bl-plans td { white-space: nowrap; }
+.bl-plans th.r, .bl-plans td.r { font-variant-numeric: tabular-nums; }
+.bl-plans td b { font-weight: 600; }
+.bl-plans td .tag { margin-left: 8px; }
+.bl-empty { padding: 28px 20px; text-align: center; color: var(--ink-3); border-top: 1px solid var(--line); }
+
+/* pay */
+.bl-steps { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 6px; color: var(--ink-2); }
+.bl-extra { margin: -4px 0 16px; }
+#pyPending { margin-bottom: 16px; }
+.bl-result { color: var(--ink-2); font-size: 13.5px; }

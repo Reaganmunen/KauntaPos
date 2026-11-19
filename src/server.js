@@ -28,6 +28,9 @@ const server = app.listen(port, () => {
   console.log(JSON.stringify({ t: new Date().toISOString(), level: 'info', msg: `Kaunta API listening on ${port}` }));
 });
 
+// Marks shops whose paid period has ended as past_due (labels only; access follows the dates).
+require('./jobs/subscriptionSweep').start();
+
 // Finish the requests in flight, then close the database pool.
 let closing = false;
 function shutdown(signal) {

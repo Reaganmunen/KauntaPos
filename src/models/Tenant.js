@@ -1,6 +1,7 @@
 'use strict';
 
 const BaseModel = require('./BaseModel');
+const entitlements = require('../utils/entitlements');
 
 class Tenant extends BaseModel {
   static table = 'tenants';
@@ -55,14 +56,13 @@ class Tenant extends BaseModel {
     return this.update(db, id, { status });
   }
 
-  /** Can this tenant use the system right now? (active, in-trial, or past_due grace) */
+  /**
+   * Can this tenant make changes right now? Trial running, paid period running, or inside the grace
+   * days after it. Worked out from the dates too, so a period that has ended stops counting even
+   * when nobody has changed the status. See utils/entitlements.
+   */
   static canOperate(tenant) {
-    if (!tenant) return false;
-    if (tenant.status === 'active' || tenant.status === 'past_due') return true;
-    if (tenant.status === 'trial') {
-      return !tenant.trial_ends_at || new Date(tenant.trial_ends_at) > new Date();
-    }
-    return false;
+    return entitlements.canOperate(entitlements.accessState(tenant));
   }
 }
 

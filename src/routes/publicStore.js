@@ -4,7 +4,8 @@
  * The customer-facing storefront API (mounted at /store). No login: the shop comes from the
  * subdomain / custom domain (or the X-Tenant header while developing), and the shopper is
  * identified by the cart token (X-Cart-Token) and later an order tracking token.
- * Shops that are suspended, expired or not published answer 404.
+ * Shops that are suspended, expired, not published, or whose plan / settings leave the online store
+ * off answer 404.
  */
 const express = require('express');
 const { resolveTenant, rateLimit } = require('../middleware');
@@ -12,7 +13,7 @@ const store = require('../controllers/storefrontPublicController');
 
 const router = express.Router();
 
-router.use(rateLimit.publicStore, resolveTenant({ required: true, blockInactive: true }));
+router.use(rateLimit.publicStore, resolveTenant({ required: true, blockInactive: true, feature: 'storefront' }));
 
 // catalogue
 router.get('/', store.bundle);

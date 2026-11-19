@@ -280,3 +280,9 @@ dialog.sheet.wide { width: min(680px, 100vw); }
 .pv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 14px; } .pv-grid span { aspect-ratio: 1; border-radius: 12px; background: linear-gradient(135deg, var(--tint), var(--gold-tint)); }
 .pv-foot { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px 16px; border-top: 1px solid var(--line); } .pv-foot span { font-size: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--ink-2); }
 @media (max-width: 1100px) { .split { grid-template-columns: 1fr; } .preview { position: static; order: -1; } }
+
+/* ---------- subscription notice: one quiet line at the top of a page (js/shell.js) ---------- */
+.sub-note { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--gold-ink) 24%, transparent); border-radius: 12px; background: var(--gold-tint); color: var(--gold-ink); font-size: 13.5px; line-height: 1.45; }
+.sub-note.bad { border-color: color-mix(in srgb, var(--red-ink) 24%, transparent); background: var(--red-tint); color: var(--red-ink); }
+.sub-note b { font-weight: 600; }
+.sub-note a { margin-left: auto; font-weight: 600; color: inherit; text-underline-offset: 3px; white-space: nowrap; }
