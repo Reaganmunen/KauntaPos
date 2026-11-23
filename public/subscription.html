@@ -55,6 +55,19 @@
     <p class="bl-err pad" id="plErr" hidden></p>
   </section>
 
+  <section class="card" id="psCard" aria-labelledby="psH" hidden>
+    <div class="card-h"><div><h2 id="psH">Pay online</h2><p class="sub">Pay with M-Pesa or card through Paystack. Your plan updates by itself as soon as the payment goes through.</p></div></div>
+    <form class="form" id="psForm" novalidate>
+      <div class="row2">
+        <label class="fld"><span>Plan</span><select id="psPlan"></select></label>
+        <label class="fld"><span>Pay for</span><select id="psCycle"><option value="monthly">One month</option><option value="yearly">One year</option></select><small id="psHint"></small></label>
+      </div>
+      <p class="note err" id="psErr" hidden></p>
+      <p class="note ok" id="psOk" hidden></p>
+      <div class="actions"><button class="btn primary" id="psGo" type="submit">Pay now</button></div>
+    </form>
+  </section>
+
   <section class="card" id="payCard" aria-labelledby="pyH" hidden>
     <div class="card-h"><div><h2 id="pyH">Pay by M-Pesa</h2><p class="sub">Pay, then enter the code from the confirmation SMS. Kaunta confirms it and extends your plan.</p></div></div>
     <ol class="bl-steps" id="pySteps"></ol>

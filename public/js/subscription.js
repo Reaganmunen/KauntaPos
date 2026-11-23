@@ -177,7 +177,7 @@
     renderPlans();
     return true;
   }
-  function afterPlans() { if (owner) fillPay(); }
+  function afterPlans() { if (owner) { fillPay(); fillPaystack(); } }
 
   /* ---------- paying ---------- */
   function choosePlan(id) {
@@ -191,6 +191,62 @@
     if (p && Number(p.price_monthly) > 0) $('#pyAmount').value = Number(p.price_monthly);
     $('#pyHint').textContent = p ? 'Monthly price: ' + price(p, p.price_monthly) : '';
   }
+  /* ---------- Paystack (pay online) ---------- */
+  function psAmount() {
+    var p = planById($('#psPlan').value), yearly = $('#psCycle').value === 'yearly';
+    return p ? Number(yearly ? p.price_yearly : p.price_monthly) : 0;
+  }
+  function psSync() {
+    var p = planById($('#psPlan').value), amt = psAmount();
+    $('#psHint').textContent = p ? (amt > 0 ? 'You will pay ' + price(p, amt) : 'This plan has no price for that period') : '';
+    $('#psGo').disabled = !(amt > 0);
+  }
+  function fillPaystack() {
+    var card = $('#psCard');
+    if (!owner || !sub || !sub.paystack_enabled || !plans.length) { card.hidden = true; return; }
+    var sel = $('#psPlan'), keep = sel.value; sel.textContent = '';
+    plans.forEach(function (p) { var o = el('option', p.name); o.value = p.id; sel.appendChild(o); });
+    var cur = sub.plan && sub.plan.id;
+    sel.value = keep && planById(keep) ? keep : (cur && planById(cur) ? cur : plans[0].id);
+    card.hidden = false; psSync();
+  }
+  function wirePaystack() {
+    $('#psPlan').addEventListener('change', psSync);
+    $('#psCycle').addEventListener('change', psSync);
+    $('#psForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var err = $('#psErr'), btn = $('#psGo');
+      K.notice(err, ''); K.notice($('#psOk'), '');
+      K.busy(btn, true, 'Opening Paystack...');
+      try {
+        var r = await K.api('POST', '/tenant/subscription/paystack/initialize', { plan_id: $('#psPlan').value, cycle: $('#psCycle').value });
+        if (!r || typeof r.authorization_url !== 'string' || r.authorization_url.indexOf('https://') !== 0) throw new Error('Could not open the payment page.');
+        window.location.href = r.authorization_url;
+        return; /* leaving the page: keep the button busy */
+      } catch (ex) { K.notice(err, ex.message, 'err'); }
+      K.busy(btn, false);
+    });
+  }
+  /* back from Paystack: ask the server whether the payment went through (it asks Paystack, not the address bar) */
+  async function checkReturn() {
+    var q = new URLSearchParams(location.search), ref = q.get('reference') || q.get('trxref');
+    if (!ref || !owner) return;
+    history.replaceState(null, '', location.pathname);
+    var box = $('#psOk'), err = $('#psErr');
+    $('#psCard').hidden = false;
+    K.notice(box, 'Checking your payment...', 'ok');
+    for (var i = 0; i < 6; i++) {
+      var r;
+      try { r = await K.api('GET', '/tenant/subscription/paystack/verify?reference=' + encodeURIComponent(ref)); }
+      catch (ex) { K.notice(box, ''); K.notice(err, ex.message, 'err'); return; }
+      if (r.status === 'confirmed') { K.notice(box, 'Payment received. Your plan is active. Thank you!', 'ok'); loadSub(); loadHistory(); return; }
+      if (r.status === 'failed') { K.notice(box, ''); K.notice(err, 'The payment did not go through. You have not been charged. Please try again.', 'err'); loadHistory(); return; }
+      if (r.status === 'review') { K.notice(box, ''); K.notice(err, 'We received your payment but need to check it. Please contact Kaunta support.', 'err'); return; }
+      await new Promise(function (res) { setTimeout(res, 3000); });
+    }
+    K.notice(box, 'Still waiting for Paystack to confirm. Your plan will update by itself once it does. You can refresh this page in a minute.', 'ok');
+  }
+
   function fillPay() {
     var sel = $('#pyPlan'); sel.textContent = '';
     if (!plans.length) { var o = el('option', 'Current plan'); o.value = ''; sel.appendChild(o); }
@@ -227,7 +283,7 @@
     box.hidden = false;
   }
 
-  var PAY = { pending: ['Waiting for Kaunta', 'warn'], confirmed: ['Confirmed', 'ok'], failed: ['Not accepted', 'bad'] };
+  var PAY = { pending: ['Waiting', 'warn'], confirmed: ['Confirmed', 'ok'], failed: ['Not accepted', 'bad'] };
   async function loadHistory() {
     var err = $('#hiErr'); err.hidden = true;
     var rows;
@@ -240,7 +296,7 @@
       var tr = el('tr'), p = planById(r.plan_id), st = PAY[r.status] || [r.status || '-', ''];
       tr.appendChild(el('td', fmtDate(r.created_at)));
       tr.appendChild(el('td', p ? p.name : '-'));
-      tr.appendChild(el('td', r.mpesa_receipt || '-', 'mono'));
+      tr.appendChild(el('td', r.mpesa_receipt || (r.method === 'paystack' ? 'Paystack' : '-'), 'mono'));
       tr.appendChild(el('td', K.money0(r.amount), 'r'));
       var s = el('td'); s.appendChild(tag(st[0], st[1])); tr.appendChild(s);
       body.appendChild(tr);
@@ -275,11 +331,11 @@
     skeleton($('#stFacts'), 3); skeleton($('#usList'), 3); skeleton($('#mdList'), 4);
     var id = await K.identity();
     owner = Boolean(id && id.user && id.user.is_owner);
-    if (owner) { $('#payCard').hidden = false; $('#hiCard').hidden = false; wireForm(); } else { $('#ownerOnly').hidden = false; }
+    if (owner) { $('#payCard').hidden = false; $('#hiCard').hidden = false; wireForm(); wirePaystack(); } else { $('#ownerOnly').hidden = false; }
     await Promise.all([loadSub(), loadPlans()]);
     renderPlans(); /* again: "Current" needs the plan from loadSub */
     afterPlans();
-    if (owner) loadHistory();
+    if (owner) { loadHistory(); checkReturn(); }
   }
   init();
 })();

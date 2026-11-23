@@ -63,6 +63,8 @@ app.get('/media/:tenantId/:id', media.serve);
 // ---------- API ----------
 // A batch of offline sales or a 1000-row product import is bigger than the 1 MB default. These two
 // run first; the body parser skips a body that has already been read.
+// Paystack signs the exact bytes it sends, so keep them (req.rawBody) to check the signature.
+app.use(`${prefix}/hooks/paystack`, express.json({ limit: '200kb', verify: (req, res, buf) => { req.rawBody = buf; } }));
 const bigJson = express.json({ limit: '5mb' });
 app.use(`${prefix}/sync/sales`, bigJson);
 app.use(`${prefix}/products/import`, bigJson);

@@ -21,7 +21,7 @@ const { accessState, canOperate, READ_ONLY_MESSAGES } = require('../utils/entitl
 const prefix = (process.env.API_PREFIX || '/api').replace(/\/$/, '');
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const PAYMENT_SCREENS = new RegExp(`^${escape(prefix)}/tenant/(subscription(/payments)?|plans)/?$`);
+const PAYMENT_SCREENS = new RegExp(`^${escape(prefix)}/tenant/(subscription(/payments|/paystack/(initialize|verify))?|plans)/?$`);
 const OFFLINE_SALES = new RegExp(`^${escape(prefix)}/sync/sales/?$`);
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);

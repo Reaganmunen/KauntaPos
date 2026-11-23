@@ -58,7 +58,7 @@ exports.stats = asyncHandler(async (req, res) => {
     const extra = await db.query(
       `SELECT
          (SELECT COUNT(*)::int FROM tenants WHERE created_at > now() - interval '30 days') AS new_30d,
-         (SELECT COUNT(*)::int FROM subscription_payments WHERE status = 'pending') AS pending_payments,
+         (SELECT COUNT(*)::int FROM subscription_payments WHERE status = 'pending' AND method <> 'paystack') AS pending_payments,
          (SELECT COALESCE(SUM(amount), 0) FROM subscription_payments
            WHERE status = 'confirmed' AND confirmed_at >= date_trunc('month', now())) AS revenue_this_month,
          (SELECT COUNT(*)::int FROM tenants
@@ -234,6 +234,7 @@ exports.listPayments = asyncHandler(async (req, res) => {
   if (req.query.status) {
     values.push(req.query.status);
     where.push(`sp.status = $${values.length}`);
+    if (req.query.status === 'pending') where.push("sp.method <> 'paystack'"); // unfinished checkouts are not waiting for staff
   }
   if (req.query.tenant_id) {
     values.push(req.query.tenant_id);

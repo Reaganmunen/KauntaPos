@@ -6,8 +6,9 @@
  * open to every logged-in user so the app can show the "trial ends in N days" banner.
  */
 const express = require('express');
-const { can, requireOwner } = require('../middleware');
+const { can, requireOwner, rateLimit } = require('../middleware');
 const ctl = require('../controllers/tenantController');
+const paystack = require('../controllers/paystackController');
 
 const router = express.Router();
 
@@ -35,5 +36,9 @@ router.get('/plans', ctl.listPlans);
 router.get('/subscription', ctl.getSubscription);
 router.get('/subscription/payments', requireOwner, ctl.listPayments);
 router.post('/subscription/payments', requireOwner, ctl.submitPayment);
+
+// pay online through Paystack (M-Pesa or card)
+router.post('/subscription/paystack/initialize', requireOwner, rateLimit.checkout, paystack.initialize);
+router.get('/subscription/paystack/verify', requireOwner, paystack.verify);
 
 module.exports = router;

@@ -7,6 +7,7 @@ class SubscriptionPayment extends BaseModel {
   static columns = [
     'plan_id', 'amount', 'method', 'mpesa_receipt', 'reference', 'period_start',
     'period_end', 'status', 'confirmed_by', 'confirmed_at', 'notes',
+    'paystack_reference', 'billing_cycle', 'channel', 'paid_at',
   ];
   static defaultOrder = 'created_at DESC';
 

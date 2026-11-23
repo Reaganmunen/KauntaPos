@@ -228,7 +228,7 @@ exports.getSubscription = asyncHandler(async (req, res) => {
     const plan = tenant.plan_id ? await Plan.findById(db, tenant.plan_id) : null;
     const access = describeAccess(tenant);
     const flags = await TenantFeature.asMap(db);
-    const pending = await db.query("SELECT COUNT(*)::int AS n FROM subscription_payments WHERE status = 'pending'");
+    const pending = await db.query("SELECT COUNT(*)::int AS n FROM subscription_payments WHERE status = 'pending' AND method <> 'paystack'");
     return {
       status: tenant.status,
       access,
@@ -245,6 +245,7 @@ exports.getSubscription = asyncHandler(async (req, res) => {
       custom_domain: planHas(plan, 'custom_domain'),
       period_days: periodDays(),
       payment_instructions: paymentInstructions(tenant),
+      paystack_enabled: require('../services/PaystackService').isConfigured(),
       pending_payments: pending.rows[0].n,
     };
   });
@@ -290,7 +291,7 @@ exports.submitPayment = asyncHandler(async (req, res) => {
     if (same.rows[0]) {
       throw ApiError.conflict('That M-Pesa code has already been sent to Kaunta', undefined, 'duplicate_receipt');
     }
-    const waiting = await db.query("SELECT COUNT(*)::int AS n FROM subscription_payments WHERE status = 'pending'");
+    const waiting = await db.query("SELECT COUNT(*)::int AS n FROM subscription_payments WHERE status = 'pending' AND method <> 'paystack'");
     if (waiting.rows[0].n >= MAX_PENDING_PAYMENTS) {
       throw ApiError.conflict(
         'You already have payments waiting for Kaunta to confirm. Please wait for them to be confirmed first.',

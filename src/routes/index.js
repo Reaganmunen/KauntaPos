@@ -34,6 +34,7 @@ router.get('/health', async (req, res) => {
 });
 
 router.use('/hooks/pay', require('./webhooks'));
+router.post('/hooks/paystack', rateLimit.webhook, require('../controllers/paystackController').webhook); // signed with your Paystack secret key
 router.use('/store', require('./publicStore'));
 // what the pages need to know before anyone is signed in (the Google client ID is public by design)
 router.get('/config', (req, res) => res.json({ success: true, data: { google_client_id: process.env.GOOGLE_CLIENT_ID || null } }));
