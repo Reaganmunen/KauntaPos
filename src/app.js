@@ -53,6 +53,7 @@ app.use(express.static(publicDir, {
   maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
   setHeaders(res, filePath) {
     if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
+    if (filePath.endsWith('sw.js')) { res.setHeader('Cache-Control', 'no-cache'); res.setHeader('Service-Worker-Allowed', '/'); } // browsers must always see a new service worker
   },
 }));
 

@@ -42,7 +42,7 @@
     L.push(when(s.sold_at));
     if (s.customer_name) L.push('Customer: ' + s.customer_name);
     L.push('');
-    (s.items || []).forEach(function (it) { L.push(num(it.quantity) + ' x ' + lineName(it) + ' - ' + m(it.line_total)); });
+    (s.items || []).forEach(function (it) { L.push(num(it.quantity) + (it.unit_abbr ? ' ' + it.unit_abbr : '') + ' x ' + lineName(it) + ' - ' + m(it.line_total)); });
     L.push('');
     if (num(s.discount_total) > 0) L.push('Discount: -' + m(s.discount_total));
     if (num(s.tax_total) > 0) L.push('VAT: ' + m(s.tax_total));
@@ -65,7 +65,7 @@
     var lines = (s.items || []).map(function (it) {
       var mods = (it.modifiers || []).map(function (x) { return '<div class="sm">+ ' + e(x.name) + '</div>'; }).join('');
       return '<tr><td colspan="2">' + e(lineName(it)) + mods + '</td></tr>' +
-        '<tr><td class="sm">' + num(it.quantity) + ' x ' + e(m(it.unit_price)) + (num(it.discount_amount) > 0 ? ' (-' + e(m(it.discount_amount)) + ')' : '') + '</td><td class="r">' + e(m(it.line_total)) + '</td></tr>';
+        '<tr><td class="sm">' + num(it.quantity) + (it.unit_abbr ? ' ' + e(it.unit_abbr) : '') + ' x ' + e(m(it.unit_price)) + (it.unit_abbr ? ' / ' + e(it.unit_abbr) : '') + (num(it.discount_amount) > 0 ? ' (-' + e(m(it.discount_amount)) + ')' : '') + '</td><td class="r">' + e(m(it.line_total)) + '</td></tr>';
     }).join('');
     var pays = paidPayments(s).map(function (p) { return '<tr><td>' + e(method(p.method)) + (p.reference ? ' <span class="sm">' + e(p.reference) + '</span>' : '') + '</td><td class="r">' + e(m(p.amount)) + '</td></tr>'; }).join('');
     var legal = [b.legal_name && b.legal_name !== b.name ? e(b.legal_name) : '', b.kra_pin ? 'PIN: ' + e(b.kra_pin) : '', b.address ? e(b.address) : '', b.phone ? 'Tel: ' + e(b.phone) : ''].filter(Boolean).join('<br>');

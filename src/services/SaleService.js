@@ -23,10 +23,11 @@ const { isRestricted } = require('../utils/context');
 const {
   Sale, Branch, Customer, CustomerLedger, Shift, ProductVariant, Modifier, PriceList, RecipeItem,
   PrescriptionRecord, EtimsInvoice, TenantEtimsConfig, DiningTable, Payment, OnlineOrder,
-  StockReservation, Role,
+  StockReservation, Role, Promotion,
 } = require('../models');
 const InventoryService = require('./InventoryService');
 const PaymentService = require('./PaymentService');
+const KPromo = require('../../public/js/promo-engine');
 
 const EPS = 0.005;
 const REFUND_METHODS = ['cash', 'mpesa', 'card', 'bank_transfer', 'other'];
@@ -91,9 +92,10 @@ async function priceLines(db, { items, customer, tenant, user, trusted }) {
     if (!Number.isFinite(quantity) || quantity <= 0) throw ApiError.unprocessable('Quantity must be greater than 0');
 
     let listPrice = Number(variant.selling_price);
+    let priceLocked = false; // a price set by hand or by a price list is left alone by offers
     if (customer && customer.price_list_id) {
       const special = await PriceList.getPrice(db, customer.price_list_id, variant.id, quantity);
-      if (special !== null && special !== undefined) listPrice = Number(special);
+      if (special !== null && special !== undefined) { listPrice = Number(special); priceLocked = true; }
     }
 
     let base = listPrice;
@@ -104,6 +106,7 @@ async function priceLines(db, { items, customer, tenant, user, trusted }) {
         throw ApiError.forbidden('You do not have permission to sell below the listed price (pos.discount)');
       }
       base = asked;
+      priceLocked = true;
     }
 
     const chosen = [];
@@ -137,6 +140,7 @@ async function priceLines(db, { items, customer, tenant, user, trusted }) {
       unit_price: unit,
       gross,
       own_discount: discount,
+      price_locked: priceLocked || discount > 0,
       sale_discount: 0,
       tax_rate: vat ? Number(variant.tax_rate || 0) : 0,
       tax_code: vat ? variant.tax_code || null : 'D',
@@ -146,6 +150,30 @@ async function priceLines(db, { items, customer, tenant, user, trusted }) {
     });
   }
   return lines;
+}
+
+/**
+ * Automatic offers (multi-buy, bundle, percent or amount off). Till sales only: the online store shows list prices,
+ * so its orders are not changed behind the shopper's back. The offer's saving is added to the line's own discount,
+ * so tax, totals and refunds work exactly as they do for any other line discount.
+ */
+async function applyPromotions(db, lines, { branchId, at }) {
+  const offers = await Promotion.activeFor(db, { branchId, at });
+  if (!offers.length) return;
+  const result = KPromo.apply(
+    lines.map((l) => ({
+      key: l.idx, variant_id: l.variant.id, quantity: l.quantity, unit_price: l.unit_price,
+      locked: l.price_locked, weighed: Boolean(l.variant.sold_by_weight),
+    })),
+    offers,
+    { at, branchId }
+  );
+  for (const l of lines) {
+    const hit = result.byKey[l.idx];
+    if (!hit) continue;
+    l.promo = hit;
+    l.own_discount = round2(l.own_discount + hit.discount);
+  }
 }
 
 /** Spreads a whole-sale discount over the lines in proportion to what each line is worth. */
@@ -301,6 +329,10 @@ async function create(db, user, input) {
 
   // ---- price it ----
   const lines = await priceLines(db, { items: input.items, customer, tenant, user, trusted });
+  if (channel === 'pos') {
+    const at = offline && input.sold_at && !Number.isNaN(new Date(input.sold_at).getTime()) && new Date(input.sold_at) <= new Date() ? new Date(input.sold_at) : new Date();
+    await applyPromotions(db, lines, { branchId: branch.id, at });
+  }
   allocateSaleDiscount(lines, input);
   finishLines(lines, pricesIncludeTax);
   const totals = totalsOf(lines);
@@ -389,6 +421,10 @@ async function create(db, user, input) {
       unit_cost: Number(l.variant.cost_price || 0),
       etims_item_class_code: l.variant.etims_item_class_code,
       etims_unit_code: l.variant.etims_unit_code,
+      unit_abbr: l.variant.sold_by_weight ? l.variant.unit_abbr || null : null,
+      promotion_id: l.promo ? l.promo.promotion_id : null,
+      promo_name: l.promo ? l.promo.name : null,
+      promo_discount: l.promo ? l.promo.discount : 0,
       kitchen_status: l.variant.kitchen_station ? 'new' : null,
       sent_to_kitchen_at: l.variant.kitchen_station ? sentNow : null,
       notes: l.notes,
@@ -481,6 +517,7 @@ async function addItems(db, user, saleId, items) {
         unit_cost: Number(l.variant.cost_price || 0),
         etims_item_class_code: l.variant.etims_item_class_code,
         etims_unit_code: l.variant.etims_unit_code,
+        unit_abbr: l.variant.sold_by_weight ? l.variant.unit_abbr || null : null,
         kitchen_status: l.variant.kitchen_station ? 'new' : null,
         notes: l.notes,
         modifiers: l.modifiers.map((m) => ({ modifier_id: m.modifier_id, name: m.name, price_delta: m.price_delta })),
@@ -703,6 +740,7 @@ async function refund(db, user, saleId, body) {
       unit_cost: Number(item.unit_cost),
       etims_item_class_code: item.etims_item_class_code,
       etims_unit_code: item.etims_unit_code,
+      unit_abbr: item.unit_abbr || null,
       notes: null,
     };
   });

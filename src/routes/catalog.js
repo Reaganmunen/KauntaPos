@@ -14,6 +14,7 @@ const categories = require('../controllers/categoryController');
 const lookups = require('../controllers/lookupController');
 const priceLists = require('../controllers/priceListController');
 const products = require('../controllers/productController');
+const promotions = require('../controllers/promotionController');
 
 const lookupRead = canAny('products.view', 'products.manage', 'pos.sell', 'inventory.view', 'purchases.manage');
 const productRead = canAny('products.view', 'products.manage', 'inventory.view', 'purchases.manage');
@@ -44,6 +45,15 @@ priceListsRouter.put('/:id/items', manage, priceLists.setItems);
 priceListsRouter.delete('/:id/items/:variantId', manage, priceLists.removeItem);
 priceListsRouter.post('/:id/default', manage, priceLists.setDefault);
 
+// ---------- /promotions ----------
+// The till reads them through /sync/catalog; this is the back-office list and editor.
+const promotionsRouter = express.Router();
+promotionsRouter.get('/', lookupRead, promotions.list);
+promotionsRouter.get('/:id', lookupRead, promotions.get);
+promotionsRouter.post('/', manage, promotions.create);
+promotionsRouter.patch('/:id', manage, promotions.update);
+promotionsRouter.delete('/:id', manage, promotions.remove);
+
 // ---------- /products ----------
 const productsRouter = express.Router();
 
@@ -68,4 +78,4 @@ productsRouter.post('/:id/images', manage, products.addImage);
 productsRouter.post('/:id/images/:imageId/primary', manage, products.setPrimaryImage);
 productsRouter.delete('/:id/images/:imageId', manage, products.removeImage);
 
-module.exports = { categoriesRouter, brandsRouter, unitsRouter, taxRouter, priceListsRouter, productsRouter };
+module.exports = { categoriesRouter, brandsRouter, unitsRouter, taxRouter, priceListsRouter, promotionsRouter, productsRouter };

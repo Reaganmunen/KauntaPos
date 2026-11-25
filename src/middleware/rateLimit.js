@@ -59,6 +59,10 @@ module.exports = {
   // public storefront browsing and cart
   publicStore: limiter({ windowMs: minute, limit: 240 }),
 
+  // storefront chat: starting a conversation is tight (it notifies a shop), replying is looser
+  chatStart: limiter({ windowMs: 30 * minute, limit: 6 }),
+  chatMessage: limiter({ windowMs: minute, limit: 30 }),
+
   // placing orders and sending M-Pesa prompts to customers' phones
   checkout: limiter({ windowMs: 10 * minute, limit: 15 }),
 

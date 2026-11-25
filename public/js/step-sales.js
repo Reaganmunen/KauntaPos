@@ -140,7 +140,7 @@
       var r = K.el('tr'), c = K.el('td'); c.appendChild(K.el('b', it.product_name));
       if (it.variant_name && it.variant_name !== 'Default') c.appendChild(K.el('span', it.variant_name, 'sale-sub'));
       (it.modifiers || []).forEach(function (x) { c.appendChild(K.el('span', '+ ' + x.name, 'sale-sub')); });
-      r.appendChild(c); r.appendChild(K.el('td', String(K.num(it.quantity)), 'r qty')); r.appendChild(K.el('td', K.money(it.unit_price), 'r num nw')); r.appendChild(K.el('td', K.money(it.line_total), 'r num nw')); tbody.appendChild(r);
+      r.appendChild(c); r.appendChild(K.el('td', String(K.num(it.quantity)) + (it.unit_abbr ? ' ' + it.unit_abbr : ''), 'r qty')); r.appendChild(K.el('td', K.money(it.unit_price), 'r num nw')); r.appendChild(K.el('td', K.money(it.line_total), 'r num nw')); tbody.appendChild(r);
     });
     tb.appendChild(tbody); sc.appendChild(tb); card.appendChild(sc); body.appendChild(card);
 

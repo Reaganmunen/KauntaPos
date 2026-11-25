@@ -34,4 +34,20 @@ ordersRouter.get('/', handle, resolveBranch(), orders.list);
 ordersRouter.get('/:id', handle, orders.get);
 ordersRouter.put('/:id/status', handle, orders.setStatus);
 
-module.exports = { storefrontRouter, ordersRouter };
+// ---------- /chat (customer questions from the storefront) ----------
+const chatRouter = express.Router();
+const chat = require('../controllers/chatController');
+const { canAny } = require('../middleware');
+const answer = canAny('orders.online', 'storefront.manage');
+chatRouter.use(requireFeature('storefront'));
+
+chatRouter.get('/unread', answer, chat.staffUnread);
+chatRouter.get('/push/key', answer, chat.pushKey);
+chatRouter.post('/push/subscribe', answer, chat.pushSubscribe);
+chatRouter.post('/push/unsubscribe', answer, chat.pushUnsubscribe);
+chatRouter.get('/threads', answer, chat.staffList);
+chatRouter.get('/threads/:id', answer, chat.staffGet);
+chatRouter.post('/threads/:id/messages', answer, chat.staffSend);
+chatRouter.put('/threads/:id/status', answer, chat.staffStatus);
+
+module.exports = { storefrontRouter, ordersRouter, chatRouter };

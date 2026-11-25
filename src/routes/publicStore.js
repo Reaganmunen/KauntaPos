@@ -34,4 +34,11 @@ router.post('/checkout', rateLimit.checkout, store.checkout);
 router.get('/orders/:token', store.trackOrder);
 router.post('/orders/:token/pay', rateLimit.checkout, store.pay);
 
+// chat with the shop (shopper identified by the X-Chat-Token kept in their browser)
+const chat = require('../controllers/chatController');
+router.post('/chat/threads', rateLimit.chatStart, chat.shopperStart);
+router.get('/chat/thread', chat.shopperPoll);
+router.get('/chat/unread', chat.shopperUnread);
+router.post('/chat/messages', rateLimit.chatMessage, chat.shopperSend);
+
 module.exports = router;

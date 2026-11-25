@@ -12,6 +12,8 @@ const { nonEmptyArray } = require('../utils/validate');
 const { run, branchId, isRestricted } = require('../utils/context');
 const { assertSaleRights } = require('../utils/saleGuards');
 const SaleService = require('../services/SaleService');
+const KScale = require('../../public/js/scale-barcode');
+const { Promotion } = require('../models');
 
 const MAX_BATCH = 100;
 
@@ -80,8 +82,11 @@ exports.catalog = asyncHandler(async (req, res) => {
   const data = await run(req, async (db) => {
     const { rows } = await db.query(
       `SELECT v.id AS variant_id, v.product_id, v.name AS variant_name, v.sku, v.barcode,
-              v.selling_price, v.wholesale_price,
-              p.name AS product_name, p.product_type, p.track_stock, p.category_id, p.kitchen_station,
+              v.selling_price, v.wholesale_price, v.scale_plu,
+              COALESCE((SELECT json_agg(json_build_object('barcode', b.barcode, 'label', b.label, 'pack_quantity', b.pack_quantity)
+                                        ORDER BY b.pack_quantity)
+                          FROM variant_barcodes b WHERE b.variant_id = v.id), '[]'::json) AS barcodes,
+              p.name AS product_name, p.sold_by_weight, u.abbreviation AS unit_abbr, p.product_type, p.track_stock, p.category_id, p.kitchen_station,
               t.code AS tax_code, COALESCE(t.rate, 0) AS tax_rate,
               COALESCE(sl.quantity_on_hand, 0) AS quantity_on_hand,
               (SELECT i.url FROM product_images i
@@ -92,6 +97,7 @@ exports.catalog = asyncHandler(async (req, res) => {
          FROM product_variants v
          JOIN products p ON p.id = v.product_id
          LEFT JOIN tax_classes t ON t.id = p.tax_class_id
+         LEFT JOIN units u ON u.id = p.unit_id
          LEFT JOIN stock_levels sl ON sl.variant_id = v.id AND sl.branch_id = $1
         WHERE $2::timestamptz IS NULL
            OR GREATEST(v.updated_at, p.updated_at, COALESCE(sl.updated_at, v.updated_at)) > $2::timestamptz
@@ -99,13 +105,18 @@ exports.catalog = asyncHandler(async (req, res) => {
         LIMIT 5000`,
       [branch, since]
     );
-    return rows;
+    const t = await db.query('SELECT settings FROM tenants WHERE id = current_tenant_id()');
+    const scale = KScale.normalize(t.rows[0] && t.rows[0].settings && t.rows[0].settings.scale_barcode);
+    const promotions = await Promotion.activeFor(db, { branchId: branch, at: new Date(), includeUpcoming: true });
+    return { rows, promotions, scale_barcode: scale.ok ? scale.config : { ...scale.config, enabled: false } };
   });
 
   return ok(res, {
     server_time: new Date().toISOString(),
-    count: data.length,
-    truncated: data.length === 5000, // call again with since = the last changed_at
-    items: data,
+    count: data.rows.length,
+    truncated: data.rows.length === 5000, // call again with since = the last changed_at
+    scale_barcode: data.scale_barcode,    // how this shop's scale prints price/weight labels
+    promotions: data.promotions,          // offers the till prices by itself (see public/js/promo-engine.js)
+    items: data.rows,
   });
 });

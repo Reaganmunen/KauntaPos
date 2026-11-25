@@ -216,6 +216,11 @@
         }
         var err = note('', 'err'); err.hidden = true; b.appendChild(err);
         var row = el('div', undefined, 'buy'); row.appendChild(qty); row.appendChild(add); f.appendChild(row); paint();
+        if (window.KChat) {
+          var ask = el('button', undefined, 'btn kc-ask'); ask.type = 'button'; ask.appendChild(icon('chat-circle-text')); ask.appendChild(document.createTextNode('Ask the seller about this'));
+          ask.addEventListener('click', function () { modal.close(); KChat.open({ product: { slug: p.slug || pslug, name: p.name } }); });
+          f.appendChild(ask);
+        }
         add.addEventListener('click', async function () {
           var n = Math.max(1, Math.floor(Number(qty.input.value) || 1)); err.hidden = true; if (!cur) return;
           add.disabled = true;
@@ -384,7 +389,7 @@
   (async function () {
     try {
       var d = await api('GET', '');
-      applySettings(d.settings || {}); banners(d.banners); pagesFooter(d.pages); S.zones = d.delivery_zones || []; $('#foot').hidden = false;
+      applySettings(d.settings || {}); if (window.KChat) KChat.init({ name: (d.settings && d.settings.store_name) || '' }); banners(d.banners); pagesFooter(d.pages); S.zones = d.delivery_zones || []; $('#foot').hidden = false;
       onShopHost = !slug;
       api('GET', '/categories').then(categories).catch(function () { /* the grid still works */ });
       refreshCart(); loadProducts(true);

@@ -28,6 +28,8 @@ module.exports = {
   ProductVariant: require('./ProductVariant'),
   ProductImage: require('./ProductImage'),
   ProductPharma: require('./ProductPharma'),
+  VariantBarcode: require('./VariantBarcode'),
+  Promotion: require('./Promotion'),
   PriceList: require('./PriceList'),
   ModifierGroup: require('./ModifierGroup'),
   Modifier: require('./Modifier'),

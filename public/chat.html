@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customer chats | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/ops.css" rel="stylesheet">
+  <link href="css/inbox.css" rel="stylesheet">
+</head>
+<body data-nav="chat.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Customer chats</h1><p>Questions from shoppers on your online store. Reply here and they see your answer in the chat on your store. New messages appear by themselves.</p></div>
+    <div class="actions"><button class="btn" id="pushBtn" type="button" hidden><i class="ph ph-bell-ringing"></i><span>Turn on alerts</span></button><button class="btn" id="refresh" type="button"><i class="ph ph-arrows-clockwise"></i>Refresh</button></div>
+  </div>
+
+  <p class="note ok" id="pushNote" hidden></p>
+  <div class="tabs" id="tabs" role="group" aria-label="Filter chats"></div>
+  <div class="toolbar"><div class="search"><i class="ph ph-magnifying-glass"></i><input type="search" id="q" placeholder="Search by name, phone or message" autocomplete="off" aria-label="Search chats"></div></div>
+  <p class="note err" id="listErr" hidden></p>
+
+  <div class="inbox" id="inbox">
+    <section class="card list"><div class="th-list" id="threads"></div></section>
+    <section class="card conv" id="conv" aria-live="polite">
+      <div class="conv-empty"><div><span class="ic lg"><i class="ph ph-chats-circle"></i></span><p>Pick a conversation to read and reply.</p></div></div>
+    </section>
+  </div>
+</main>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/step-chat.js"></script>
+</body>
+</html>

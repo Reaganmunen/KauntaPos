@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Promotions | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/ui.css" rel="stylesheet">
+  <link href="css/theme.css" rel="stylesheet">
+</head>
+<body data-nav="promotions.html">
+<main class="page" id="page">
+  <div class="head">
+    <div><h1>Promotions</h1><p>Offers the till applies by itself: buy 2 get 1, bundle prices and discounts that run for a limited time.</p></div>
+    <div class="actions"><button class="btn primary" id="openNew" type="button"><i class="ph ph-plus"></i>New promotion</button></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="seg" id="pfilter" role="group" aria-label="Show">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="live" aria-pressed="false">Live</button>
+      <button type="button" data-f="scheduled" aria-pressed="false">Scheduled</button>
+      <button type="button" data-f="ended" aria-pressed="false">Ended</button>
+    </div>
+  </div>
+
+  <p class="note err" id="listErr" hidden></p>
+  <div id="list"></div>
+</main>
+
+<dialog class="sheet wide" id="pSheet" aria-labelledby="pTitle">
+  <form class="form" id="pForm" novalidate style="display:contents">
+    <div class="sheet-h"><h2 id="pTitle">New promotion</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <div class="sheet-b">
+      <label class="fld"><span>Name</span><input type="text" id="pName" maxlength="80" autocomplete="off" placeholder="e.g. Sugar 2kg, buy 2 get 1"><small>Shown to the cashier and on the receipt.</small></label>
+
+      <div class="fld"><span>Kind of offer</span>
+        <div class="seg wrap" id="pType" role="group" aria-label="Kind of offer">
+          <button type="button" data-t="multi_buy" aria-pressed="true">Buy and get free</button>
+          <button type="button" data-t="bundle" aria-pressed="false">Bundle price</button>
+          <button type="button" data-t="percent" aria-pressed="false">Percent off</button>
+          <button type="button" data-t="amount" aria-pressed="false">Amount off</button>
+        </div>
+      </div>
+
+      <div class="stack" data-for="multi_buy">
+        <div class="row2">
+          <label class="fld"><span>Customer buys</span><input type="number" id="fBuy" min="1" step="1" inputmode="numeric" value="2"></label>
+          <label class="fld"><span>And gets free</span><input type="number" id="fGet" min="1" step="1" inputmode="numeric" value="1"></label>
+        </div>
+        <label class="fld"><span>Most free items per sale</span><input type="number" id="fLimit" min="1" step="1" inputmode="numeric" placeholder="No limit"><small>Optional. Stops one customer clearing the shelf.</small></label>
+      </div>
+      <div class="row2" data-for="bundle" hidden>
+        <label class="fld"><span>Items in the bundle</span><input type="number" id="fBq" min="2" step="1" inputmode="numeric" value="3"></label>
+        <label class="fld"><span>Bundle price (KES)</span><input type="number" id="fBp" min="0" step="0.01" inputmode="decimal"></label>
+      </div>
+      <label class="fld" data-for="percent" hidden><span>Percent off</span><input type="number" id="fPct" min="1" max="100" step="any" inputmode="decimal" placeholder="e.g. 15"></label>
+      <label class="fld" data-for="amount" hidden><span>Amount off each item (KES)</span><input type="number" id="fAmt" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 20"></label>
+
+      <p class="offer-preview" id="pPreview" aria-live="polite"></p>
+
+      <div class="fld"><span>Items on offer</span>
+        <div class="search"><i class="ph ph-magnifying-glass"></i><input type="search" id="pFind" placeholder="Search your products to add" autocomplete="off" aria-label="Search products to add"></div>
+        <ul class="pick-list" id="pResults" hidden></ul>
+        <div class="chips" id="pChosen"></div>
+        <small id="pFindNote" class="muted">The same offer covers every item you add. Items sold by weight only take percent or amount offers.</small>
+      </div>
+
+      <div class="row2">
+        <label class="fld"><span>Starts</span><input type="datetime-local" id="pStart"></label>
+        <label class="fld"><span>Ends</span><input type="datetime-local" id="pEnd"></label>
+      </div>
+      <small class="muted">Leave both empty to run until you switch it off.</small>
+
+      <div class="opts"><label class="chk"><input type="checkbox" id="pActive" checked><span><b>On</b><small>Switch off to pause the offer without deleting it.</small></span></label></div>
+      <p class="note err" id="pErr" hidden></p>
+      <button class="btn danger sm" id="pDelete" type="button" style="justify-self:start" hidden><i class="ph ph-trash"></i>Delete promotion</button>
+    </div>
+    <div class="sheet-f"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" id="pSave" type="submit">Save promotion</button></div>
+  </form>
+</dialog>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/shell.js"></script>
+<script src="js/promo-engine.js"></script>
+<script src="js/step-promotions.js"></script>
+</body>
+</html>

@@ -286,3 +286,33 @@ dialog.sheet.wide { width: min(680px, 100vw); }
 .sub-note.bad { border-color: color-mix(in srgb, var(--red-ink) 24%, transparent); background: var(--red-tint); color: var(--red-ink); }
 .sub-note b { font-weight: 600; }
 .sub-note a { margin-left: auto; font-weight: 600; color: inherit; text-underline-offset: 3px; white-space: nowrap; }
+
+/* Scale label tester (Products). A bordered strip with the layout drawn in mono, and the parsed result beneath it. */
+.scale-test { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); }
+.scale-test .mono { letter-spacing: .14em; font-size: 14px; color: var(--ink-2); }
+.scale-out { font-size: 13.5px; color: var(--ink-3); min-height: 1.5em; font-variant-numeric: tabular-nums; }
+.scale-out b { color: var(--ink); font-weight: 600; }
+.scale-out.bad { color: var(--red-ink); }
+.scale-out.good b { color: var(--ok-ink); }
+
+/* Extra barcodes inside a product option (Products > edit). Three short inputs and a remove button per row. */
+.bc-box { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+.bc-list { display: grid; gap: 8px; }
+.bc-row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 84px auto; gap: 8px; align-items: center; }
+.bc-row input { min-width: 0; }
+.bc-row .bc-units { font-variant-numeric: tabular-nums; text-align: right; }
+@media (max-width: 560px) { .bc-row { grid-template-columns: minmax(0, 1fr) 84px auto; } .bc-row .bc-label { grid-column: 1 / 3; grid-row: 2; } }
+
+/* Promotions page: the one-sentence preview, the product picker and the chosen-item chips. */
+.seg.wrap { flex-wrap: wrap; border-radius: var(--r); }
+.offer-preview { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); font-size: 14px; }
+.offer-preview b { font-weight: 600; color: var(--brand-ink); }
+.pick-list { list-style: none; margin: 0; padding: 4px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--surface); display: grid; gap: 2px; }
+.pick-list li { display: flex; }
+.pick-list li > span { padding: 10px 12px; }
+.pick-list button { flex: 1; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.pick-list button:hover, .pick-list button:focus-visible { background: var(--surface-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chipx { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); font-size: 13px; font-weight: 500; }
+.chipx button { display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: 50%; background: none; color: var(--ink-3); cursor: pointer; }
+.chipx button:hover { background: var(--red-tint); color: var(--red-ink); }

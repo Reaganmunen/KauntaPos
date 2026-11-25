@@ -11,6 +11,7 @@ const { audit } = require('../utils/audit');
 const { Tenant, TenantFeature, TenantDomain, SubscriptionPayment, Plan } = require('../models');
 const { invalidateTenant } = require('../utils/contextCache');
 const OnboardingService = require('../services/OnboardingService');
+const KScale = require('../../public/js/scale-barcode');
 const { planFor, usage } = require('../utils/limits');
 const {
   MODULES, describeAccess, planAllows, planHas, effectiveFeatures, periodDays,
@@ -58,9 +59,16 @@ exports.mergeSettings = asyncHandler(async (req, res) => {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     throw ApiError.unprocessable('Send an object of settings to change');
   }
+  // The scale label layout is checked here so a typo cannot silently stop every weighed item from scanning.
+  const patch = { ...req.body };
+  if (patch.scale_barcode !== undefined) {
+    const checked = KScale.normalize(patch.scale_barcode);
+    if (!checked.ok) throw ApiError.unprocessable(checked.error, undefined, 'invalid_scale_barcode');
+    patch.scale_barcode = checked.config;
+  }
   const tenant = await run(req, async (db) => {
-    const updated = await Tenant.mergeSettings(db, req.tenantId, req.body);
-    await audit(db, req, 'tenant.settings', 'tenant', req.tenantId, { after: req.body });
+    const updated = await Tenant.mergeSettings(db, req.tenantId, patch);
+    await audit(db, req, 'tenant.settings', 'tenant', req.tenantId, { after: patch });
     return updated;
   });
   return ok(res, tenant.settings);

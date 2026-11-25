@@ -21,6 +21,7 @@
   <div class="head">
     <div><h1>Products</h1><p>Everything you sell, with prices and photos. Tap a product to see its details.</p></div>
     <div class="actions">
+      <button class="btn" id="openScale" type="button"><i class="ph ph-barcode"></i>Scale labels</button>
       <button class="btn" id="openImport" type="button"><i class="ph ph-file-csv"></i>Import</button>
       <button class="btn primary" id="openAdd" type="button"><i class="ph ph-plus"></i>Add product</button>
     </div>
@@ -62,6 +63,8 @@
       <div class="opts">
         <label class="chk"><input type="checkbox" id="eOnline"><span><b>Sell this online</b><small>Shows in your online store.</small></span></label>
         <label class="chk"><input type="checkbox" id="eActive"><span><b>Active</b><small>Switch off to hide it from the till and the store without deleting it.</small></span></label>
+        <label class="chk"><input type="checkbox" id="eWeighed"><span><b>Sold by weight or measure</b><small>The till asks for the weight. The price below is per unit.</small></span></label>
+        <label class="fld" id="eUnitFld" hidden><span>Unit</span><select id="eUnit"></select></label>
       </div>
       <div class="row"><h3 class="grow">Prices and codes</h3><button class="btn sm" id="eAddVar" type="button"><i class="ph ph-plus"></i>Add option</button></div>
       <div id="eVars" class="stack"></div>
@@ -88,12 +91,17 @@
       </div>
       <label class="fld"><span>Product name</span><input type="text" id="pName" required autocomplete="off" placeholder="e.g. Maize flour 2kg"></label>
       <label class="fld"><span>Category</span><select id="pCategory"><option value="">No category</option></select></label>
+      <label class="chk"><input type="checkbox" id="pWeighed"><span><b>Sold by weight or measure</b><small>Sugar, rice, vegetables. The till asks for the weight each time.</small></span></label>
+      <div class="row2" id="pWeighFields" hidden>
+        <label class="fld"><span>Unit</span><select id="pUnit"></select></label>
+        <label class="fld"><span>Scale code (PLU)</span><input type="text" id="pPlu" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="e.g. 101"><small>Optional. The item code your scale prints on its labels.</small></label>
+      </div>
       <div class="row2">
-        <label class="fld"><span>Selling price (KES)</span><input type="number" id="pPrice" min="0" step="0.01" inputmode="decimal" required></label>
+        <label class="fld"><span id="pPriceLbl">Selling price (KES)</span><input type="number" id="pPrice" min="0" step="0.01" inputmode="decimal" required></label>
         <label class="fld"><span>Buying price (KES)</span><input type="number" id="pCost" min="0" step="0.01" inputmode="decimal"><small>Optional. Lets Kaunta show your profit.</small></label>
       </div>
       <div class="row2">
-        <label class="fld"><span>In stock now</span><input type="number" id="pQty" min="0" step="1" inputmode="decimal"><small>Optional. You can only sell what is in stock.</small></label>
+        <label class="fld"><span>In stock now</span><input type="number" id="pQty" min="0" step="any" inputmode="decimal"><small>Optional. You can only sell what is in stock.</small></label>
         <label class="fld"><span>SKU or barcode</span><input type="text" id="pSku" autocomplete="off"><small>Optional.</small></label>
       </div>
       <label class="chk"><input type="checkbox" id="pOnline" checked><span>Also sell this online (shows in your online store)</span></label>
@@ -103,10 +111,39 @@
   </form>
 </dialog>
 
+<datalist id="bcLabels"><option value="Carton"><option value="Dozen"><option value="Pack"><option value="Bale"><option value="Single"></datalist>
+
+<dialog class="modal" id="scaleDlg" aria-labelledby="scTitle">
+  <form method="dialog" class="dlg form" id="scaleForm" novalidate>
+    <div class="row"><h2 class="grow" id="scTitle">Scale labels</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <p class="muted">Tell Kaunta how your scale prints its price or weight label, so scanning one adds the item with the right weight. Most scales start the label with 2.</p>
+    <label class="chk"><input type="checkbox" id="scOn"><span><b>Read scale labels at the till</b></span></label>
+    <div class="row2">
+      <label class="fld"><span>Label starts with</span><input type="text" id="scPrefix" inputmode="numeric" maxlength="3" autocomplete="off"></label>
+      <label class="fld"><span>Item code digits</span><input type="number" id="scPlu" min="1" max="8" step="1" inputmode="numeric"></label>
+    </div>
+    <div class="row2">
+      <label class="fld"><span>Weight or price digits</span><input type="number" id="scVal" min="3" max="7" step="1" inputmode="numeric"></label>
+      <label class="fld"><span>The label holds</span><select id="scType"><option value="weight">The weight</option><option value="price">The price</option></select></label>
+    </div>
+    <div class="row2">
+      <label class="fld"><span>Decimal places</span><input type="number" id="scDec" min="0" max="4" step="1" inputmode="numeric"><small id="scDecHint"></small></label>
+      <label class="fld"><span>Extra check digit before the value</span><select id="scKey"><option value="0">No</option><option value="1">Yes</option></select></label>
+    </div>
+    <div class="scale-test">
+      <div class="row"><span class="mono" id="scPattern"></span></div>
+      <label class="fld"><span>Test a label</span><input type="text" id="scTest" class="mono-in" inputmode="numeric" maxlength="13" autocomplete="off" placeholder="Scan or type a 13-digit label"></label>
+      <p class="scale-out" id="scOut" aria-live="polite">Scan a label from your scale to check these settings.</p>
+    </div>
+    <p class="note err" id="scErr" hidden></p>
+    <button class="btn primary lg block" id="scSave" type="submit">Save</button>
+  </form>
+</dialog>
+
 <dialog class="modal" id="importModal" aria-labelledby="iTitle">
   <div class="dlg">
     <div class="row"><h2 class="grow" id="iTitle">Import products</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
-    <p class="muted">Upload a CSV file (save one from Excel or Google Sheets). The first row names the columns. Only <b>name</b> is required. Optional: <b>selling_price</b>, <b>cost_price</b>, <b>opening_quantity</b>, <b>sku</b>, <b>barcode</b>, <b>category</b>, <b>brand</b>, <b>unit</b>, <b>reorder_level</b> and <b>tax_code</b>.</p>
+    <p class="muted">Upload a CSV file (save one from Excel or Google Sheets). The first row names the columns. Only <b>name</b> is required. Optional: <b>selling_price</b>, <b>cost_price</b>, <b>opening_quantity</b>, <b>sku</b>, <b>barcode</b>, <b>category</b>, <b>brand</b>, <b>unit</b>, <b>reorder_level</b> and <b>tax_code</b>. For loose items add <b>sold_by_weight</b> (yes or no), <b>unit</b> (for example kg) and <b>scale_plu</b>. For a carton barcode add <b>carton_barcode</b> and <b>carton_quantity</b> (units in the carton).</p>
     <div class="drop">
       <input type="file" id="file" accept=".csv,text/csv" aria-label="CSV file">
       <a class="link" id="tpl" href="#" download="kaunta-products-template.csv">Download a template to fill in</a>
@@ -120,6 +157,7 @@
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/shell.js"></script>
+<script src="js/scale-barcode.js"></script>
 <script src="js/step-products.js"></script>
 </body>
 </html>

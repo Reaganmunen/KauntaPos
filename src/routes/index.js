@@ -69,6 +69,7 @@ router.use('/terminals', team.terminalsRouter);
 router.use('/categories', catalog.categoriesRouter);
 router.use('/brands', catalog.brandsRouter);
 router.use('/units', catalog.unitsRouter);
+router.use('/promotions', catalog.promotionsRouter);
 router.use('/tax-classes', catalog.taxRouter);
 router.use('/price-lists', catalog.priceListsRouter);
 router.use('/products', catalog.productsRouter);
@@ -95,6 +96,7 @@ router.use('/restaurant', require('./restaurant'));
 
 router.use('/storefront', online.storefrontRouter);
 router.use('/online-orders', online.ordersRouter);
+router.use('/chat', online.chatRouter);
 
 router.use('/reports', insight.reportsRouter);
 router.use('/audit', insight.auditRouter);

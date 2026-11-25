@@ -26,7 +26,7 @@
     <select class="chip" id="branch" hidden></select>
     <div class="search grow">
       <i class="ph ph-magnifying-glass"></i>
-      <input type="search" id="q" placeholder="Search products, or scan a barcode" autocomplete="off" aria-label="Search products or scan a barcode">
+      <input type="search" id="q" placeholder="Search products, or scan a barcode or scale label" autocomplete="off" aria-label="Search products or scan a barcode">
       <kbd class="hide-s" aria-hidden="true">/</kbd>
     </div>
     <div class="top-r">
@@ -65,6 +65,7 @@
       <label class="fld note-fld" id="noteFld" hidden><span>Note for this sale</span><input type="text" id="note" maxlength="200" placeholder="Optional. Appears on the sale record." autocomplete="off"></label>
       <button class="link addnote" id="addNote" type="button" hidden>Add a note</button>
       <div class="sumrow"><span id="itemsLine">0 items</span><span class="num" id="sub">KES 0.00</span></div>
+      <div class="sumrow offer-row" id="offerRow" hidden><span id="offerLabel">Offers</span><span class="num" id="offerAmt">KES 0.00</span></div>
       <p class="muted fine">Tax and discounts are worked out when you charge.</p>
       <div class="cart-total"><span>Total</span><b class="num" id="total">KES 0.00</b></div>
       <p class="note err" id="saleErr" hidden></p>
@@ -79,6 +80,23 @@
   <div class="sheet-h"><h2 id="dTitle">Product</h2><button class="icon-btn sm" type="button" data-close aria-label="Close"><i class="ph ph-x"></i></button></div>
   <div class="sheet-b" id="dBody"></div>
   <div class="sheet-f" id="dFoot"></div>
+</dialog>
+
+<dialog class="modal" id="weighDlg" aria-labelledby="wTitle">
+  <form method="dialog" class="dlg" id="weighForm" novalidate>
+    <div class="row"><div class="grow"><h2 id="wTitle">Weigh item</h2><p class="muted" id="wRate"></p></div><button class="icon-btn sm" id="wClose" type="button" aria-label="Close"><i class="ph ph-x"></i></button></div>
+    <label class="fld"><span id="wLabel">Weight</span>
+      <span class="weigh-in"><input type="number" id="wQty" min="0" step="any" inputmode="decimal" autocomplete="off"><b id="wUnit">kg</b></span>
+    </label>
+    <div class="actions weigh-quick" id="wQuick"></div>
+    <dl class="weigh-sum">
+      <div><dt id="wCalc">Weight x price</dt><dd class="num" id="wTotal">KES 0.00</dd></div>
+      <div><dt>Already on this sale</dt><dd class="num" id="wHave">None</dd></div>
+      <div><dt>In stock</dt><dd class="num" id="wStock">-</dd></div>
+    </dl>
+    <p class="note err" id="wErr" hidden></p>
+    <button class="btn primary lg block" id="wGo" type="submit">Add to sale</button>
+  </form>
 </dialog>
 
 <dialog class="modal" id="payDlg" aria-labelledby="payTitle">
@@ -137,6 +155,8 @@
 </dialog>
 
 <script src="js/config.js"></script>
+<script src="js/scale-barcode.js"></script>
+<script src="js/promo-engine.js"></script>
 <script src="js/app.js"></script>
 <script src="js/pos.js"></script>
 </body>

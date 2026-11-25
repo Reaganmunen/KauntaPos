@@ -8,7 +8,7 @@ class ProductVariant extends BaseModel {
   static columns = [
     'product_id', 'name', 'sku', 'barcode', 'option_values', 'cost_price', 'selling_price',
     'wholesale_price', 'reorder_level', 'is_default', 'is_active',
-    'etims_item_code', 'etims_sync_status', 'etims_synced_at',
+    'etims_item_code', 'etims_sync_status', 'etims_synced_at', 'scale_plu',
   ];
   static jsonColumns = ['option_values'];
   static defaultOrder = 'is_default DESC, name ASC';
@@ -17,8 +17,16 @@ class ProductVariant extends BaseModel {
     return this.findAll(db, { filters: { product_id: productId } });
   }
 
+  /** The variant a barcode belongs to, whether it is the main code or an extra (carton, dozen). */
   static async findByBarcode(db, barcode) {
-    return this.findOne(db, { barcode });
+    const main = await this.findOne(db, { barcode });
+    if (main) return main;
+    const { rows } = await db.query(
+      `SELECT v.* FROM variant_barcodes b JOIN product_variants v ON v.id = b.variant_id
+        WHERE b.barcode = $1 AND v.deleted_at IS NULL LIMIT 1`,
+      [String(barcode)]
+    );
+    return rows[0] || null;
   }
 
   static async findBySku(db, sku) {
@@ -36,6 +44,8 @@ class ProductVariant extends BaseModel {
               p.track_stock,
               p.product_type,
               p.kitchen_station,
+              p.sold_by_weight,
+              u.abbreviation AS unit_abbr,
               t.code AS tax_code,
               COALESCE(t.rate, 0) AS tax_rate,
               COALESCE(p.etims_item_class_code, c.etims_item_class_code) AS etims_item_class_code,
@@ -61,19 +71,24 @@ class ProductVariant extends BaseModel {
               v.barcode,
               v.selling_price,
               v.cost_price,
+              v.scale_plu,
               p.name AS product_name,
               p.track_stock,
               p.product_type,
+              p.sold_by_weight,
+              u.abbreviation AS unit_abbr,
               t.code AS tax_code,
               COALESCE(t.rate, 0) AS tax_rate,
               COALESCE(sl.quantity_on_hand, 0) AS quantity_on_hand
          FROM product_variants v
          JOIN products p ON p.id = v.product_id
          LEFT JOIN tax_classes t ON t.id = p.tax_class_id
+         LEFT JOIN units u ON u.id = p.unit_id
          LEFT JOIN stock_levels sl ON sl.variant_id = v.id AND sl.branch_id = $2
         WHERE v.deleted_at IS NULL AND v.is_active
           AND p.deleted_at IS NULL AND p.is_active
-          AND (v.barcode = $1 OR v.sku ILIKE $3 OR p.name ILIKE $3)
+          AND (v.barcode = $1 OR v.sku ILIKE $3 OR p.name ILIKE $3
+               OR EXISTS (SELECT 1 FROM variant_barcodes b WHERE b.variant_id = v.id AND b.barcode = $1))
         ORDER BY COALESCE(v.barcode = $1, false) DESC, p.name ASC, v.name ASC
         LIMIT $4`,
       [q, branchId, this.like(q), limit]

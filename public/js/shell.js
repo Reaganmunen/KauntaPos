@@ -18,11 +18,13 @@
       { href: 'test-sale.html', label: 'Practice sale', icon: 'flask', desc: 'Try a cash sale and its receipt', ready: true },
       { href: 'sales.html', label: 'Sales', icon: 'receipt', desc: 'Every receipt, searchable', ready: true },
       { href: 'shifts.html', label: 'Shifts', icon: 'clock', desc: 'Cash drawer and handover', ready: true },
-      { href: 'online-orders.html', label: 'Online orders', icon: 'shopping-bag', desc: 'Orders from your store', ready: true}
+      { href: 'online-orders.html', label: 'Online orders', icon: 'shopping-bag', desc: 'Orders from your store', ready: true},
+      { href: 'chat.html', label: 'Customer chats', icon: 'chats-circle', desc: 'Questions from your store', ready: true }
     ] },
     { id: 'stock', label: 'Stock', icon: 'package', title: 'Stock', blurb: 'What you sell and what is on the shelf.', items: [
       { href: 'products.html', label: 'Products', icon: 'package', desc: 'Prices, photos and variants', ready: true },
       { href: 'inventory.html', label: 'Inventory', icon: 'stack', desc: 'Stock levels by branch', ready:true },
+      { href: 'promotions.html', label: 'Promotions', icon: 'seal-percent', desc: 'Multi-buys, bundles and limited offers', ready: true },
       { href: 'purchases.html', label: 'Purchases', icon: 'truck', desc: 'Orders to your suppliers', ready:true }
     ] },
     { id: 'people', label: 'People', icon: 'users-three', title: 'People', blurb: 'Customers, suppliers and your team.', items: [
@@ -47,6 +49,7 @@
   var here = document.body.getAttribute('data-nav') || location.pathname.split('/').pop() || 'dashboard.html';
   var current = NAV.filter(function (s) { return s.items.some(function (i) { return i.href === here; }); })[0] || NAV[0];
   var shown = current;
+  var chatUnread = 0;
   var S = K.session || {}, shopTitle = (S.tenant && S.tenant.name) || 'Your shop', userName = (S.user && (S.user.name || S.user.full_name)) || '';
 
   function firstReady(sec) { return (sec.items.filter(function (i) { return i.ready; })[0] || sec.items[0]).href; }
@@ -88,6 +91,7 @@
     shell.querySelector('#panelLinks').innerHTML = shown.items.map(function (i) {
       var inner = '<span class="ic sm"><i class="ph ph-' + i.icon + '"></i></span><span><b>' + K.esc(i.label) + '</b><small>' + K.esc(i.desc) + '</small></span>';
       if (!i.ready) return '<div class="pl off" aria-disabled="true">' + inner + '<span class="tag">Soon</span></div>';
+      if (i.href === 'chat.html' && chatUnread > 0) inner += '<span class="tag">' + (chatUnread > 9 ? '9+' : chatUnread) + '</span>';
       return '<a class="pl' + (i.href === here ? ' on' : '') + '" href="' + i.href + '"' + (i.href === here ? ' aria-current="page"' : '') + '>' + inner + '</a>';
     }).join('');
   }
@@ -102,7 +106,19 @@
   shell.querySelector('#menuBtn').addEventListener('click', function () { setNav(!shell.classList.contains('nav-open')); });
   shell.querySelector('#scrim').addEventListener('click', function () { setNav(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setNav(false); });
-  shell.querySelector('#signOut').addEventListener('click', function () { K.logout(); });
+  shell.querySelector('#signOut').addEventListener('click', function () {
+    /* stop chat alerts on this device so the next person to use it does not receive this shop's messages */
+    var done = false, go = function () { if (!done) { done = true; K.logout(); } };
+    setTimeout(go, 1500);
+    try {
+      if (!('serviceWorker' in navigator)) return go();
+      navigator.serviceWorker.getRegistration().then(function (reg) { return reg && reg.pushManager.getSubscription(); }).then(function (sub) {
+        if (!sub) return null;
+        var endpoint = sub.endpoint;
+        return K.api('POST', '/chat/push/unsubscribe', { endpoint: endpoint }).catch(function () {}).then(function () { return sub.unsubscribe(); });
+      }).then(go, go);
+    } catch (e) { go(); }
+  });
 
   /* top bar details */
   shell.querySelector('#dateLine').textContent = new Date().toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -146,6 +162,68 @@
     box.appendChild(msg); box.appendChild(link);
     page.insertBefore(box, page.firstChild);
   }
+
+  /* Customer chats, on every page:
+       - a red dot on the Sell section and a count on the Customer chats link
+       - a pop-up with the sender and message the moment a new one arrives (not on the chats page itself)
+       - the count in the browser tab title, so you notice it from another tab
+     Phone / desktop alerts when Kaunta is closed are set up on the Customer chats page (sw.js + Web Push).
+     Quietly stops if this person may not answer chats or the online store is off (the API says 403). */
+  (function () {
+    var css = document.createElement('style');
+    css.textContent =
+      '.rail-i{position:relative}.rail-i .rail-dot{position:absolute;top:6px;right:10px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#d92d20;color:#fff;font-size:10px;font-weight:700;display:none;place-items:center;line-height:1}.rail-i .rail-dot.on{display:grid}' +
+      '.chat-pop{position:fixed;right:18px;bottom:18px;z-index:120;display:flex;gap:12px;align-items:flex-start;width:min(360px,calc(100vw - 24px));padding:14px 14px 14px 16px;background:var(--surface,#fff);color:var(--ink,#13201a);border:1px solid var(--line,#e1e7df);border-left:4px solid var(--brand,#0f5c44);border-radius:14px;box-shadow:0 18px 44px rgba(0,0,0,.24);animation:chatpop .25s ease-out}' +
+      '.chat-pop .tx{flex:1;min-width:0}.chat-pop b{display:block;font-size:14px}.chat-pop span.m{display:block;margin-top:2px;font-size:13.5px;color:var(--ink-3,#5d6d65);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}' +
+      '.chat-pop .go{margin-top:9px;display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border:0;border-radius:999px;background:var(--brand,#0f5c44);color:var(--on-brand,#fff);font:600 13px/1 inherit;cursor:pointer}' +
+      '.chat-pop .x{border:0;background:transparent;color:inherit;font-size:20px;line-height:1;cursor:pointer;opacity:.6;padding:2px 4px}' +
+      '@keyframes chatpop{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}';
+    document.head.appendChild(css);
+    var sellBtn = shell.querySelector('.rail-i[data-sec="sell"]');
+    var dot = document.createElement('span'); dot.className = 'rail-dot'; if (sellBtn) sellBtn.appendChild(dot);
+    var baseTitle = document.title, timer = 0, lastAt = null, first = true, popTimer = 0;
+
+    function pop(latest) {
+      var old = document.querySelector('.chat-pop'); if (old) old.remove();
+      clearTimeout(popTimer);
+      var box = document.createElement('div'); box.className = 'chat-pop'; box.setAttribute('role', 'status');
+      var tx = document.createElement('div'); tx.className = 'tx';
+      var b = document.createElement('b'); b.textContent = (latest.name || 'A customer') + ' sent a message';
+      var m = document.createElement('span'); m.className = 'm'; m.textContent = latest.preview || '';
+      var go = document.createElement('button'); go.className = 'go'; go.type = 'button'; go.textContent = 'Open chat';
+      go.addEventListener('click', function () { location.href = 'chat.html?open=' + encodeURIComponent(latest.id); });
+      tx.appendChild(b); tx.appendChild(m); tx.appendChild(go);
+      var x = document.createElement('button'); x.className = 'x'; x.type = 'button'; x.setAttribute('aria-label', 'Dismiss'); x.textContent = '\u00d7';
+      x.addEventListener('click', function () { box.remove(); });
+      box.appendChild(tx); box.appendChild(x); document.body.appendChild(box);
+      popTimer = setTimeout(function () { box.remove(); }, 12000);
+    }
+
+    function check() {
+      if (document.hidden) return;
+      K.api('GET', '/chat/unread').then(function (r) {
+        var n = (r && r.count) || 0, latest = r && r.latest;
+        if (n !== chatUnread) {
+          chatUnread = n; dot.textContent = n > 9 ? '9+' : String(n); dot.classList.toggle('on', n > 0); paintPanel();
+          document.title = n > 0 ? '(' + n + ') ' + baseTitle : baseTitle;
+        }
+        if (first) { lastAt = latest ? latest.at : null; first = false; return; }  /* the first look only sets the baseline */
+        if (latest && latest.at !== lastAt) {
+          lastAt = latest.at;
+          if (here === 'chat.html') document.dispatchEvent(new CustomEvent('chat:new')); else pop(latest);
+        }
+      }).catch(function (e) { if (e && (e.status === 403 || e.status === 401)) clearInterval(timer); });
+    }
+    check(); timer = setInterval(check, 12000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+    document.addEventListener('chat:unread', check);
+  })();
+
+  /* installable app (Add to Home Screen): needed for alerts on iPhones */
+  (function () {
+    if (document.querySelector('link[rel=manifest]')) return;
+    var l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.webmanifest'; document.head.appendChild(l);
+  })();
 
   K.identity().then(function (d) {
     if (!d) return;

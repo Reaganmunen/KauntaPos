@@ -13,9 +13,23 @@ const { audit } = require('../utils/audit');
 const { assertWithinLimit, remainingQuota } = require('../utils/limits');
 const {
   Product, ProductVariant, ProductImage, ProductPharma, ModifierGroup,
-  TaxClass, Category, Brand, Unit,
+  TaxClass, Category, Brand, Unit, VariantBarcode,
 } = require('../models');
 const InventoryService = require('../services/InventoryService');
+const KScale = require('../../public/js/scale-barcode');
+
+// A scale code is digits only (up to 8) and is kept without leading zeros: "000123" is saved as "123".
+function cleanPlu(value) {
+  if (value === undefined) return undefined;
+  if (value === null || String(value).trim() === '') return null;
+  const digits = String(value).trim();
+  if (!/^[0-9]{1,8}$/.test(digits)) throw ApiError.unprocessable('A scale code is digits only, up to 8 of them');
+  return KScale.normalizePlu(digits);
+}
+function cleanVariantCodes(spec) {
+  if (spec && spec.scale_plu !== undefined) spec.scale_plu = cleanPlu(spec.scale_plu);
+  return spec;
+}
 
 // A product created without a variants array gets one "Default" variant built from these fields.
 function variantSpecsFrom(body) {
@@ -29,13 +43,16 @@ function variantSpecsFrom(body) {
     wholesale_price: body.wholesale_price,
     reorder_level: body.reorder_level,
     opening_quantity: body.opening_quantity,
+    scale_plu: body.scale_plu,
+    extra_barcodes: body.extra_barcodes,
   }];
 }
 
 // SKU / barcode are unique per shop even for deleted variants, so free them when removing.
 async function releaseVariantCodes(db, productId) {
+  await db.query('DELETE FROM variant_barcodes WHERE variant_id IN (SELECT id FROM product_variants WHERE product_id = $1)', [productId]);
   await db.query(
-    'UPDATE product_variants SET sku = NULL, barcode = NULL, is_default = false WHERE product_id = $1',
+    'UPDATE product_variants SET sku = NULL, barcode = NULL, scale_plu = NULL, is_default = false WHERE product_id = $1',
     [productId]
   );
 }
@@ -81,7 +98,7 @@ exports.create = asyncHandler(async (req, res) => {
   requireFields(req.body, ['name']);
   const body = req.body;
   const branch = branchId(req, { required: false });
-  const specs = variantSpecsFrom(body);
+  const specs = variantSpecsFrom(body).map(cleanVariantCodes);
   // opening stock needs a branch to be booked into: fail loudly instead of quietly dropping it
   if (
     !branch && body.track_stock !== false && body.product_type !== 'service' &&
@@ -99,7 +116,15 @@ exports.create = asyncHandler(async (req, res) => {
       if (defaultTax) data.tax_class_id = defaultTax.id;
     }
 
+    for (const spec of specs) {
+      await VariantBarcode.assertFree(db, spec.barcode);
+      if (spec.extra_barcodes !== undefined) VariantBarcode.clean(spec.extra_barcodes, spec.barcode);
+    }
     const record = await Product.createWithVariants(db, data, specs);
+    for (let i = 0; i < record.variants.length; i++) {
+      const list = specs[i].extra_barcodes;
+      if (Array.isArray(list) && list.length) record.variants[i].barcodes = await VariantBarcode.replaceFor(db, record.variants[i].id, list, record.variants[i].barcode);
+    }
 
     const images = Array.isArray(body.images) ? body.images : [];
     for (let i = 0; i < images.length; i++) {
@@ -183,11 +208,16 @@ exports.createVariant = asyncHandler(async (req, res) => {
     const product = await Product.findById(db, req.params.id);
     if (!product) throw ApiError.notFound('Product not found');
 
+    await VariantBarcode.assertFree(db, req.body.barcode);
+    if (req.body.extra_barcodes !== undefined) VariantBarcode.clean(req.body.extra_barcodes, req.body.barcode);
     const record = await ProductVariant.create(db, {
-      ...req.body,
+      ...cleanVariantCodes({ ...req.body }),
       product_id: product.id,
       is_default: false,
     });
+    if (Array.isArray(req.body.extra_barcodes) && req.body.extra_barcodes.length) {
+      record.barcodes = await VariantBarcode.replaceFor(db, record.id, req.body.extra_barcodes, record.barcode);
+    }
     if (!product.has_variants) await Product.update(db, product.id, { has_variants: true });
 
     const qty = Number(req.body.opening_quantity || 0);
@@ -216,7 +246,14 @@ exports.updateVariant = asyncHandler(async (req, res) => {
     if (!existing || existing.product_id !== req.params.id) throw ApiError.notFound('Variant not found');
 
     const { product_id, is_default, ...data } = req.body; // moving or re-defaulting has its own endpoint
+    cleanVariantCodes(data);
+    const extras = data.extra_barcodes;
+    delete data.extra_barcodes;
+    if (data.barcode) await VariantBarcode.assertFree(db, data.barcode, { exceptVariantId: existing.id });
+    const nextBarcode = data.barcode === undefined ? existing.barcode : data.barcode;
+    if (extras !== undefined) VariantBarcode.clean(extras, nextBarcode); // check before anything is written
     const record = await ProductVariant.update(db, existing.id, data);
+    if (extras !== undefined) record.barcodes = await VariantBarcode.replaceFor(db, existing.id, extras, nextBarcode);
     await audit(db, req, 'variant.update', 'product_variant', existing.id, { after: data });
     return record;
   });
@@ -248,7 +285,8 @@ exports.removeVariant = asyncHandler(async (req, res) => {
     }
 
     // free the SKU/barcode and the "default" slot, then soft delete
-    await ProductVariant.update(db, target.id, { sku: null, barcode: null, is_default: false });
+    await VariantBarcode.removeForVariants(db, [target.id]);
+    await ProductVariant.update(db, target.id, { sku: null, barcode: null, scale_plu: null, is_default: false });
     await ProductVariant.remove(db, target.id);
 
     if (target.is_default) {
@@ -331,7 +369,8 @@ async function resolveCached(cache, key, finder) {
 
 // POST /products/import
 // { rows: [{ name, sku, barcode, category, brand, unit, tax_code, cost_price, selling_price,
-//            opening_quantity, track_stock, reorder_level }] }   (max 1000 rows)
+//            opening_quantity, track_stock, reorder_level, sold_by_weight, scale_plu,
+//            carton_barcode, carton_quantity }] }   (max 1000 rows)
 // Each row is imported on its own savepoint, so one bad row does not undo the others.
 exports.bulkImport = asyncHandler(async (req, res) => {
   const rows = nonEmptyArray(req.body.rows, 'rows');
@@ -373,6 +412,8 @@ exports.bulkImport = asyncHandler(async (req, res) => {
           : defaultTax;
         if (row.tax_code && !tax) throw new Error(`unknown tax code "${row.tax_code}"`);
 
+        if (row.barcode) await VariantBarcode.assertFree(db, row.barcode);
+        if (row.carton_barcode) VariantBarcode.clean([{ barcode: row.carton_barcode, pack_quantity: row.carton_quantity || 1 }], row.barcode);
         const product = await Product.createWithVariants(
           db,
           {
@@ -383,6 +424,7 @@ exports.bulkImport = asyncHandler(async (req, res) => {
             tax_class_id: tax ? tax.id : null,
             track_stock: row.track_stock === undefined ? true : toBool(row.track_stock) !== false,
             is_online: toBool(row.is_online) === true, // shown in the online store only when the file says so
+            sold_by_weight: toBool(row.sold_by_weight) === true,
             created_by: req.user.id,
           },
           [{
@@ -392,9 +434,14 @@ exports.bulkImport = asyncHandler(async (req, res) => {
             cost_price: row.cost_price || 0,
             selling_price: row.selling_price || 0,
             reorder_level: row.reorder_level || 0,
+            scale_plu: cleanPlu(row.scale_plu),
+            extra_barcodes: row.carton_barcode
+              ? [{ barcode: row.carton_barcode, label: 'Carton', pack_quantity: row.carton_quantity || 1 }]
+              : undefined,
           }]
         );
 
+        if (row.carton_barcode) await VariantBarcode.replaceFor(db, product.variants[0].id, [{ barcode: row.carton_barcode, label: 'Carton', pack_quantity: row.carton_quantity || 1 }], row.barcode);
         const qty = Number(row.opening_quantity || 0);
         if (qty > 0 && branch && product.track_stock) {
           await InventoryService.openingStock(db, req.user, {

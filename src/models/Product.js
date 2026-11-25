@@ -4,6 +4,7 @@ const BaseModel = require('./BaseModel');
 const ProductVariant = require('./ProductVariant');
 const ProductImage = require('./ProductImage');
 const ProductPharma = require('./ProductPharma');
+const VariantBarcode = require('./VariantBarcode');
 
 class Product extends BaseModel {
   static table = 'products';
@@ -13,6 +14,7 @@ class Product extends BaseModel {
     'product_type', 'track_stock', 'has_variants', 'kitchen_station', 'tags', 'attributes',
     'is_online', 'online_description', 'seo_title', 'seo_description',
     'etims_item_class_code', 'etims_pkg_unit_code', 'origin_country', 'is_active', 'created_by',
+    'sold_by_weight',
   ];
   static jsonColumns = ['attributes'];   // tags is text[] (plain JS array)
   static defaultOrder = 'name ASC';
@@ -40,7 +42,9 @@ class Product extends BaseModel {
   static async getWithVariants(db, id) {
     const product = await this.findById(db, id);
     if (!product) return null;
-    const variants = await ProductVariant.forProduct(db, id);
+    const rawVariants = await ProductVariant.forProduct(db, id);
+    const extras = await VariantBarcode.forVariants(db, rawVariants.map((v) => v.id));
+    const variants = rawVariants.map((v) => ({ ...v, barcodes: extras.get(v.id) || [] }));
     const images = await ProductImage.forProduct(db, id);
     const pharma = await ProductPharma.findByProduct(db, id);
     return { ...product, variants, images, pharma };
@@ -69,7 +73,8 @@ class Product extends BaseModel {
         `(p.name ILIKE ${like} OR EXISTS (
             SELECT 1 FROM product_variants x
              WHERE x.product_id = p.id AND x.deleted_at IS NULL
-               AND (x.sku ILIKE ${like} OR x.barcode = ${exact})))`
+               AND (x.sku ILIKE ${like} OR x.barcode = ${exact}
+                    OR EXISTS (SELECT 1 FROM variant_barcodes xb WHERE xb.variant_id = x.id AND xb.barcode = ${exact}))))`
       );
     }
     if (category_id) {
@@ -94,16 +99,17 @@ class Product extends BaseModel {
     const order = `${sortable[col] || 'p.name'} ${String(dir).toLowerCase() === 'desc' ? 'DESC' : 'ASC'}`;
 
     return this.runPaged(db, {
-      select: `p.*, c.name AS category_name,
+      select: `p.*, c.name AS category_name, u.abbreviation AS unit_abbr,
                MIN(v.selling_price) AS min_price, MAX(v.selling_price) AS max_price,
                COUNT(v.id)::int AS variant_count`,
       from: `products p
              LEFT JOIN categories c ON c.id = p.category_id
+             LEFT JOIN units u ON u.id = p.unit_id
              LEFT JOIN product_variants v ON v.product_id = p.id AND v.deleted_at IS NULL AND v.is_active`,
       countFrom: 'products p',
       where,
       values,
-      groupBy: 'GROUP BY p.id, c.name',
+      groupBy: 'GROUP BY p.id, c.name, u.abbreviation',
       order,
       page,
       limit,

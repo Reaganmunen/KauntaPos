@@ -41,7 +41,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Branch-Id', 'X-Cart-Token', 'X-Tenant', 'X-Request-Id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Branch-Id', 'X-Cart-Token', 'X-Chat-Token', 'X-Tenant', 'X-Request-Id'],
   exposedHeaders: ['X-Request-Id', 'X-Subscription-Status', 'RateLimit', 'RateLimit-Policy', 'Retry-After'],
   maxAge: 600,
 };

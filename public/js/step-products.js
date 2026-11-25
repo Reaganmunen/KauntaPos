@@ -4,7 +4,7 @@
   'use strict';
   var K = window.KApp; if (!K) return;
   var $ = function (s) { return document.querySelector(s); };
-  var S = { page: 1, pages: 1, q: '', cat: '', view: 'grid', rows: [], info: {}, vinfo: {}, cats: {} };
+  var S = { units: [], page: 1, pages: 1, q: '', cat: '', view: 'grid', rows: [], info: {}, vinfo: {}, cats: {} };
   try { S.view = localStorage.getItem('kaunta.products.view') === 'table' ? 'table' : 'grid'; } catch (e) { /* ignore */ }
 
   function thumb(url, name, cls) {
@@ -12,11 +12,13 @@
     if (!url) return ph();
     var im = K.el('img', undefined, 'thumb'); im.alt = ''; im.loading = 'lazy'; im.src = url; im.addEventListener('error', function () { im.replaceWith(ph()); }); return im;
   }
-  function range(p) { var lo = Number(p.min_price), hi = Number(p.max_price); if (!isFinite(lo)) return 'No price'; return lo === hi || !isFinite(hi) ? K.money(lo) : K.money(lo) + ' to ' + K.money(hi); }
+  function fq(n) { return String(Math.round((Number(n) || 0) * 1000) / 1000); }
+  function unitName(p) { return p && p.sold_by_weight ? (p.unit_abbr || 'kg') : ''; }
+  function range(p) { var lo = Number(p.min_price), hi = Number(p.max_price); if (!isFinite(lo)) return 'No price'; var per = unitName(p) ? ' / ' + unitName(p) : ''; return (lo === hi || !isFinite(hi) ? K.money(lo) : K.money(lo) + ' to ' + K.money(hi)) + per; }
   function stockTag(info) {
     if (!info) return null;
     if (!info.track) return K.el('span', 'Not tracked', 'tag');
-    return K.el('span', info.qty <= 0 ? 'Out of stock' : info.qty <= 5 ? info.qty + ' left' : info.qty + ' in stock', 'tag dot ' + (info.qty <= 0 ? 'bad' : info.qty <= 5 ? 'warn' : 'ok'));
+    return K.el('span', info.qty <= 0 ? 'Out of stock' : info.qty <= 5 ? fq(info.qty) + ' left' : fq(info.qty) + ' in stock', 'tag dot ' + (info.qty <= 0 ? 'bad' : info.qty <= 5 ? 'warn' : 'ok'));
   }
 
   /* ---------- load ---------- */
@@ -117,17 +119,20 @@
       body.appendChild(gal);
       var tags = K.el('div', undefined, 'd-tags'); tags.style.display = 'flex'; tags.style.gap = '8px'; tags.style.flexWrap = 'wrap';
       if (row.category_name) tags.appendChild(K.el('span', row.category_name, 'tag'));
+      if (p.sold_by_weight) tags.appendChild(K.el('span', 'Sold by ' + (row.unit_abbr || 'kg'), 'tag ok'));
       tags.appendChild(K.el('span', p.is_online ? 'Sold online' : 'Till only', 'tag' + (p.is_online ? ' info' : ''))); if (p.track_stock === false) tags.appendChild(K.el('span', 'Stock not tracked', 'tag'));
       (Array.isArray(p.tags) ? p.tags : []).forEach(function (x) { tags.appendChild(K.el('span', String(x), 'tag')); });
       body.appendChild(tags);
       if (p.description) body.appendChild(K.el('p', p.description, 'muted')).style.whiteSpace = 'pre-line';
       var card = K.el('div', undefined, 'card flush'), sc = K.el('div', undefined, 'scroll'), tb = K.el('table'), hr = K.el('tr');
       var showCost = (p.variants || []).some(function (v) { return v.cost_price != null; });
-      ['Option', 'SKU', 'Barcode', 'Price'].concat(showCost ? ['Margin'] : []).concat(['Stock']).forEach(function (h, i) { hr.appendChild(K.el('th', h, h === 'Price' || h === 'Margin' ? 'r' : '')); });
+      var showPlu = (p.variants || []).some(function (v) { return v.scale_plu; });
+      ['Option', 'SKU', 'Barcode'].concat(showPlu ? ['Scale code'] : []).concat(['Price']).concat(showCost ? ['Margin'] : []).concat(['Stock']).forEach(function (h, i) { hr.appendChild(K.el('th', h, h === 'Price' || h === 'Margin' ? 'r' : '')); });
       var thd = K.el('thead'); thd.appendChild(hr); tb.appendChild(thd); var tbody = K.el('tbody');
       (p.variants || []).forEach(function (v) {
-        var r = K.el('tr'); r.appendChild(K.el('td', v.name && v.name !== 'Default' ? v.name : 'Standard')); r.appendChild(K.el('td', v.sku || '', 'mono')); r.appendChild(K.el('td', v.barcode || '', 'mono'));
-        r.appendChild(K.el('td', K.money(v.selling_price), 'r num nw'));
+        var r = K.el('tr'); r.appendChild(K.el('td', v.name && v.name !== 'Default' ? v.name : 'Standard')); r.appendChild(K.el('td', v.sku || '', 'mono')); var bc = K.el('td', v.barcode || '', 'mono'); if ((v.barcodes || []).length) { var more = K.el('span', '+' + v.barcodes.length, 'tag'); more.style.marginLeft = '8px'; more.title = v.barcodes.map(function (b) { return (b.label || 'Pack') + ' ' + b.barcode + (Number(b.pack_quantity) !== 1 ? ' (x' + fq(b.pack_quantity) + ')' : ''); }).join('\n'); bc.appendChild(more); } r.appendChild(bc);
+        if (showPlu) r.appendChild(K.el('td', v.scale_plu || '', 'mono'));
+        r.appendChild(K.el('td', K.money(v.selling_price) + (p.sold_by_weight ? ' / ' + (row.unit_abbr || 'kg') : ''), 'r num nw'));
         if (showCost) { var sp = Number(v.selling_price) || 0, cp = Number(v.cost_price); r.appendChild(K.el('td', v.cost_price != null && sp > 0 ? Math.round((sp - cp) / sp * 100) + '%' : '', 'r num')); }
         var vi = S.vinfo[v.id]; var c = K.el('td'); if (vi) { var tg = stockTag({ track: vi.track, qty: vi.qty }); c.appendChild(tg); } r.appendChild(c); tbody.appendChild(r);
       });
@@ -170,12 +175,19 @@
     if ($('#pSku').value.trim()) body.sku = $('#pSku').value.trim();
     if ($('#pCategory').value) body.category_id = $('#pCategory').value;
     body.is_online = $('#pOnline').checked;
+    if ($('#pWeighed').checked) {
+      body.sold_by_weight = true;
+      var plu = $('#pPlu').value.trim();
+      if (plu && !/^[0-9]{1,8}$/.test(plu)) return K.notice(err, 'The scale code is digits only, up to 8 of them.', 'err');
+      if (plu) body.scale_plu = plu;
+    }
     K.busy(btn, true, 'Saving...');
     try {
+      if (body.sold_by_weight) { var uid = await resolveUnit($('#pUnit').value); if (uid) body.unit_id = uid; }
       var headers = await stockBranchHeader(qty > 0);
       if (photo) { var up = await K.api('POST', '/media', { data: photo }); body.images = [{ url: up.url, alt_text: name }]; }
       await K.api('POST', '/products', body, headers);
-      $('#oneForm').reset(); photo = null; paintPhoto(); $('#addSheet').close(); K.toast(name + ' saved');
+      $('#oneForm').reset(); photo = null; paintPhoto(); paintWeighToggle(); $('#addSheet').close(); K.toast(name + ' saved');
       S.page = 1; await loadExtras(); load();
     } catch (ex) { K.notice(err, ex.message, 'err'); }
     K.busy(btn, false);
@@ -184,7 +196,7 @@
   /* ---------- import ---------- */
   var ALIAS = { price: 'selling_price', selling: 'selling_price', sellingprice: 'selling_price', buying_price: 'cost_price', cost: 'cost_price', buyingprice: 'cost_price',
     qty: 'opening_quantity', quantity: 'opening_quantity', stock: 'opening_quantity', opening_stock: 'opening_quantity', product: 'name', product_name: 'name', item: 'name',
-    reorder: 'reorder_level', tax: 'tax_code' };
+    reorder: 'reorder_level', tax: 'tax_code', weighed: 'sold_by_weight', by_weight: 'sold_by_weight', loose: 'sold_by_weight', plu: 'scale_plu', scale_code: 'scale_plu', pack_barcode: 'carton_barcode', carton: 'carton_barcode', carton_qty: 'carton_quantity', units_per_carton: 'carton_quantity', pack_quantity: 'carton_quantity' };
   var rows = [];
   function parseCsv(text) {
     var out = [], row = [], cur = '', q = false, i = 0;
@@ -221,7 +233,7 @@
     rd.readAsText(f);
   });
   $('#tpl').addEventListener('click', function () {
-    var csv = 'name,selling_price,cost_price,opening_quantity,sku,category\r\nMaize flour 2kg,180,150,24,MF-2KG,Flour\r\nCooking oil 1L,320,280,12,OIL-1L,Oils\r\n';
+    var csv = 'name,selling_price,cost_price,opening_quantity,sku,category,sold_by_weight,unit,scale_plu,barcode,carton_barcode,carton_quantity\r\nMaize flour 2kg,180,150,24,MF-2KG,Flour,,,,6161100010012,6161100010098,12\r\nCooking oil 1L,320,280,12,OIL-1L,Oils,,,,,,\r\nSugar (loose),190,165,50,,Sugar,yes,kg,101,,,\r\n';
     this.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   });
   $('#manySave').addEventListener('click', async function () {
@@ -275,8 +287,28 @@
     var a = K.el('div', undefined, 'row2'); a.appendChild(field('Selling price (KES)', 'v-price', { type: 'number', min: '0', step: '0.01', inputmode: 'decimal' }, v && v.selling_price));
     a.appendChild(field('Buying price (KES)', 'v-cost', { type: 'number', min: '0', step: '0.01', inputmode: 'decimal' }, v && v.cost_price)); box.appendChild(a);
     var b = K.el('div', undefined, 'row2'); b.appendChild(field('SKU', 'v-sku', { type: 'text', autocomplete: 'off' }, v && v.sku)); b.appendChild(field('Barcode', 'v-bar', { type: 'text', autocomplete: 'off' }, v && v.barcode)); box.appendChild(b);
-    box.appendChild(field('Reorder level', 'v-reorder', { type: 'number', min: '0', step: '1', inputmode: 'decimal' }, v && v.reorder_level, 'You are warned when stock falls to this number.'));
-    r.get = function () { function g(c) { return box.querySelector('.' + c); } return { name: g('v-name') ? g('v-name').value.trim() : undefined, price: g('v-price').value, cost: g('v-cost').value, sku: g('v-sku').value.trim(), bar: g('v-bar').value.trim(), reorder: g('v-reorder').value }; };
+    box.appendChild(field('Reorder level', 'v-reorder', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' }, v && v.reorder_level, 'You are warned when stock falls to this number.'));
+    var pf = field('Scale code (PLU)', 'v-plu', { type: 'text', inputmode: 'numeric', maxlength: '8', autocomplete: 'off' }, v && v.scale_plu, 'The item code your scale prints on its labels.'); pf.classList.add('plu-fld'); pf.hidden = !$('#eWeighed').checked; box.appendChild(pf);
+    /* Other barcodes: a carton or multipack code that sells this same option. One scan adds "units" of it. */
+    var bx = K.el('div', undefined, 'bc-box'), bh = K.el('div', undefined, 'row'), bl = K.el('div', undefined, 'bc-list');
+    bh.appendChild(K.el('b', 'Other barcodes', 'grow'));
+    var ba = K.el('button', undefined, 'btn sm'); ba.type = 'button'; ba.appendChild(K.icon('plus')); ba.appendChild(document.createTextNode('Add barcode')); bh.appendChild(ba);
+    bx.appendChild(bh); bx.appendChild(bl); bx.appendChild(K.el('small', 'For a carton or multipack. Scanning it adds that many units at the single-unit price, and stock comes off the same item.', 'muted'));
+    function bcRow(b) {
+      var row = K.el('div', undefined, 'bc-row');
+      function inp(cls, ph, label, attrs) { var i = K.el('input'); i.className = cls; i.placeholder = ph; i.setAttribute('aria-label', label); i.autocomplete = 'off'; Object.keys(attrs || {}).forEach(function (k) { i.setAttribute(k, attrs[k]); }); return i; }
+      var code = inp('bc-code mono-in', 'Barcode', 'Barcode', { type: 'text', maxlength: '32' }), lab = inp('bc-label', 'Carton', 'Name of this pack', { type: 'text', maxlength: '30', list: 'bcLabels' });
+      var units = inp('bc-units', 'Units', 'Units in this pack', { type: 'number', min: '0', step: 'any', inputmode: 'decimal' });
+      code.value = (b && b.barcode) || ''; lab.value = (b && b.label) || ''; units.value = b && b.pack_quantity != null ? String(Number(b.pack_quantity)) : '';
+      var rm = K.el('button', undefined, 'icon-btn sm'); rm.type = 'button'; rm.setAttribute('aria-label', 'Remove this barcode'); rm.appendChild(K.icon('trash')); rm.addEventListener('click', function () { row.remove(); });
+      row.appendChild(code); row.appendChild(lab); row.appendChild(units); row.appendChild(rm); bl.appendChild(row); return code;
+    }
+    ba.addEventListener('click', function () { bcRow(null).focus(); });
+    (v && v.barcodes || []).forEach(bcRow);
+    r.setExtras = function (list) { bl.textContent = ''; (list || []).forEach(bcRow); };
+    box.appendChild(bx);
+    r.get = function () { function g(c) { return box.querySelector('.' + c); } return { name: g('v-name') ? g('v-name').value.trim() : undefined, price: g('v-price').value, cost: g('v-cost').value, sku: g('v-sku').value.trim(), bar: g('v-bar').value.trim(), reorder: g('v-reorder').value, plu: g('v-plu').value.trim(),
+      extras: Array.prototype.map.call(box.querySelectorAll('.bc-row'), function (row) { return { barcode: row.querySelector('.bc-code').value.trim(), label: row.querySelector('.bc-label').value.trim(), pack_quantity: row.querySelector('.bc-units').value }; }).filter(function (x) { return x.barcode || x.pack_quantity !== '' || x.label; }) }; };
     return r;
   }
   function addVar(v, multi) { var r = varRow(v, multi); ed.vars.push(r); $('#eVars').appendChild(r.box); return r; }
@@ -286,6 +318,7 @@
     ed = { photo: null, removePhoto: false, oldImage: (p.images || [])[0] || null, vars: [] };
     $('#eName').value = p.name || ''; $('#eDesc').value = p.description || ''; $('#eCategory').value = p.category_id || '';
     $('#eOnline').checked = Boolean(p.is_online); $('#eActive').checked = p.is_active !== false;
+    $('#eWeighed').checked = Boolean(p.sold_by_weight); fillUnits($('#eUnit'), p.unit_id); $('#eUnitFld').hidden = !p.sold_by_weight;
     var box = $('#eVars'); box.textContent = ''; var vs = p.variants || []; vs.forEach(function (v) { addVar(v, vs.length > 1); });
     paintEditPhoto(); $('#detail').close(); $('#editSheet').showModal();
   });
@@ -293,7 +326,7 @@
     var live = ed.vars.filter(function (r) { return !r.removed; });
     if (live.length === 1 && !live[0].box.querySelector('.v-name')) { /* a single standard option becomes a named one once there are two */
       var old = live[0], idx = ed.vars.indexOf(old), v = (S.curP.variants || []).filter(function (x) { return x.id === old.id; })[0];
-      var vals = old.get(); var nr = varRow(v, true); nr.box.querySelector('.v-price').value = vals.price; nr.box.querySelector('.v-cost').value = vals.cost; nr.box.querySelector('.v-sku').value = vals.sku; nr.box.querySelector('.v-bar').value = vals.bar; nr.box.querySelector('.v-reorder').value = vals.reorder;
+      var vals = old.get(); var nr = varRow(v, true); nr.box.querySelector('.v-price').value = vals.price; nr.box.querySelector('.v-cost').value = vals.cost; nr.box.querySelector('.v-sku').value = vals.sku; nr.box.querySelector('.v-bar').value = vals.bar; nr.box.querySelector('.v-reorder').value = vals.reorder; nr.box.querySelector('.v-plu').value = vals.plu; nr.setExtras(vals.extras);
       nr.box.querySelector('.v-name').value = (v && v.name !== 'Default') ? v.name : 'Standard'; old.box.replaceWith(nr.box); ed.vars[idx] = nr;
     }
     var r = addVar(null, true); var n = r.box.querySelector('.v-name'); if (n) n.focus();
@@ -309,13 +342,22 @@
       var g = live[i].get();
       if (g.price === '' || K.num(g.price) < 0) return K.notice(err, 'Enter a selling price for every option.', 'err');
       if (g.name !== undefined && !g.name) return K.notice(err, 'Give every option a name.', 'err');
+      for (var x = 0; x < g.extras.length; x++) {
+        if (!g.extras[x].barcode) return K.notice(err, 'Enter the barcode for each extra pack, or remove the empty row.', 'err');
+        if (!(K.num(g.extras[x].pack_quantity) > 0)) return K.notice(err, 'Enter how many units are in the pack with barcode ' + g.extras[x].barcode + '.', 'err');
+      }
     }
+    var weighedOn = $('#eWeighed').checked;
+    for (var k = 0; k < live.length; k++) if (weighedOn && live[k].get().plu && !/^[0-9]{1,8}$/.test(live[k].get().plu)) return K.notice(err, 'A scale code is digits only, up to 8 of them.', 'err');
     K.busy(btn, true, 'Saving...');
     try {
       var id = encodeURIComponent(p.id);
-      await K.api('PATCH', '/products/' + id, { name: name, description: $('#eDesc').value.trim() || null, category_id: $('#eCategory').value || null, is_online: $('#eOnline').checked, is_active: $('#eActive').checked });
+      var head = { name: name, description: $('#eDesc').value.trim() || null, category_id: $('#eCategory').value || null, is_online: $('#eOnline').checked, is_active: $('#eActive').checked, sold_by_weight: weighedOn };
+      if (weighedOn) { var uid = await resolveUnit($('#eUnit').value); if (uid) head.unit_id = uid; }
+      await K.api('PATCH', '/products/' + id, head);
       for (var j = 0; j < ed.vars.length; j++) {
-        var r = ed.vars[j], v = r.get(), body = { selling_price: K.num(v.price), cost_price: v.cost === '' ? null : K.num(v.cost), sku: v.sku || null, barcode: v.bar || null, reorder_level: v.reorder === '' ? 0 : K.num(v.reorder) };
+        var r = ed.vars[j], v = r.get(), body = { selling_price: K.num(v.price), cost_price: v.cost === '' ? null : K.num(v.cost), sku: v.sku || null, barcode: v.bar || null, reorder_level: v.reorder === '' ? 0 : K.num(v.reorder), scale_plu: weighedOn && v.plu ? v.plu : null,
+          extra_barcodes: v.extras.map(function (x) { return { barcode: x.barcode, label: x.label, pack_quantity: K.num(x.pack_quantity) }; }) };
         if (v.name !== undefined) body.name = v.name;
         if (r.removed) { if (r.id) await K.api('DELETE', '/products/' + id + '/variants/' + encodeURIComponent(r.id)); continue; }
         if (r.id) await K.api('PATCH', '/products/' + id + '/variants/' + encodeURIComponent(r.id), body);
@@ -338,6 +380,80 @@
     btn.disabled = false;
   });
 
-  loadCats(); loadExtras().then(load);
+  /* ---------- units and the weighed toggle ---------- */
+  async function loadUnits() {
+    try { var u = await K.api('GET', '/units?all=true'); S.units = Array.isArray(u) ? u : (u && u.rows) || []; } catch (e) { S.units = []; }
+    fillUnits($('#pUnit'));
+  }
+  /* Lists the shop's units. When there is no kilogram yet it is offered anyway and created the first time it is used. */
+  function fillUnits(sel, selectedId) {
+    sel.textContent = '';
+    var hasKg = S.units.some(function (u) { return String(u.abbreviation).toLowerCase() === 'kg'; });
+    if (!hasKg) { var o = K.el('option', 'Kilogram (kg)'); o.value = '__kg'; sel.appendChild(o); }
+    S.units.forEach(function (u) { var o2 = K.el('option', u.name + ' (' + u.abbreviation + ')'); o2.value = u.id; sel.appendChild(o2); });
+    var kg = S.units.filter(function (u) { return String(u.abbreviation).toLowerCase() === 'kg'; })[0];
+    sel.value = selectedId || (kg ? kg.id : '__kg');
+  }
+  async function resolveUnit(value) {
+    if (!value) return null;
+    if (value !== '__kg') return value;
+    var made = await K.api('POST', '/units', { name: 'Kilogram', abbreviation: 'kg', etims_unit_code: 'KG' });
+    S.units.push(made); return made.id;
+  }
+  function paintWeighToggle() {
+    var on = $('#pWeighed').checked; $('#pWeighFields').hidden = !on;
+    $('#pPriceLbl').textContent = on ? 'Price per unit (KES)' : 'Selling price (KES)';
+  }
+  $('#pWeighed').addEventListener('change', paintWeighToggle);
+  $('#eWeighed').addEventListener('change', function () {
+    var on = this.checked; $('#eUnitFld').hidden = !on;
+    document.querySelectorAll('#eVars .plu-fld').forEach(function (f) { f.hidden = !on; });
+  });
+
+  /* ---------- scale labels ---------- */
+  var scaleSaved = null;
+  function readScale() {
+    return { enabled: $('#scOn').checked, prefix: $('#scPrefix').value.trim(), plu_length: Number($('#scPlu').value), value_length: Number($('#scVal').value),
+      value_type: $('#scType').value, decimals: Number($('#scDec').value), value_check_digit: $('#scKey').value === '1', verify_check_digit: true };
+  }
+  function paintScale() {
+    var n = KScale.normalize(readScale()), type = $('#scType').value;
+    $('#scPattern').textContent = n.ok ? KScale.describe(n) : '';
+    $('#scDecHint').textContent = type === 'price' ? 'Usually 2: 01250 means 12.50.' : 'Usually 3: 01250 means 1.250 kg.';
+    K.notice($('#scErr'), n.ok ? '' : n.error, 'err');
+    var out = $('#scOut'), code = $('#scTest').value.trim(); out.className = 'scale-out';
+    if (!code) { out.textContent = 'Scan a label from your scale to check these settings.'; return; }
+    if (!n.ok) { out.textContent = 'Fix the settings above first.'; return; }
+    var r = KScale.parse(code, n.config);
+    out.textContent = '';
+    if (!r) { out.classList.add('bad'); out.textContent = code.length < 13 ? 'Keep typing: a label has 13 digits.' : 'This does not look like a scale label with these settings.'; return; }
+    if (!r.ok) { out.classList.add('bad'); out.textContent = 'The last digit does not check out. Scan the label again.'; return; }
+    out.classList.add('good');
+    out.appendChild(document.createTextNode('Item code '));
+    out.appendChild(K.el('b', r.plu));
+    out.appendChild(document.createTextNode(r.kind === 'price' ? ', price ' : ', weight '));
+    out.appendChild(K.el('b', r.kind === 'price' ? K.money(r.amount) : fq(r.quantity) + ' kg'));
+  }
+  async function openScale() {
+    K.notice($('#scErr'), ''); $('#scTest').value = '';
+    var c = scaleSaved;
+    if (!c) { try { var t = await K.api('GET', '/tenant'); var n = KScale.normalize(t && t.settings && t.settings.scale_barcode); c = n.config; } catch (e) { c = KScale.normalize({}).config; } scaleSaved = c; }
+    $('#scOn').checked = c.enabled; $('#scPrefix').value = c.prefix; $('#scPlu').value = c.plu_length; $('#scVal').value = c.value_length;
+    $('#scType').value = c.value_type; $('#scDec').value = c.decimals; $('#scKey').value = c.value_check_digit ? '1' : '0';
+    paintScale(); $('#scaleDlg').showModal(); $('#scTest').focus();
+  }
+  $('#openScale').addEventListener('click', openScale);
+  ['#scOn', '#scPrefix', '#scPlu', '#scVal', '#scType', '#scDec', '#scKey', '#scTest'].forEach(function (s) { $(s).addEventListener('input', paintScale); $(s).addEventListener('change', paintScale); });
+  $('#scType').addEventListener('change', function () { $('#scDec').value = this.value === 'price' ? 2 : 3; paintScale(); });
+  $('#scaleForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var n = KScale.normalize(readScale()), btn = $('#scSave'); if (!n.ok) return K.notice($('#scErr'), n.error, 'err');
+    K.busy(btn, true, 'Saving...');
+    try { var s = await K.api('PATCH', '/tenant/settings', { scale_barcode: n.config }); scaleSaved = (s && s.scale_barcode) || n.config; $('#scaleDlg').close(); K.toast('Scale label settings saved'); }
+    catch (ex) { K.notice($('#scErr'), ex.status === 403 ? 'Only the shop owner or a manager can change this.' : ex.message, 'err'); }
+    K.busy(btn, false);
+  });
+
+  loadUnits(); loadCats(); loadExtras().then(load);
   if (/[?&]new=1/.test(location.search)) openAdd();
 })();

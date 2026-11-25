@@ -54,16 +54,17 @@ class Sale extends BaseModel {
         `INSERT INTO sale_items
            (tenant_id, sale_id, line_no, variant_id, batch_id, product_name, variant_name, sku,
             quantity, unit_price, discount_amount, tax_code, tax_rate, tax_amount, line_total,
-            unit_cost, etims_item_class_code, etims_unit_code, kitchen_status, sent_to_kitchen_at, notes)
+            unit_cost, etims_item_class_code, etims_unit_code, kitchen_status, sent_to_kitchen_at, notes, unit_abbr, promotion_id, promo_name, promo_discount)
          VALUES (current_tenant_id(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                 $15, $16, $17, $18, $19, $20)
+                 $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
          RETURNING *`,
         [
           saleId, lineNo++, it.variant_id, it.batch_id || null, it.product_name, it.variant_name || null,
           it.sku || null, it.quantity, it.unit_price, it.discount_amount || 0, it.tax_code || null,
           it.tax_rate || 0, it.tax_amount || 0, it.line_total, it.unit_cost || 0,
           it.etims_item_class_code || null, it.etims_unit_code || null,
-          it.kitchen_status || null, it.sent_to_kitchen_at || null, it.notes || null,
+          it.kitchen_status || null, it.sent_to_kitchen_at || null, it.notes || null, it.unit_abbr || null,
+          it.promotion_id || null, it.promo_name || null, it.promo_discount || 0,
         ]
       );
       const row = rows[0];
