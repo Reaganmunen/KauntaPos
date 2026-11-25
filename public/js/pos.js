@@ -451,6 +451,7 @@
     try {
       var payload = { client_uuid: saleUuid || (saleUuid = K.uuid()), items: cart.map(function (l) { return { variant_id: l.variant_id, quantity: l.qty }; }), payments: [pay] };
       if ($('#note').value.trim()) payload.notes = $('#note').value.trim();
+      if (terminal) payload.terminal_id = terminal.id;
       var sale = await K.api('POST', '/sales', payload, hdr());
       finish(sale, pay);
     } catch (ex) {
@@ -508,6 +509,32 @@
     } catch (ex) { K.notice(err, ex.message, 'err'); }
   });
 
+  /* ---------- this device as a till ---------- */
+  /* Each browser gets a permanent device ID. A manager registers that ID under Branches > Tills,
+     after which this device is "the till": shifts and sales are tied to it. */
+  var terminal = null;
+  function deviceId() {
+    var id = null;
+    try { id = localStorage.getItem('kaunta.device_id'); if (!id) { id = 'dev-' + K.uuid(); localStorage.setItem('kaunta.device_id', id); } } catch (e) { /* private mode */ }
+    return id || 'dev-session-' + (window.__kdev || (window.__kdev = K.uuid()));
+  }
+  function paintTill() {
+    $('#tillText').textContent = terminal ? terminal.name : 'Not a till';
+    $('#tillBtn').firstElementChild.className = 'ph ' + (terminal ? 'ph-cash-register' : 'ph-warning');
+  }
+  async function pingTill() {
+    try { terminal = await K.api('POST', '/terminals/heartbeat', { device_id: deviceId() }, hdr()); }
+    catch (ex) { terminal = null; }
+    paintTill();
+  }
+  $('#tillBtn').addEventListener('click', function () {
+    if (terminal) { K.toast('Till: ' + terminal.name); return; }
+    var id = deviceId();
+    try { navigator.clipboard.writeText(id); } catch (e) { /* ignore */ }
+    window.prompt('This device is not registered as a till yet.\nCopy this ID, then in Branches > Tills > Add a till, paste it as the Device ID:', id);
+  });
+  setInterval(pingTill, 60000);
+
   /* ---------- shift ---------- */
   function paintShift() {
     var btn = $('#shiftBtn'); btn.hidden = !shiftKnown;
@@ -530,7 +557,7 @@
     e.preventDefault();
     var err = $('#shiftErr'), btn = $('#shiftGo'); K.notice(err, ''); btn.disabled = true;
     try {
-      shift = await K.api('POST', '/shifts/open', { opening_float: K.num($('#float').value) }, hdr()); shiftKnown = true; paintShift();
+      shift = await K.api('POST', '/shifts/open', { opening_float: K.num($('#float').value), terminal_id: terminal ? terminal.id : undefined }, hdr()); shiftKnown = true; paintShift();
       $('#shiftDlg').close(); K.toast('Shift opened');
       if (cart.length) $('#charge').click();
     } catch (ex) { K.notice(err, ex.message, 'err'); }
@@ -567,6 +594,6 @@
       K.avatar($('#shopAv'), d.tenant && d.tenant.logo_url, d.tenant && d.tenant.name); if (d.tenant && d.tenant.name) $('#shopName').textContent = d.tenant.name;
       K.avatar($('#meAv'), d.user && d.user.avatar_url, d.user && d.user.full_name); $('#meName').textContent = (d.user && d.user.full_name) || '';
     });
-    loadShift(); loadCats(); await loadCatalog(); $('#q').focus();
+    pingTill(); loadShift(); loadCats(); await loadCatalog(); $('#q').focus();
   })();
 })();
