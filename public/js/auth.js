@@ -60,9 +60,9 @@
   function finish(session, method, identifier) {
     lsSet(KEY_SESSION, session);
     lsSet(KEY_LAST, { method: method, shop: session && session.tenant && session.tenant.slug, identifier: method === 'password' ? identifier : undefined });
-    /* A suspended shop can only use the payment screen, so that is where it lands. */
+    /* A shop that has not paid (trial over, plan lapsed, suspended) goes no further than the payment screen. */
     var access = session && session.tenant && session.tenant.access;
-    location.href = access && access.state === 'suspended' ? 'subscription.html?locked=1' : nextUrl();
+    location.href = access && access.can_operate === false ? 'renew.html' : nextUrl();
   }
 
   /* ---------- show/hide password ---------- */

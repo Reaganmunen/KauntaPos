@@ -617,6 +617,7 @@
     K.notice($('#doneErr'), '');
     cart = []; saleUuid = null; buildGroups(); renderCats(); renderCart(); renderGrid();
     $('#payDlg').close(); $('#doneDlg').showModal(); $('#newSale').focus();
+    if (window.KPrinter && window.KPrinter.get().auto) $('#print').click();   /* "Print after every sale" in Printer settings */
   }
   $('#newSale').addEventListener('click', function () { $('#doneDlg').close(); });
   $('#doneDlg').addEventListener('close', function () { $('#q').focus(); });
@@ -624,29 +625,10 @@
   /* ---------- receipt ---------- */
   $('#print').addEventListener('click', async function () {
     var err = $('#doneErr'); K.notice(err, '');
-    try {
-      var r = await K.api('GET', '/sales/' + lastSaleId + '/receipt'), s = r.sale || {}, b = r.business || {};
-      var rows = (s.items || []).map(function (i) {
-        return '<tr><td>' + esc(i.product_name + (i.variant_name && i.variant_name !== 'Default' ? ' - ' + i.variant_name : '')) + '<br><small>' + esc(fmtQty(i.quantity)) + (i.unit_abbr ? ' ' + esc(i.unit_abbr) : '') + ' x ' + esc(K.money(i.unit_price)) + (i.unit_abbr ? ' / ' + esc(i.unit_abbr) : '') + '</small>' + (i.promo_name && Number(i.promo_discount) > 0 ? '<br><small>' + esc(i.promo_name) + ' -' + esc(K.money(i.promo_discount)) + '</small>' : '') + '</td><td class="r">' + esc(K.money(i.line_total)) + '</td></tr>';
-      }).join('');
-      var pays = (s.payments || []).map(function (p) { return '<tr><td>' + esc(String(p.method).replace(/_/g, ' ')) + '</td><td class="r">' + esc(K.money(p.tendered || p.amount)) + '</td></tr>'; }).join('');
-      var html = '<!doctype html><meta charset="utf-8"><title>Receipt ' + esc(s.sale_number) + '</title><style>body{font:13px/1.4 monospace;width:72mm;margin:0 auto;padding:6px}h1{font-size:16px;text-align:center;margin:0}p{margin:2px 0;text-align:center}table{width:100%;border-collapse:collapse;margin:6px 0}td{padding:2px 0;vertical-align:top}.r{text-align:right}hr{border:0;border-top:1px dashed #000}.b{font-weight:bold;font-size:15px}</style>' +
-        (b.logo_url ? '<p><img src="' + esc(b.logo_url) + '" alt="" style="max-width:50%;max-height:64px"></p>' : '') + '<h1>' + esc(b.name || '') + '</h1>' + (b.address ? '<p>' + esc(b.address) + '</p>' : '') + (b.phone ? '<p>Tel ' + esc(b.phone) + '</p>' : '') + (b.kra_pin ? '<p>PIN ' + esc(b.kra_pin) + '</p>' : '') +
-        '<hr><p>Receipt ' + esc(s.sale_number) + '</p><p>' + esc(new Date(s.sold_at || Date.now()).toLocaleString('en-KE')) + '</p>' + (s.cashier_name ? '<p>Served by ' + esc(s.cashier_name) + '</p>' : '') + '<hr>' +
-        '<table>' + rows + '</table><hr><table>' +
-        (Number(s.discount_total) > 0 ? '<tr><td>Discount</td><td class="r">-' + esc(K.money(s.discount_total)) + '</td></tr>' : '') +
-        (Number(s.tax_total) > 0 ? '<tr><td>' + (s.prices_include_tax === false ? 'Tax' : 'Includes tax') + '</td><td class="r">' + esc(K.money(s.tax_total)) + '</td></tr>' : '') +
-        '<tr class="b"><td>TOTAL</td><td class="r">' + esc(K.money(s.total)) + '</td></tr>' + pays +
-        (Number(s.change_due) > 0 ? '<tr><td>Change</td><td class="r">' + esc(K.money(s.change_due)) + '</td></tr>' : '') + '</table>' +
-        (s.kra_invoice_no ? '<hr><p>KRA invoice ' + esc(s.kra_invoice_no) + '</p>' : '') + (b.receipt_footer ? '<hr><p>' + esc(b.receipt_footer) + '</p>' : '<hr><p>Thank you!</p>');
-      var f = document.createElement('iframe'); f.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden'; document.body.appendChild(f);
-      f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
-      // wait for the logo to load (at most 2 seconds) so it is on the paper
-      var imgs = Array.prototype.slice.call(f.contentDocument.images);
-      await Promise.race([Promise.all(imgs.map(function (im) { return im.complete ? 1 : new Promise(function (r2) { im.onload = im.onerror = r2; }); })), new Promise(function (r2) { setTimeout(r2, 2000); })]);
-      f.contentWindow.focus(); f.contentWindow.print(); setTimeout(function () { f.remove(); }, 2000);
-    } catch (ex) { K.notice(err, ex.message, 'err'); }
+    try { await window.KReceipt.print(await window.KReceipt.load(lastSaleId, true)); }
+    catch (ex) { K.notice(err, ex.message, 'err'); }
   });
+  $('#printerBtn').addEventListener('click', function () { window.KPrinter.openSettings(); });
 
   /* ---------- keep offers fresh ---------- */
   /* Offers were only fetched when the page loaded, so a new or edited offer never reached an open till.

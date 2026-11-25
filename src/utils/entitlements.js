@@ -9,14 +9,14 @@
  *   trial           free trial still running                      full access
  *   active          paid, period not over                         full access
  *   grace           period just ended (or marked past_due)        full access, with a "pay now" notice
- *   trial_expired   free trial over                               READ-ONLY
- *   expired         period over and the grace days are used up    READ-ONLY
- *   cancelled       cancelled by the shop or by Kaunta            READ-ONLY
- *   inactive        any status this code does not know            READ-ONLY
+ *   trial_expired   free trial over                               LOCKED
+ *   expired         period over and the grace days are used up    LOCKED
+ *   cancelled       cancelled by the shop or by Kaunta            LOCKED
+ *   inactive        any status this code does not know            LOCKED
  *   suspended       locked by Kaunta staff                        locked out, except the payment screens
  *
- * READ-ONLY means the shop can still view and export its data and pay, but cannot change anything
- * (see middleware/subscription.js).
+ * LOCKED means staff can log in but see only the pay screen: every other API request is refused with
+ * 402 subscription_expired until a payment is confirmed (see middleware/subscription.js).
  *
  *   SUBSCRIPTION_GRACE_DAYS   days of full access after a paid period ends (default 3)
  *   SUBSCRIPTION_PERIOD_DAYS  days one confirmed payment adds (default 30)
@@ -65,7 +65,7 @@ const canOperate = (state) => OPERATING.has(state);
 
 /**
  * Everything the apps need to show the right notice:
- *   { state, can_operate, read_only, ends_at, days_left, grace_ends_at }
+ *   { state, can_operate, locked, read_only (same as locked, kept for older pages), ends_at, days_left, grace_ends_at }
  * days_left is negative once the end date has passed.
  */
 function describeAccess(tenant, now = Date.now()) {
@@ -76,6 +76,7 @@ function describeAccess(tenant, now = Date.now()) {
   return {
     state,
     can_operate: canOperate(state),
+    locked: !canOperate(state),
     read_only: !canOperate(state) && state !== 'suspended',
     ends_at: endsAt === null ? null : new Date(endsAt).toISOString(),
     days_left: endsAt === null ? null : Math.ceil((endsAt - now) / DAY),
@@ -83,12 +84,12 @@ function describeAccess(tenant, now = Date.now()) {
   };
 }
 
-// What the API says to a shop that may not change anything right now.
-const READ_ONLY_MESSAGES = {
-  trial_expired: 'Your free trial has ended. Subscribe to keep making changes.',
-  expired: 'Your subscription has ended. Renew to keep making changes.',
-  cancelled: 'Your subscription is cancelled. Subscribe again to keep making changes.',
-  inactive: 'Your subscription is not active. Renew to keep making changes.',
+// What the API says to a locked shop.
+const LOCKED_MESSAGES = {
+  trial_expired: 'Your free trial has ended. Subscribe to continue.',
+  expired: 'Your subscription has ended. Renew to continue.',
+  cancelled: 'Your subscription is cancelled. Subscribe again to continue.',
+  inactive: 'Your subscription is not active. Renew to continue.',
 };
 
 // ---------- plan modules ----------
@@ -129,7 +130,7 @@ module.exports = {
   accessState,
   canOperate,
   describeAccess,
-  READ_ONLY_MESSAGES,
+  LOCKED_MESSAGES,
   MODULES,
   planAllows,
   planHas,

@@ -154,6 +154,7 @@
   }
   function showNotice(d) {
     if (here === 'subscription.html') return;
+    if (d.tenant && d.tenant.access && d.tenant.access.can_operate === false) { location.replace('renew.html'); return; }
     var n = noticeFor(d.tenant && d.tenant.access); if (!n) return;
     var box = document.createElement('div'); box.className = 'sub-note' + (n.tone ? ' ' + n.tone : ''); box.setAttribute('role', 'status');
     var msg = document.createElement('span'), b = document.createElement('b'); b.textContent = n.head;

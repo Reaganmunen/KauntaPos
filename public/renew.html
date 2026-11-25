@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Renew your plan | Kaunta</title>
+  <meta name="theme-color" content="#ecefe9">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="img/logo-mark.svg">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="js/theme.js"></script>
+  <link href="css/theme.css" rel="stylesheet">
+  <link href="css/auth.css" rel="stylesheet">
+  <link href="css/renew.css" rel="stylesheet">
+</head>
+<body data-theme-float>
+<main class="rn">
+  <a class="brand" href="renew.html"><img src="img/logo-mark.svg" alt="" width="36" height="36">Kaunta</a>
+
+  <div class="auth-card rn-card" aria-live="polite">
+    <div class="rn-lock" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+
+    <section id="vLoading"><h1>One moment...</h1><p class="sub" id="loadingText">Checking your subscription.</p></section>
+
+    <section id="vConfirm" hidden>
+      <h1>Confirming your payment</h1>
+      <p class="sub">This usually takes a few seconds. Please keep this page open.</p>
+      <div class="rn-spin" role="status" aria-label="Confirming"></div>
+    </section>
+
+    <section id="vPay" hidden>
+      <h1 id="payTitle">Your plan has ended</h1>
+      <p class="sub" id="payLead"></p>
+
+      <div id="ownerPane">
+        <div class="rn-cycle" role="radiogroup" aria-label="Billing period">
+          <label><input type="radio" name="cycle" value="monthly" checked><span>Monthly</span></label>
+          <label><input type="radio" name="cycle" value="yearly"><span>Yearly</span></label>
+        </div>
+        <div class="rn-plans" id="plans" role="radiogroup" aria-label="Choose a plan"></div>
+        <button class="btn-main" type="button" id="payBtn" disabled>Pay with Paystack</button>
+        <p class="fine">M-Pesa or card. You will be taken to Paystack's secure page, and your shop opens as soon as the payment goes through.</p>
+      </div>
+
+      <p class="rn-staff" id="staffPane" hidden>Only the shop owner can renew the plan. Ask the owner to sign in and pay, then you can carry on.</p>
+      <div class="msg" id="msg" role="alert"></div>
+      <p class="switch"><button type="button" class="btn-quiet" id="outBtn">Sign out</button></p>
+    </section>
+  </div>
+</main>
+<script src="js/config.js"></script>
+<script src="js/renew.js"></script>
+</body>
+</html>

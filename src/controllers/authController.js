@@ -99,7 +99,7 @@ exports.logout = asyncHandler(async (req, res) => {
 // GET /auth/me  -> user, shop, branches the user can work in, enabled features
 // tenant.access says where the subscription stands ({ state, can_operate, read_only, days_left, ... })
 // so the apps can show the right notice; features leaves out modules the shop's plan does not include.
-// Not behind the subscription gate: a shop whose trial ended must still see who it is and pay.
+// Not behind the subscription gate: a locked shop must still see who it is (and pay on renew.html).
 exports.me = asyncHandler(async (req, res) => {
   const data = await run(req, async (db) => {
     const user = await User.findWithRole(db, req.user.id);

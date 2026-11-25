@@ -3,13 +3,13 @@
 /**
  * Paystack for Kaunta subscriptions. Shops pay Kaunta (YOUR Paystack account, set by
  * PAYSTACK_SECRET_KEY); Paystack takes M-Pesa or card, then tells us two ways:
- *   1. the shop is sent back to /subscription.html?reference=...  -> GET /tenant/subscription/paystack/verify
+ *   1. the shop is sent back to /renew.html?reference=...  -> GET /tenant/subscription/paystack/verify
  *   2. Paystack calls POST /api/hooks/paystack (charge.success)    -> the safety net if the browser never returns
  * Both end in settle(), which asks Paystack itself whether the money arrived (never trusts the
  * browser or the webhook body), checks amount and currency, and activates the shop once.
  *
  *   PAYSTACK_SECRET_KEY    sk_test_... or sk_live_...   (required)
- *   PAYSTACK_CALLBACK_URL  optional full URL the shop returns to; default <this host>/subscription.html
+ *   PAYSTACK_CALLBACK_URL  optional full URL the shop returns to; default <this host>/renew.html
  */
 const crypto = require('crypto');
 const { withAdmin } = require('../config/database');

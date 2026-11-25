@@ -15,7 +15,7 @@ const DEFAULT_CODES = {
  * Error with an HTTP status. The error middleware turns it into
  * { success: false, error: { message, code, details, request_id } }.
  * `code` is a stable machine-readable string the frontend can switch on
- * (e.g. 'token_expired', 'subscription_inactive', 'feature_disabled').
+ * (e.g. 'token_expired', 'subscription_expired', 'feature_disabled').
  */
 class ApiError extends Error {
   constructor(status, message, details, code) {

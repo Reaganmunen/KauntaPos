@@ -17,7 +17,7 @@ const CURRENCY = () => (process.env.PAYSTACK_CURRENCY || 'KES').toUpperCase();
 
 function callbackUrl(req) {
   if (process.env.PAYSTACK_CALLBACK_URL) return process.env.PAYSTACK_CALLBACK_URL;
-  return `${req.protocol}://${req.get('host')}/subscription.html`;
+  return `${req.protocol}://${req.get('host')}/renew.html`;
 }
 
 // POST /tenant/subscription/paystack/initialize  { plan_id, cycle: 'monthly' | 'yearly' }  (owner only)

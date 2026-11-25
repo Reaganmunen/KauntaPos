@@ -1,0 +1,30 @@
+/* The pay screen shown to a shop whose subscription has ended. Builds on auth.css. */
+.rn { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 28px 16px 40px; }
+.rn .brand { align-self: center; }
+.rn-card { margin: auto; max-width: 520px; position: relative; text-align: left; }
+.rn-lock { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--err-bg); color: var(--err-ink); margin-bottom: 18px; }
+.rn-cycle { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--chip); border-radius: 999px; margin-bottom: 16px; }
+.rn-cycle label { margin: 0; cursor: pointer; }
+.rn-cycle input { position: absolute; opacity: 0; width: 1px; height: 1px; min-height: 0; }
+.rn-cycle span { display: block; text-align: center; padding: 10px 12px; border-radius: 999px; font-weight: 600; font-size: 14px; color: var(--ink-2); transition: background-color .15s, color .15s; }
+.rn-cycle input:checked + span { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(10, 30, 22, .15); }
+.rn-cycle input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 2px; }
+.rn-plans { display: grid; gap: 10px; margin-bottom: 18px; }
+.rn-plan { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1.5px solid var(--line-2); border-radius: 16px; cursor: pointer; margin: 0; font-weight: 400; transition: border-color .15s, background-color .15s; }
+.rn-plan:hover { border-color: var(--ink-3); }
+.rn-plan input { position: absolute; opacity: 0; width: 1px; height: 1px; min-height: 0; }
+.rn-plan:has(input:checked) { border-color: var(--brand); background: var(--tint); }
+.rn-plan:has(input:focus-visible) { outline: 2px solid var(--brand); outline-offset: 2px; }
+.rn-plan .dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line-2); flex: none; display: grid; place-items: center; }
+.rn-plan:has(input:checked) .dot { border-color: var(--brand); }
+.rn-plan:has(input:checked) .dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--brand); }
+.rn-plan .nm { flex: 1; min-width: 0; }
+.rn-plan .nm b { display: block; font-size: 16px; font-weight: 600; }
+.rn-plan .nm small { color: var(--ink-3); font-size: 13px; }
+.rn-plan .pr { text-align: right; font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rn-plan .pr small { display: block; font-weight: 400; font-size: 12.5px; color: var(--ink-3); }
+.rn-plan.off { opacity: .5; cursor: not-allowed; }
+.rn-staff { background: var(--chip); border-radius: 12px; padding: 14px; color: var(--ink-2); margin: 0; }
+.rn-spin { width: 40px; height: 40px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--brand); animation: rnSpin .8s linear infinite; margin: 8px 0 4px; }
+@keyframes rnSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .rn-spin { animation-duration: 2.4s !important; } }

@@ -1,6 +1,7 @@
 /* Receipts, shared by any page: window.KReceipt
    load(id)               GET /sales/:id/receipt, returns { sale, business }
-   print(data)            prints a narrow (80 mm) receipt through a hidden frame; "Save as PDF" is in the print window
+   print(data)            prints the receipt: straight to a thermal printer when Printer settings say so (printer.js),
+                          otherwise through the print dialog laid out for 58 mm or 80 mm paper. Returns a promise.
    text(data)             plain-text receipt, with WhatsApp bold markers
    whatsapp(data, phone)  opens WhatsApp with the receipt typed in (phone optional: WhatsApp then asks who to send to)
    phone(raw)             0712 345 678 / +254712345678 / 712345678 -> 254712345678, or '' when it is not a phone number */
@@ -62,17 +63,19 @@
 
   function html(data) {
     var s = data.sale, b = data.business || {}, e = K.esc;
+    var W = window.KPrinter && window.KPrinter.get().width === 58 ? 58 : 80, fs = W === 58 ? 11 : 12.5;
     var lines = (s.items || []).map(function (it) {
       var mods = (it.modifiers || []).map(function (x) { return '<div class="sm">+ ' + e(x.name) + '</div>'; }).join('');
       return '<tr><td colspan="2">' + e(lineName(it)) + mods + '</td></tr>' +
-        '<tr><td class="sm">' + num(it.quantity) + (it.unit_abbr ? ' ' + e(it.unit_abbr) : '') + ' x ' + e(m(it.unit_price)) + (it.unit_abbr ? ' / ' + e(it.unit_abbr) : '') + (num(it.discount_amount) > 0 ? ' (-' + e(m(it.discount_amount)) + ')' : '') + '</td><td class="r">' + e(m(it.line_total)) + '</td></tr>';
+        '<tr><td class="sm">' + num(it.quantity) + (it.unit_abbr ? ' ' + e(it.unit_abbr) : '') + ' x ' + e(m(it.unit_price)) + (it.unit_abbr ? ' / ' + e(it.unit_abbr) : '') + (num(it.discount_amount) > 0 ? ' (-' + e(m(it.discount_amount)) + ')' : '') + '</td><td class="r">' + e(m(it.line_total)) + '</td></tr>' +
+        (it.promo_name && num(it.promo_discount) > 0 ? '<tr><td colspan="2" class="sm">Offer: ' + e(it.promo_name) + '</td></tr>' : '');
     }).join('');
     var pays = paidPayments(s).map(function (p) { return '<tr><td>' + e(method(p.method)) + (p.reference ? ' <span class="sm">' + e(p.reference) + '</span>' : '') + '</td><td class="r">' + e(m(p.amount)) + '</td></tr>'; }).join('');
     var legal = [b.legal_name && b.legal_name !== b.name ? e(b.legal_name) : '', b.kra_pin ? 'PIN: ' + e(b.kra_pin) : '', b.address ? e(b.address) : '', b.phone ? 'Tel: ' + e(b.phone) : ''].filter(Boolean).join('<br>');
     var kra = s.kra_invoice_no || s.cu_serial_no ? '<hr><div class="sm c">' + (s.kra_invoice_no ? 'KRA invoice no: ' + e(s.kra_invoice_no) + '<br>' : '') + (s.cu_serial_no ? 'CU serial: ' + e(s.cu_serial_no) + '<br>' : '') + (s.cu_invoice_no ? 'CU invoice: ' + e(s.cu_invoice_no) : '') + '</div>' : '';
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + e(title(s) + ' ' + s.sale_number) + '</title><style>' +
-      '@page{size:80mm auto;margin:4mm}*{box-sizing:border-box}body{margin:0;font:12.5px/1.35 "Courier New",ui-monospace,monospace;color:#000;width:72mm}' +
-      'h1{font-size:16px;margin:0 0 2px;text-align:center}.c{text-align:center}.sm{font-size:11px;color:#333}.r{text-align:right;white-space:nowrap}' +
+      '@page{size:' + W + 'mm auto;margin:2mm 0}*{box-sizing:border-box}body{margin:0 auto;font:' + fs + 'px/1.35 "Courier New",ui-monospace,monospace;color:#000;width:' + (W - 8) + 'mm}' +
+      'h1{font-size:' + (W === 58 ? 14 : 16) + 'px;margin:0 0 2px;text-align:center}.c{text-align:center}.sm{font-size:11px;color:#333}.r{text-align:right;white-space:nowrap}' +
       'table{width:100%;border-collapse:collapse}td{padding:1px 0;vertical-align:top}hr{border:0;border-top:1px dashed #000;margin:6px 0}' +
       '.big td{font-size:15px;font-weight:bold;padding-top:3px}.logo{display:block;margin:0 auto 4px;max-width:36mm;max-height:18mm}' +
       '</style></head><body>' +
@@ -94,6 +97,17 @@
   }
 
   function print(data) {
+    var P = window.KPrinter;
+    if (P && P.get().mode === 'direct') {
+      return P.printReceipt(data).catch(function (ex) {
+        K.toast('Could not print directly (' + (ex && ex.message ? ex.message : 'printer error') + '). Opening the print dialog instead.');
+        dialog(data);
+      });
+    }
+    dialog(data); return Promise.resolve();
+  }
+
+  function dialog(data) {
     var f = document.createElement('iframe');
     f.setAttribute('aria-hidden', 'true'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
     document.body.appendChild(f);

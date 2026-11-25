@@ -14,6 +14,13 @@
   function toLogin() { location.replace('login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() || 'dashboard.html')); }
   if (!session || !session.access_token) { toLogin(); return; }
 
+  /* Subscription gate: a shop that has not paid sees only renew.html. The sign-in response says so up front, and the
+     server enforces it on every request (402 subscription_expired), so this is just the fast path. A Paystack
+     return (?reference=) is carried along so the payment can still be confirmed. */
+  function toRenew() { location.replace('renew.html' + (/[?&](reference|trxref)=/.test(location.search) ? location.search : '')); }
+  (function () { var a = session.tenant && session.tenant.access; if (a && a.can_operate === false) toRenew(); })();
+  if (session.tenant && session.tenant.access && session.tenant.access.can_operate === false) return;
+
   function slug() { return session.tenant && session.tenant.slug; }
   function el(tag, text, cls) { var e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
   function icon(name, cls) { var i = document.createElement('i'); i.className = 'ph ph-' + name + (cls ? ' ' + cls : ''); i.setAttribute('aria-hidden', 'true'); return i; }
@@ -44,10 +51,9 @@
     if (!res.ok || !j || j.success === false) {
       var err = (j && j.error) || {};
       var msg = err.message || 'Something went wrong. Please try again.';
-      /* 402 = the shop can look but not change (trial ended, plan expired). The server words the reason. */
-      if ((res.status === 402 || err.code === 'subscription_inactive') && !err.message) msg = 'Your subscription is not active. Renew it to continue.';
-      /* 403 account_suspended = locked by Kaunta: the only page that still works is Plan and billing. */
-      if (err.code === 'account_suspended' && !/subscription\.html$/.test(location.pathname)) { location.replace('subscription.html?locked=1'); }
+      /* 402 subscription_expired = trial ended or plan lapsed; 403 account_suspended = locked by Kaunta.
+         Either way the only page that still works is renew.html. */
+      if (err.code === 'subscription_expired' || err.code === 'account_suspended') { toRenew(); var le = new Error(''); le.status = res.status; le.code = err.code; throw le; }
       var e = new Error(msg); e.status = res.status; e.code = err.code; e.details = err.details; throw e;
     }
     return j;
