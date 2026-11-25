@@ -22,7 +22,7 @@ salesRouter.post(
   can('pos.sell'),
   resolveBranch({ required: true }),
   saleRights, // discounts need pos.discount, prescriptions need pharmacy.dispense
-  requireFeatureIf('restaurant', (req) => Boolean(req.body && (req.body.status === 'open' || req.body.table_id))),
+  requireFeatureIf('restaurant', (req) => Boolean(req.body && ((req.body.status === 'open' && !req.body.awaiting_payment) || req.body.table_id))),
   requireFeatureIf('prescriptions', (req) => Boolean(req.body && req.body.prescription)),
   sales.create
 );
@@ -33,6 +33,7 @@ salesRouter.get('/:id/receipt', salesRead, sales.receipt);
 
 salesRouter.post('/:id/items', can('pos.sell'), saleRights, requireFeatureIf('restaurant', () => true), sales.addItems);
 salesRouter.post('/:id/void', can('pos.void'), sales.void);
+salesRouter.post('/:id/abandon', can('pos.sell'), sales.abandon); // cashier drops their own unpaid M-Pesa sale
 salesRouter.post('/:id/refund', can('pos.refund'), sales.refund);
 
 salesRouter.get('/:id/payments', salesRead, payments.listForSale);

@@ -115,7 +115,14 @@
       <div class="tot"><span>Change</span><span id="change">KES 0.00</span></div>
     </div>
     <div id="paneMpesa" class="form" hidden>
-      <label class="fld"><span>M-Pesa receipt code</span><input type="text" id="mpRef" class="mono-in" autocomplete="off" autocapitalize="characters" maxlength="20" placeholder="e.g. SJK7H2LQ9P"><small>From the customer's M-Pesa confirmation message. Check the amount and name before you accept.</small></label>
+      <p class="note" id="mpDetails" hidden></p>
+      <label class="fld"><span>Customer's M-Pesa number</span><input type="tel" id="mpPhone" inputmode="tel" autocomplete="off" placeholder="0712 345 678"><small>We send a payment prompt to this phone. The customer enters their M-Pesa PIN.</small></label>
+      <button class="btn primary lg block" id="stkGo" type="button"><i class="ph ph-paper-plane-tilt"></i>Send M-Pesa prompt</button>
+      <p class="note" id="stkStatus" hidden></p>
+      <details id="mpManual">
+        <summary>Customer already paid? Enter the receipt code instead</summary>
+        <label class="fld"><span>M-Pesa receipt code</span><input type="text" id="mpRef" class="mono-in" autocomplete="off" autocapitalize="characters" maxlength="20" placeholder="e.g. SJK7H2LQ9P"><small>From the customer's M-Pesa confirmation message. Check the amount and name before you accept.</small></label>
+      </details>
     </div>
     <div id="paneCard" class="form" hidden>
       <label class="fld"><span>Card slip or approval number</span><input type="text" id="cardRef" autocomplete="off"><small>Optional. Take the card payment on your card machine first.</small></label>

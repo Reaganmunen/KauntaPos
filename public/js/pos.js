@@ -183,8 +183,31 @@
     var line = cart.filter(function (l) { return l.variant_id === it.variant_id; })[0];
     if (line) line.qty = round3(line.qty + n);
     else cart.push({ variant_id: it.variant_id, product_id: it.product_id, name: it.product_name, variant: vname(it), price: Number(it.selling_price) || 0, qty: n, image: it.image_url || null, weighed: weighed(it), unit: unitOf(it) });
+    autoFree(it.variant_id);
     saleUuid = null; K.notice($('#saleErr'), ''); renderCart(); renderGrid();
     var tot = $('#total'); tot.classList.remove('bump'); void tot.offsetWidth; tot.classList.add('bump');
+  }
+  /* Buy 2 get 1 free: when the cashier adds the last "buy" item, the free one is added for them.
+     The engine then makes the cheapest unit free. Only runs when quantity goes UP, so removing the free item sticks. */
+  function autoFree(variantId) {
+    if (!window.KPromo || !promos.length) return;
+    var line = cart.filter(function (l) { return l.variant_id === variantId; })[0];
+    if (!line || line.weighed) return;
+    promos.forEach(function (p) {
+      if (p.type !== 'multi_buy' || !window.KPromo.isLive(p)) return;
+      if (p.branch_id && branchId && String(p.branch_id) !== String(branchId)) return;
+      var ids = p.variant_ids || []; if (ids.indexOf(variantId) < 0) return;
+      var buy = Number(p.buy_qty), get = Number(p.get_qty), size = buy + get;
+      var units = cart.reduce(function (s, l) { return ids.indexOf(l.variant_id) >= 0 && !l.weighed ? s + Math.floor(l.qty + 1e-9) : s; }, 0);
+      if (units % size !== buy) return;
+      if (Number(p.limit_per_sale) >= 1 && Math.floor(units / size) >= Number(p.limit_per_sale)) return;
+      var it = catalog.filter(function (c) { return c.variant_id === variantId; })[0];
+      if (it && tracked(it) && line.qty + get > (Number(it.quantity_on_hand) || 0)) return;   /* no stock for the free one */
+      var before = priced().off;
+      line.qty = round3(line.qty + get);
+      if (priced().off <= before + 0.004) { line.qty = round3(line.qty - get); return; }   /* the offer would not actually discount it */
+      K.toast('Free ' + line.name + ' added (' + p.name + ')');
+    });
   }
   function renderCart() {
     var ul = $('#lines'), P = priced(); ul.textContent = '';
@@ -216,7 +239,9 @@
   }
   function setQty(i, q) {
     q = round3(q);
+    var grew = cart[i] && q > cart[i].qty, vid = cart[i] && cart[i].variant_id;
     if (!(q > 0)) cart.splice(i, 1); else cart[i].qty = q;
+    if (grew) autoFree(vid);
     saleUuid = null; renderCart(); renderGrid();
   }
   $('#clear').addEventListener('click', function () { cart = []; saleUuid = null; K.notice($('#saleErr'), ''); renderCart(); renderGrid(); });
@@ -404,8 +429,13 @@
     document.querySelectorAll('#methods button').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.m === m)); });
     $('#paneCash').hidden = m !== 'cash'; $('#paneMpesa').hidden = m !== 'mpesa'; $('#paneCard').hidden = m !== 'card';
     K.notice($('#payErr'), '');
-    var f = m === 'cash' ? $('#tendered') : m === 'mpesa' ? $('#mpRef') : $('#cardRef'); if (f) f.focus();
+    paintGo();
+    if (m === 'mpesa') { loadTillInfo(); $('#mpPhone').focus(); return; }
+    var f = m === 'cash' ? $('#tendered') : $('#cardRef'); if (f) f.focus();
   }
+  /* On the M-Pesa tab the main button is the prompt; "Complete sale" only shows for the manual receipt code. */
+  function paintGo() { $('#payGo').hidden = method === 'mpesa' && !$('#mpManual').open; }
+  $('#mpManual').addEventListener('toggle', paintGo);
   document.querySelectorAll('#methods button').forEach(function (b) { b.addEventListener('click', function () { setMethod(b.dataset.m); }); });
 
   function paintChange() { var c = K.num($('#tendered').value) - due; $('#change').textContent = K.money(c > 0 ? c : 0); }
@@ -424,10 +454,12 @@
   }
   $('#tendered').addEventListener('input', paintChange);
 
-  $('#charge').addEventListener('click', function () {
+  $('#charge').addEventListener('click', async function () {
     if (!cart.length) return;
+    if (pending && !(await abandonPending())) return;   /* an earlier M-Pesa prompt is still live: wait for it */
     due = total(); saleUuid = saleUuid || K.uuid();
     $('#tendered').value = String(due); $('#mpRef').value = ''; $('#cardRef').value = '';
+    $('#mpPhone').value = ''; $('#mpManual').open = false; K.notice($('#stkStatus'), ''); $('#stkGo').disabled = false; $('#mpPhone').disabled = false;
     paintDue(); setMethod('cash'); $('#payGo').disabled = false;
     $('#payDlg').showModal(); $('#tendered').select();
   });
@@ -447,6 +479,7 @@
       pay.reference = ref;
     } else if ($('#cardRef').value.trim()) pay.reference = $('#cardRef').value.trim();
 
+    if (pending && !(await abandonPending())) return K.notice(err, 'An M-Pesa prompt is still waiting for the customer. Wait a moment, then try again.', 'err');
     btn.disabled = true; btn.textContent = 'Completing...';
     try {
       var payload = { client_uuid: saleUuid || (saleUuid = K.uuid()), items: cart.map(function (l) { return { variant_id: l.variant_id, quantity: l.qty }; }), payments: [pay] };
@@ -466,6 +499,112 @@
     }
     btn.disabled = false; btn.textContent = 'Complete sale';
   });
+
+
+  /* ---------- M-Pesa prompt (STK push) ---------- */
+  /* The sale is saved unpaid first (status open + awaiting_payment), the prompt goes to the customer's phone,
+     and the sale completes by itself when Safaricom confirms. Cancelling returns the stock. */
+  var pending = null, stkUuid = null, tillCache = {}, polling = 0;
+  function stkMsg(text, kind) { K.notice($('#stkStatus'), text, kind); }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  async function loadTillInfo() {
+    var el = $('#mpDetails'), key = branchId || '_';
+    try { if (!tillCache[key]) tillCache[key] = await K.api('GET', '/mpesa/till-info', undefined, hdr()); }
+    catch (ex) { tillCache[key] = { configured: false }; }
+    var t = tillCache[key]; el.hidden = false; el.className = 'note';
+    if (!t || !t.configured) {
+      el.textContent = 'M-Pesa is not set up for this shop yet. Ask the owner to add it under M-Pesa settings. You can still enter a receipt code below.';
+      $('#stkGo').disabled = true; $('#mpManual').open = true; return;
+    }
+    $('#stkGo').disabled = false;
+    el.textContent = 'Customer pays to ' + (t.shortcode_type === 'till' ? 'Till' : 'Paybill') + ' ' + t.shortcode + (t.label ? ' (' + t.label + ')' : '') + (t.environment === 'sandbox' ? '. Sandbox: test mode, no real money.' : '');
+  }
+
+  async function abandonPending() {
+    if (!pending) return true;
+    try {
+      await K.api('POST', '/sales/' + encodeURIComponent(pending.saleId) + '/abandon', {}, hdr());
+      pending = null; stkUuid = null; polling++; K.toast('Unpaid M-Pesa sale cancelled');
+      return true;
+    } catch (ex) {
+      if (ex.code === 'already_paid' || ex.code === 'not_abandonable') {   /* money came in or it was settled: the sale is real */
+        pending = null; stkUuid = null; polling++; cart = []; saleUuid = null; renderCart(); renderGrid();
+        K.toast('That M-Pesa sale was already paid. Find it under Sales.');
+        return true;
+      }
+      K.toast(ex.message || 'Could not cancel the M-Pesa sale yet');
+      return false;
+    }
+  }
+
+  async function stkPaid(tx) {
+    stkMsg('Payment received' + (tx.mpesa_receipt ? ' (' + tx.mpesa_receipt + ')' : '') + '. Finishing the sale...', 'ok');
+    var sale = null;
+    for (var i = 0; i < 6; i++) {
+      try { sale = await K.api('GET', '/sales/' + encodeURIComponent(pending.saleId)); } catch (e) { sale = null; }
+      if (sale && sale.payment_status === 'paid') break;
+      await wait(1500);
+    }
+    if (!sale || sale.payment_status !== 'paid') {
+      stkMsg('Safaricom confirmed ' + (tx.mpesa_receipt || 'the payment') + ' but the sale has not updated yet. Do not charge again: check Sales in a minute.', 'err');
+      return;
+    }
+    var p = pending; pending = null; stkUuid = null; polling++;
+    finish(sale, { method: 'mpesa', amount: p.total, reference: tx.mpesa_receipt });
+  }
+
+  async function pollStk(txId) {
+    var mine = ++polling, started = Date.now();
+    while (mine === polling && pending) {
+      await wait(3000);
+      if (mine !== polling || !pending) return;
+      var tx; try { tx = await K.api('GET', '/mpesa/transactions/' + encodeURIComponent(txId)); } catch (e) { continue; }   /* network blip: keep polling */
+      if (tx.status === 'success') return stkPaid(tx);
+      if (tx.status !== 'pending') { stkMsg((tx.result_desc || 'The payment was not completed') + '. Press Send to try again.', 'err'); return; }
+      if (Date.now() - started > 100000) { stkMsg('No answer yet. Ask the customer to check their phone, then press Send again, or enter the receipt code if they already paid.', 'err'); return; }
+    }
+  }
+
+  $('#mpPhone').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('#stkGo').click(); } });
+  $('#stkGo').addEventListener('click', async function () {
+    var phone = $('#mpPhone').value.trim(), go = $('#stkGo');
+    if (!/^(?:\+?254|0)?[17]\d{8}$/.test(phone.replace(/[\s-]/g, ''))) return stkMsg('Enter a valid Safaricom number, e.g. 0712 345 678.', 'err');
+    stkMsg(''); K.notice($('#payErr'), ''); go.disabled = true; $('#mpPhone').disabled = true;
+    try {
+      if (!pending) {
+        var payload = {
+          client_uuid: stkUuid || (stkUuid = K.uuid()), status: 'open', awaiting_payment: true, payments: [],
+          items: cart.map(function (l) { return { variant_id: l.variant_id, quantity: l.qty }; }),
+        };
+        if ($('#note').value.trim()) payload.notes = $('#note').value.trim();
+        if (terminal) payload.terminal_id = terminal.id;
+        var sale = await K.api('POST', '/sales', payload, hdr());
+        pending = { saleId: sale.id, total: Number(sale.total) || due, txId: null };
+        due = pending.total; paintDue();
+      }
+      var tx;
+      try { tx = await K.api('POST', '/mpesa/stk-push', { sale_id: pending.saleId, phone: phone }, hdr()); }
+      catch (ex) {
+        if (ex.code !== 'stk_pending') throw ex;   /* a prompt was just sent: keep waiting on that one */
+        var list = await K.api('GET', '/mpesa/sales/' + encodeURIComponent(pending.saleId) + '/transactions');
+        tx = (list || []).filter(function (t) { return t.status === 'pending'; })[0];
+        if (!tx) throw ex;
+      }
+      pending.txId = tx.id;
+      stkMsg('Prompt sent to ' + phone + '. Ask the customer to enter their M-Pesa PIN.', 'ok');
+      await pollStk(tx.id);
+    } catch (ex) {
+      if (ex.code === 'shift_required') { $('#payDlg').close(); openShiftDialog('Your shop requires an open shift before selling.'); }
+      else if (ex.code === 'already_paid' && pending) {
+        try { var s2 = await K.api('GET', '/sales/' + encodeURIComponent(pending.saleId)); var p2 = pending; pending = null; stkUuid = null; polling++; finish(s2, { method: 'mpesa', amount: p2.total }); } catch (e2) { stkMsg(ex.message, 'err'); }
+      }
+      else stkMsg(ex.message + (ex.code === 'insufficient_stock' ? ' Remove it from the sale, or add stock first.' : ''), 'err');
+    }
+    go.disabled = false; $('#mpPhone').disabled = false;
+  });
+  /* Closing the modal with an unpaid prompt cancels that sale (refused for 3 minutes while the customer could still approve). */
+  $('#payDlg').addEventListener('close', function () { if (pending) { polling++; abandonPending(); } });
 
   function finish(sale, pay) {
     lastSaleId = sale.id;
@@ -508,6 +647,20 @@
       f.contentWindow.focus(); f.contentWindow.print(); setTimeout(function () { f.remove(); }, 2000);
     } catch (ex) { K.notice(err, ex.message, 'err'); }
   });
+
+  /* ---------- keep offers fresh ---------- */
+  /* Offers were only fetched when the page loaded, so a new or edited offer never reached an open till.
+     since=now returns no product rows, just the current offers, so this is cheap. */
+  async function refreshPromos() {
+    if (!branchId || document.hidden) return;
+    try {
+      var d = await K.api('GET', '/sync/catalog?since=' + encodeURIComponent(new Date().toISOString()), undefined, hdr());
+      if (d && d.promotions) { promos = d.promotions; renderCart(); }
+    } catch (ex) { /* offline: keep the offers we have */ }
+  }
+  window.addEventListener('focus', refreshPromos);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshPromos(); });
+  setInterval(refreshPromos, 120000);
 
   /* ---------- this device as a till ---------- */
   /* Each browser gets a permanent device ID. A manager registers that ID under Branches > Tills,

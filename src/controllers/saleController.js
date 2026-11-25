@@ -141,6 +141,33 @@ exports.void = asyncHandler(async (req, res) => {
   return ok(res, sale);
 });
 
+// POST /sales/:id/abandon
+// The customer never paid the M-Pesa prompt. The cashier who made the sale may cancel it while it is
+// still unpaid; stock goes back. Refused while a prompt could still be approved (first 3 minutes).
+exports.abandon = asyncHandler(async (req, res) => {
+  const sale = await run(req, async (db) => {
+    const found = await Sale.findById(db, req.params.id);
+    if (!found) throw ApiError.notFound('Sale not found');
+    if (found.cashier_id !== req.user.id && !isManager(req)) throw ApiError.forbidden('This sale belongs to another cashier');
+    if (found.status !== 'open' || Number(found.amount_paid) > 0) throw ApiError.conflict('Only an unpaid sale can be cancelled', undefined, 'not_abandonable');
+    const { rows: paid } = await db.query(
+      `SELECT 1 FROM mpesa_transactions WHERE sale_id = $1 AND status = 'success' LIMIT 1`, [found.id]
+    );
+    if (paid.length) throw ApiError.conflict('The customer already paid this sale by M-Pesa.', undefined, 'already_paid');
+    const { rows } = await db.query(
+      `SELECT 1 FROM mpesa_transactions
+        WHERE sale_id = $1 AND direction = 'stk_push' AND status = 'pending'
+          AND created_at > now() - interval '3 minutes' LIMIT 1`,
+      [found.id]
+    );
+    if (rows.length) throw ApiError.conflict('The M-Pesa prompt may still be approved. Wait a moment and try again.', undefined, 'stk_pending');
+    const result = await SaleService.void(db, req.user, found.id, 'Customer did not complete the M-Pesa payment');
+    await audit(db, req, 'sale.abandon', 'sale', found.id, null);
+    return result;
+  });
+  return ok(res, sale);
+});
+
 // POST /sales/:id/refund
 // { reason, items: [{ sale_item_id | variant_id, quantity }], refund_method: 'cash'|'mpesa'|..., restock: true }
 // Creates a credit note (which is also sent to KRA eTIMS) and books the refund.

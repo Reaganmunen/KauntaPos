@@ -296,6 +296,8 @@ async function create(db, user, input) {
   const offline = Boolean(input.offline);
   const deferStock = Boolean(input.defer_stock);
   const isTab = input.status === 'open' && channel !== 'online';
+  // an unpaid retail sale waiting for the customer to approve an M-Pesa prompt: not a restaurant tab
+  const awaitingPayment = isTab && Boolean(input.awaiting_payment) && !input.table_id;
   const status = input.status === 'open' ? 'open' : 'completed';
 
   // The same client_uuid always gives back the sale already saved.
@@ -321,7 +323,7 @@ async function create(db, user, input) {
   }
 
   const shift = user ? await Shift.findOpenForUser(db, user.id) : null;
-  if (channel === 'pos' && !offline && !isTab && settings.require_shift && !shift) {
+  if (channel === 'pos' && !offline && (!isTab || awaitingPayment) && settings.require_shift && !shift) {
     throw ApiError.conflict('Open a shift before selling', undefined, 'shift_required');
   }
   const payments = Array.isArray(input.payments) ? input.payments : [];

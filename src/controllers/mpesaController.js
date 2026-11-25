@@ -124,6 +124,23 @@ exports.registerC2b = asyncHandler(async (req, res) => {
 
 // ---------- taking payments ----------
 
+// GET /mpesa/till-info   what a cashier may see: where customers pay (never any secret)
+exports.tillInfo = asyncHandler(async (req, res) => {
+  const branch = branchId(req, { required: false });
+  const config = await run(req, (db) => MpesaConfig.forBranch(db, branch));
+  if (!config) return ok(res, { configured: false });
+  const settings = config.provider_settings || {};
+  return ok(res, {
+    configured: Boolean(config.has_passkey !== false && config.passkey_enc),
+    label: config.label || null,
+    shortcode: config.shortcode,
+    shortcode_type: config.shortcode_type,   // 'till' | 'paybill'
+    environment: config.environment,
+    store_number: settings.store_number || null,
+  });
+});
+
+
 // POST /mpesa/stk-push  { sale_id, phone, amount? }   amount defaults to the sale's balance due
 exports.stkPush = asyncHandler(async (req, res) => {
   requireFields(req.body, ['sale_id', 'phone']);

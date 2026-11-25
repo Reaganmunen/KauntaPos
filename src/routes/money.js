@@ -37,6 +37,7 @@ mpesaRouter.post('/configs/:id/register-c2b', can('mpesa.manage'), mpesa.registe
 
 // taking payments at the till (limited per signed-in user, not per IP: a shop shares one address)
 const takesPayments = canAny('pos.sell', 'orders.online', 'mpesa.manage');
+mpesaRouter.get('/till-info', can('pos.sell'), resolveBranch(), mpesa.tillInfo);
 mpesaRouter.post('/stk-push', can('pos.sell'), rateLimit.posStk, resolveBranch(), mpesa.stkPush);
 mpesaRouter.get('/unmatched', takesPayments, mpesa.unmatched);
 mpesaRouter.get('/transactions', canAny('mpesa.manage', 'reports.view'), mpesa.listTransactions);
